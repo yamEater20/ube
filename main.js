@@ -21,6 +21,7 @@ import { DrawablePool, PhysObjPool } from './pools.js';
 import { Entity } from './entity.js';
 import {camera} from './camera.js';
 import {PhysObj, RectHitbox, DummyCollisionHandler, DummyCollidableProvider, DummyUpdateHandler, getDefaultFallV} from './physics.js';
+import {InputProvider} from './input.js';
 
 let root;
 
@@ -40,6 +41,48 @@ class DrawableEntity extends Entity {
 	}
 }
 
+class GroundedProvider {
+	constructor(collidableProvider) {
+		this._collidableProvider = collidableProvider;
+	}
+
+	onGround(p) {
+		const onTopOf = this._collidableProvider.getAllCollidingExcept(p, VectorDown, []);
+		return onTopOf.length > 0;
+	}
+}
+
+class FallUpdateHandler {
+	constructor(groundedProvider) {
+		this._groundedProvider = groundedProvider;
+	}
+
+	update(physObj, time) {
+		if (!this._groundedProvider.onGround(physObj))
+			physObj.setYVelocity(getDefaultFallV(physObj.getYVelocity(), time.delta));
+	}
+}
+
+class PlayerUpdateHandler {
+	constructor(inputProvider, fallUpdateHandler) {
+		this._inputProvider = inputProvider;
+		this._fallUpdateHandler = fallUpdateHandler;
+	}
+
+	update(physObj, time) {
+		const input = this._inputProvider.getInput();
+		if (input.moveLeft) physObj.setXVelocity(-0.1);
+		else if (input.moveRight) physObj.setXVelocity(0.1)
+		else physObj.setXVelocity(0);
+
+		this._fallUpdateHandler.update(physObj, time);
+
+		if (input.jumpPressed) {
+			physObj.setYVelocity(-0.17);
+		}
+	}
+}
+
 function makeWall(parent, relativePosition, sprite) {
 	const hitbox = new RectHitbox(parent, relativePosition, 8, 8);
 
@@ -55,23 +98,15 @@ function makeWall(parent, relativePosition, sprite) {
 	return {"physObj": physObj, "drawableEntity": drawableEntity};
 }
 
-function makeBox(parent, relativePosition, collidableProvider, sprite) {
-	const hitbox = new RectHitbox(parent, relativePosition, 8, 8);
-	class FallUpdateHandler {
-		update(physObj, time) {
-			physObj.setYVelocity(getDefaultFallV(physObj.getYVelocity(), time.delta));
-		}
-	}
-	const fallUpdateHandler = new FallUpdateHandler();
+function makePhysObj(hitbox, updateHandler, collidableProvider, sprite) {
 	const physObj = new PhysObj(
 		hitbox,
-		fallUpdateHandler,
+		updateHandler,
 		new DummyCollisionHandler(),
 		collidableProvider
 	);
 
 	const drawableEntity = new DrawableEntity(hitbox, sprite);
-
 	return {"physObj": physObj, "drawableEntity": drawableEntity};
 }
 
@@ -79,6 +114,9 @@ class Root {
 	constructor() {
 		this.drawablePool = new DrawablePool();
 		this.physObjPool = new PhysObjPool();
+		this.inputProvider = new InputProvider();
+		const groundedProvider = new GroundedProvider(this.physObjPool);
+		const fallUpdateHandler  = new FallUpdateHandler(groundedProvider);
 
 		for (let i = 0; i < 10; ++i) {
 			const wall = makeWall(
@@ -89,19 +127,20 @@ class Root {
 			this.registerAll(wall);
 		}
 
-		this.registerAll(
-			makeBox(
-				this,
-				VectorDown.scalar(0),
-				this.physObjPool,
-				new Sprites.Sprite(Sprites.SPRITES.BUTTON)
-			)
+		const thingy = makePhysObj(
+			new RectHitbox(this, VectorZero, 8, 8),
+			fallUpdateHandler,
+			this.physObjPool,
+			new Sprites.Sprite(Sprites.SPRITES.BUTTON)
 		);
 
+		this.registerAll(thingy);
+		this.drawablePool.register(thingy.physObj);
+
 		this.registerAll(
-			makeBox(
-				this,
-				Vector({x: 12, y: 20}),
+			makePhysObj(
+				new RectHitbox(this, Vector({x: 12, y: 20}), 8, 8),
+				new PlayerUpdateHandler(this.inputProvider, fallUpdateHandler),
 				this.physObjPool,
 				new Sprites.Sprite(Sprites.SPRITES.BUTTON)
 			)
@@ -124,6 +163,7 @@ class Root {
 
 	update() {
 		this.trueTime.tick();
+		this.inputProvider.update();
 		this.children.forEach(c => c.update(this.trueTime));
 		this.physObjPool.updateAll(this.trueTime);
 	}

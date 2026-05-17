@@ -1,14 +1,12 @@
 export class InputProvider {
     constructor() {
-        this.keyCodes = {
+        this._keyCodes = {
             "ArrowRight": false,
             "ArrowLeft": false,
             "ArrowDown": false,
             "ArrowUp": false,
             "KeyZ": false,
             "KeyX": false,
-            "PrevJump": false,
-            "PrevSlide": false,
         
             // //Debug keys
             "KeyO": false, //fly
@@ -30,28 +28,47 @@ export class InputProvider {
             "KeyD": false,
             "KeyN": false,
             "KeyM": false,
+
+            "Space": false,
         };
 
-        document.addEventListener('keydown', this.keyDownHandler, false);
-        document.addEventListener('keyup', this.keyUpHandler, false);
+        this._input = {
+            "jump": false,
+        }
+
+        this._prevInput = structuredClone(this._input);
+
+        document.addEventListener('keydown', this.keyDownHandler.bind(this), false);
+        document.addEventListener('keyup', this.keyUpHandler.bind(this), false);
     }
 
     keyDownHandler(event) {
-        if (event.code in this.keyCodes) {
-            this.keyCodes[event.code] = true;
+        if (event.code in this._keyCodes) {
+            this._keyCodes[event.code] = true;
         }
     }
     
     keyUpHandler(event) {
-        if (event.code in this.keyCodes) {
-            this.keyCodes[event.code] = false;
+        if (event.code in this._keyCodes) {
+            this._keyCodes[event.code] = false;
         }
+    }
+
+    update() {
+        const newInput = {
+            "moveRight": this._keyCodes.ArrowRight || this._keyCodes.KeyD,
+            "moveLeft": this._keyCodes.ArrowLeft || this._keyCodes.KeyA,
+
+            "jump": this._keyCodes.KeyZ || this._keyCodes.KeyW || this._keyCodes.Space
+        };
+
+        newInput.jumpPressed = newInput.jump && !this._prevInput.jump;
+
+        this._prevInput = this._input;
+        this._input = newInput;
     }
     
     getInput() {
-        return {
-            "moveRight": this.keys.ArrowRight || this.keys.KeyD,
-            "moveLeft": this.keys.ArrowLeft || this.keys.KeyA,
-        }
+        return this._input;
     }
 }
