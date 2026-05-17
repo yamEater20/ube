@@ -7,6 +7,9 @@ const Vector = ({x, y}) => ({
 	addPoint(p) {
 		return Vector({x: this.x + p.x, y: this.y + p.y});
 	},
+	subtract(p) {
+		return Vector({x: this.x - p.x, y: this.y - p.y});
+	},
 	scalarX(scalar) {
 		return (Vector({x: this.x * scalar, y: this.y}));
 	},
@@ -19,6 +22,9 @@ const Vector = ({x, y}) => ({
 	},
 	trunc() {
 		return Vector({x: Math.trunc(this.x), y: Math.trunc(this.y)});
+	},
+	sign() {
+		return Vector({x: Math.sign(this.x), y: Math.sign(this.y)});
 	}
 });
 
@@ -89,7 +95,6 @@ export {
     VectorZero,
 	numToVec,
 	Direction,
-	Rectangle,
 	framesToMs,
 	shuffle
 };

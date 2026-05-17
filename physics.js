@@ -1,9 +1,7 @@
 import {
 	Vector,
-	Rectangle,
 } from './math.js';
 
-import {camera} from "./camera.js";
 import { Entity } from './entity.js';
 
 const MAXFALL = 0.2;
@@ -13,92 +11,80 @@ const GRAVITY_COMING_DOWN = 8 / 10000;
 class RectHitbox extends Entity {
     constructor(parent, relativePosition, width, height) {
 		super(parent, relativePosition);
-        this.rect = new Rectangle(width, height);
 		this.width = width;
 		this.height = height;
     }
 
-    toString() {
-        return `${this.rect.toString()}`
-    }
-	
-	isOverlap(hitbox) {
-		const pos = this.globalPosition();
-		const otherPos = hitbox.globalPosition();
-		let x = pos.x;
-		let y = pos.y;
-		let rx = otherPos.x;
-		let ry = otherPos.y;
-		return (x < rx + hitbox.width &&
-			x + this.width > rx &&
-			y < ry + hitbox.height &&
-			y + this.height > ry);
+	toStr() {
+		return `x: ${this.globalPosition().x} y: ${this.globalPosition().y} w: ${this.width} h: ${this.height}`;
 	}
 
-	isTouching(hitbox) {
-		return (
-			this.isOnTopOf(hitbox) ||
-			this.isUnder(hitbox) ||
-			this.isLeftOf(hitbox) ||
-			this.isRightOf(hitbox)
-		)
+	cloneOffset(v) {
+		return new RectHitbox(this.parent, this.relativePosition.addPoint(v), this.width, this.height);
 	}
-
-	isOnTopOf(hitbox) {
-		const otherPos = hitbox.globalPosition();
-		const pos = this.globalPosition();
-		return (
-			otherPos.y + this.height === otherPos.y &&
-			pos.x + this.width > pos.x &&
-			pos.x + hitbox.width > pos.x
-		);
-	}
-
-	isLeftOf(hitbox) {
-		const pos = this.globalPosition();
-		const otherPos = hitbox.globalPosition();
-		let x = pos.x;
-		let y = pos.y;
-		return (
-			x + this.width === otherPos.x &&
-			y < otherPos.y + hitbox.height &&
-			y + this.height > otherPos.y
-		);
-	}
-
-	isUnder(hitbox) {
-		return hitbox.isOnTopOf(this);
-	}
-
-	isRightOf(hitbox) {
-		return hitbox.isLeftOf(this);
-	}
-
-    cloneOffset(v) {
-        return new RectHitbox(this.parent, this.relativePosition.addPoint(v), this.width, this.height);
-    }
 }
 
-class PhysObj {
-	constructor(x, y, w, h, collidable, level, direction) {
-		this.hitbox = new RectHitbox(x, y, w, h);
-		this.direction = direction;
-		this.level = level;
-		this.collidable = collidable;
+function isOverlap(hitboxA, hitboxB) {
+	const pos = hitboxA.globalPosition();
+	const otherPos = hitboxB.globalPosition();
+	let x = pos.x;
+	let y = pos.y;
+	let rx = otherPos.x;
+	let ry = otherPos.y;
+	return (x < rx + hitboxB.width &&
+		x + hitboxA.width > rx &&
+		y < ry + hitboxB.height &&
+		y + hitboxA.height > ry);
+}
+
+function isTouching(hitboxA, hitboxB) {
+	return (
+		hitboxA.isOnTopOf(hitbox) ||
+		hitboxA.isUnder(hitbox) ||
+		hitboxA.isLeftOf(hitbox) ||
+		hitboxA.isRightOf(hitbox)
+	)
+}
+
+function isOnTopOf(hitboxA, hitboxB) {
+	const otherPos = hitboxB.globalPosition();
+	const pos = hitboxA.globalPosition();
+	return (
+		otherPos.y + hitboxA.height === otherPos.y &&
+		pos.x + hitboxA.width > pos.x &&
+		pos.x + hitboxB.width > pos.x
+	);
+}
+
+function isLeftOf(hitboxA, hitboxB) {
+	const pos = hitboxA.globalPosition();
+	const otherPos = hitboxB.globalPosition();
+	let x = pos.x;
+	let y = pos.y;
+	return (
+		x + hitboxA.width === otherPos.x &&
+		y < otherPos.y + hitboxB.height &&
+		y + hitboxA.height > otherPos.y
+	);
+}
+
+function isUnder(hitboxA, hitboxB) {
+	return hitboxB.isOnTopOf(hitboxA);
+}
+
+function isRightOf(hitboxA, hitboxB) {
+	return hitboxB.isLeftOf(hitboxA);
+}
+
+class PhysObj extends Entity {
+	constructor(parent, updateHandler, collisionHandler, collidableProvider) {
+		super(parent);
 		this.velocity = Vector({x: 0, y: 0});
+		this.subpixels = Vector({x: 0, y: 0});
 
-		//TODO: Use a hashmap/dictionary
-		this.colliderBehaviors = [];
-		this.collideeBehaviors = [];
-		this.camera = camera;
-	}
-
-	incrX(dx) {
-		this.relativePosition.x += dx;
-	}
-
-	incrY(dy) {
-		this.relativePosition.y += dy;
+		this.updateHandler = updateHandler;
+		this.collisionHandler = collisionHandler;
+		this.collidableProvider = collidableProvider;
 	}
 
 	setXVelocity(vx) {
@@ -123,7 +109,8 @@ class PhysObj {
 	}
 
 	update(time) {
-		this.move(this.velocity.x * time.delta, this.velocity.y * time.delta);
+		this.updateHandler.update(this, time);
+		this.move(this.velocity.scalar(time.delta));
 	}
 
 	move(x, y) {
@@ -131,23 +118,23 @@ class PhysObj {
 	}
 
 	isOverlap(physObj, offset) {
-		return this !== physObj && this.hitbox.cloneOffset(offset).isOverlap(physObj.getHitbox())
+		return this !== physObj && isOverlap(this.parent.cloneOffset(offset), physObj.parent);
 	}
 
 	isOnTopOf(physObj) {
-		return this.hitbox.isOnTopOf(physObj.hitbox);
+		return isOnTopOf(this.parent, physObj.parent);
 	}
 
 	isUnder(physObj) {
-		return this.hitbox.isUnder(physObj.hitbox);
+		return isUnder(this.parent, physObj.parent);
 	}
 
 	isLeftOf(physObj) {
-		return this.hitbox.isLeftOf(physObj.hitbox);
+		return isLeftOf(this.parent, physObj.parent);
 	}
 
 	isRightOf(physObj) {
-		return this.hitbox.isRightOf(physObj.hitbox);
+		return isRightOf(this.parent, physObj.parent);
 	}
 
 	checkBehavior(funcName, ...args) {
@@ -155,196 +142,245 @@ class PhysObj {
 			b => b[funcName] && b[funcName](...args)
 		);
 	}
-}
 
-class Solid extends PhysObj {
-	constructor(x, y, w, h, collidable, level, direction) {
-		super(x, y, w, h, collidable, level, direction);
+	move(amount) {
+		let remainder = amount.addPoint(this.subpixels).trunc();
+		this.subpixels = amount.addPoint(this.subpixels).subtract(remainder);
+		const directionX = Vector({x: Math.sign(remainder.x), y: 0});
+		const directionY = Vector({x: 0, y: Math.sign(remainder.y)});
+
+		this.moveDirection(remainder.x, directionX);
+		this.moveDirection(remainder.y, directionY);
 	}
 
-	move(moveX, moveY) {
-		let remainderX = Math.round(moveX);
-		let remainderY = Math.round(moveY);
-		if (remainderX !== 0 || remainderY !== 0) {
-			const ridingActors = super.getLevel().getAllRidingActors(this);
-			const prevCollide = this.collidable;
-			this.collidable = false;
-			if (remainderX !== 0) {
-				super.incrX(remainderX);
-				//Warning: if a solid tunnels through an object, the object won't get pushed
-				//That's probably fine for now
-				super.getLevel().getActors().forEach(actor => {
-					if (actor in ridingActors) {
-						actor.moveX(remainderX, actor.onCollide);
-					} else if (this.getHitbox().isOverlap(actor.getHitbox())) {
-						actor.moveX(super.getX() + super.getWidth() - actor.getX(), actor.squish)
-					}
-				});
+	moveDirection(amount, direction) {
+		const directionScalar = direction.x + direction.y;
+		while (amount !== 0) {
+			const allRiding = this.collidableProvider.getAllRiding(this);
+			const allColliding = this.collidableProvider.getAllCollidingExcept(this, direction, allRiding);
+			let shouldBreak = false;
+			allColliding.some(c => {
+				if (this.collisionHandler.onCollide(c)) {
+					shouldBreak = true;
+					return true;
+				}
+			});
+			if (shouldBreak) {
+				break;
 			}
 
-			if (remainderY !== 0) {
-				super.incrY(remainderY);
-				super.getLevel().getActors().forEach(actor => {
-					if (actor in ridingActors) {
-						actor.moveY(remainderY, actor.onCollide);
-					} else if (this.getHitbox().isOverlap(actor.getHitbox())) {
-						const moveUp = remainderY > 0 ? super.getY() - super.getHeight() - actor.getY() : super.getY() - actor.getY() - actor.getHeight();
-						actor.moveY(moveUp, actor.squish)
-					}
-				});
-			}
-			this.collidable = prevCollide;
+			this.parent.relativePosition = this.parent.relativePosition.addPoint(direction);
+			allRiding.forEach(actor => {
+				actor.moveDirection(1, direction);
+			});
+			amount -= directionScalar;
 		}
 	}
 
-	//onPlayerCollide() {return "wall";}
-}
-
-class Actor extends PhysObj {
-	constructor(x, y, w, h, collidable, level, direction) {
-		super(x, y, w, h, collidable, level, direction);
-		this.spawn = Vector({x: x, y: y});
-		this.origW = w;
-		this.origH = h;
-		this.subpixelX = 0;
-		this.subpixelY = 0;
-	}
-
-	//Moves the actor by [amount] pixels and calls [onCollide] after collision with any object
-	moveX(amount, onCollide) {
-		let remainder = Math.round(amount + this.subpixelX);
-		this.subpixelX = (amount + this.subpixelX) - remainder;
-		const direction = Vector({x: amount < 0 ? -1 : 1, y: 0});
-
-		if (remainder !== 0) {
-			const ridingActors = super.getLevel().getAllRidingActors(this);
-			while (remainder !== 0) {
-				let collideObjs = this.collideOffset(direction);
-				let shouldBreak = false;
-				const runCollisionObjs = [];
-				collideObjs.some(c => {
-					if (c && onCollide(c)) {
-						runCollisionObjs.push(c);
-						shouldBreak = true;
-						return true;
-					}
-				});
-				if (shouldBreak) {
-					break;
-				}
-
-				super.incrX(direction.x);
-				ridingActors.forEach(actor => {
-					actor.moveX(direction.x, actor.onCollide);
-				});
-				remainder -= direction.x;
-			}
-		}
-	}
-
-	moveY(amount, onCollide) {
-		let remainder = Math.round(amount + this.subpixelY);
-		this.subpixelY = (amount + this.subpixelY) - remainder;
-		const direction = Vector({y: amount < 0 ? -1 : 1, x: 0});
-		if (remainder !== 0) {
-			while (remainder !== 0) {
-				let collideObjs = this.collideOffset(direction);
-				let shouldBreak = false;
-				const runCollisionObjs = [];
-				collideObjs.some(c => {
-					if (c && onCollide(c)) {
-						runCollisionObjs.push(c);
-						shouldBreak = true;
-						return true;
-					}
-				});
-				if (shouldBreak) {
-					break;
-				}
-
-				const ridingActors = super.getLevel().getAllRidingActors(this);
-
-				super.incrY(direction.y);
-
-				if (direction.y > 0) {
-					ridingActors.forEach(a => a.moveY(direction.y, a.onCollide));
-				}
-				remainder -= direction.y;
-			}
-		}
-	}
-
-	isOnGround() {
-		return (super.getLevel().isOnGround(this));
-	}
-
-	isOnIce() {
-		return (super.getLevel().isOnIce(this));
-	}
-
-	isBonkHead() {
-		return (super.getLevel().isBonkHead(this));
-	}
-
-	isPushUp() {
-		return (super.getLevel().isPushUp(this));
-	}
-
-	isRiding(solid) {
-		return (this.getHitbox().isOnTopOf(solid.getHitbox()));
-	}
-
-	onCollide(physObj) {
-		console.error("Implement method onCollide");
-		console.trace();
-		console.log("Physobj:", physObj);
-		console.log("This: ", this);
-	}
-
-	getFallV(gravity) {
-		let newV = this.velocity.y + TrueTime.delta * gravity;
-		if (newV > MAXFALL) newV = Math.max(MAXFALL, newV - 0.01 * TrueTime.delta);
-		return newV;
-	}
-
-	defaultFall() {
-		let newV = this.getFallV(this.velocity.y > 0 ? GRAVITY_COMING_DOWN : GRAVITY_GOING_UP)
-		if (newV > MAXFALL) newV = Math.max(MAXFALL, newV - 0.01 * TrueTime.delta);
-		
-		this.setYVelocity(newV);
-	}
-
-	squish(physObj) {
-		throw new Error("implement method squish in subclass actor");
-	}
-
-	getCarrying() {
-		return null;
-	}
-
-	move(x, y) {
-		this.moveX(x, this.onCollide);
-		this.moveY(y, this.onCollide);
-	}
-
-	reset() {
-		this.setX(this.spawn.x);
-		this.setY(this.spawn.y);
-
-		this.setXVelocity(0);
-		this.setYVelocity(0);
-	}
-
-	addToLevel(level) {
-		level.pushActor(this);
+	draw(camera) {
+		const pos = this.globalPosition().trunc();
+		camera.drawRect(
+			pos.x,
+			pos.y,
+			this.parent.width,
+			this.parent.height
+		);
 	}
 }
+
+class DummyCollisionHandler {
+	onCollide(other) {
+		return true;
+	}
+}
+
+class DummyCollidableProvider {
+	getAllRiding(physObj) {return [];}
+
+	getAllCollidingExcept(physObj, offset, except) {
+		return [];
+    }
+}
+
+class DummyUpdateHandler {
+	update(physObj, time) {}
+}
+
+function getFallV(vy, gravity, timeDelta) {
+	return Math.min(MAXFALL, vy + timeDelta * gravity);
+}
+
+function getDefaultFallV(vy, timeDelta) {
+	return getFallV(vy, vy > 0 ? GRAVITY_COMING_DOWN : GRAVITY_GOING_UP, timeDelta);
+}
+
 
 export {
     PhysObj,
-	Solid,
-	Actor,
+	RectHitbox,
+	DummyCollisionHandler,
+	DummyCollidableProvider,
+	DummyUpdateHandler,
 
 	GRAVITY_COMING_DOWN,
-	GRAVITY_GOING_UP
+	GRAVITY_GOING_UP,
+	getFallV,
+	getDefaultFallV
 }
+
+
+// class Solid extends PhysObj {
+// 	constructor(hitbox, collidable, level) {
+// 		super(hitbox, collidable, level);
+// 	}
+
+
+	
+// 	move(moveX, moveY) {
+// 		let remainderX = Math.round(moveX);
+// 		let remainderY = Math.round(moveY);
+// 		if (remainderX !== 0 || remainderY !== 0) {
+// 			const ridingActors = super.getLevel().getAllRidingActors(this);
+// 			const prevCollide = this.collidable;
+// 			this.collidable = false;
+// 			if (remainderX !== 0) {
+// 				super.incrX(remainderX);
+// 				//Warning: if a solid tunnels through an object, the object won't get pushed
+// 				//That's probably fine for now
+// 				super.getLevel().getActors().forEach(actor => {
+// 					if (actor in ridingActors) {
+// 						actor.moveX(remainderX, actor.onCollide);
+// 					} else if (this.getHitbox().isOverlap(actor.getHitbox())) {
+// 						actor.moveX(super.getX() + super.getWidth() - actor.getX(), actor.squish)
+// 					}
+// 				});
+// 			}
+
+// 			if (remainderY !== 0) {
+// 				super.incrY(remainderY);
+// 				super.getLevel().getActors().forEach(actor => {
+// 					if (actor in ridingActors) {
+// 						actor.moveY(remainderY, actor.onCollide);
+// 					} else if (this.getHitbox().isOverlap(actor.getHitbox())) {
+// 						const moveUp = remainderY > 0 ? super.getY() - super.getHeight() - actor.getY() : super.getY() - actor.getY() - actor.getHeight();
+// 						actor.moveY(moveUp, actor.squish)
+// 					}
+// 				});
+// 			}
+// 			this.collidable = prevCollide;
+// 		}
+// 	}
+
+// 	//onPlayerCollide() {return "wall";}
+// }
+
+// class Actor extends PhysObj {
+// 	constructor(x, y, w, h, collidable, level) {
+// 		super(x, y, w, h, collidable, level);
+// 		this.spawn = Vector({x: x, y: y});
+// 		this.origW = w;
+// 		this.origH = h;
+// 		this.subpixelX = 0;
+// 		this.subpixelY = 0;
+// 	}
+
+// 	//Moves the actor by [amount] pixels and calls [onCollide] after collision with any object
+// 	moveX(amount, onCollide) {
+// 		let remainder = Math.round(amount + this.subpixelX);
+// 		this.subpixelX = (amount + this.subpixelX) - remainder;
+// 		const direction = Vector({x: amount < 0 ? -1 : 1, y: 0});
+
+// 		if (remainder !== 0) {
+// 			const ridingActors = super.getLevel().getAllRidingActors(this);
+// 			while (remainder !== 0) {
+// 				let collideObjs = this.collideOffset(direction);
+// 				let shouldBreak = false;
+// 				const runCollisionObjs = [];
+// 				collideObjs.some(c => {
+// 					if (c && onCollide(c)) {
+// 						runCollisionObjs.push(c);
+// 						shouldBreak = true;
+// 						return true;
+// 					}
+// 				});
+// 				if (shouldBreak) {
+// 					break;
+// 				}
+
+// 				super.incrX(direction.x);
+// 				ridingActors.forEach(actor => {
+// 					actor.moveX(direction.x, actor.onCollide);
+// 				});
+// 				remainder -= direction.x;
+// 			}
+// 		}
+// 	}
+
+// 	moveY(amount, onCollide) {
+// 		let remainder = Math.round(amount + this.subpixelY);
+// 		this.subpixelY = (amount + this.subpixelY) - remainder;
+// 		const direction = Vector({y: amount < 0 ? -1 : 1, x: 0});
+// 		if (remainder !== 0) {
+// 			while (remainder !== 0) {
+// 				let collideObjs = this.collideOffset(direction);
+// 				let shouldBreak = false;
+// 				const runCollisionObjs = [];
+// 				collideObjs.some(c => {
+// 					if (c && onCollide(c)) {
+// 						runCollisionObjs.push(c);
+// 						shouldBreak = true;
+// 						return true;
+// 					}
+// 				});
+// 				if (shouldBreak) {
+// 					break;
+// 				}
+
+// 				const ridingActors = super.getLevel().getAllRidingActors(this);
+
+// 				super.incrY(direction.y);
+
+// 				if (direction.y > 0) {
+// 					ridingActors.forEach(a => a.moveY(direction.y, a.onCollide));
+// 				}
+// 				remainder -= direction.y;
+// 			}
+// 		}
+// 	}
+
+// 	isOnGround() {
+// 		return (super.getLevel().isOnGround(this));
+// 	}
+
+// 	isOnIce() {
+// 		return (super.getLevel().isOnIce(this));
+// 	}
+
+// 	isBonkHead() {
+// 		return (super.getLevel().isBonkHead(this));
+// 	}
+
+// 	isPushUp() {
+// 		return (super.getLevel().isPushUp(this));
+// 	}
+
+// 	isRiding(solid) {
+// 		return (this.getHitbox().isOnTopOf(solid.getHitbox()));
+// 	}
+
+// 	onCollide(physObj) {
+// 		console.error("Implement method onCollide");
+// 		console.trace();
+// 		console.log("Physobj:", physObj);
+// 		console.log("This: ", this);
+// 	}
+
+// 	squish(physObj) {
+// 		throw new Error("implement method squish in subclass actor");
+// 	}
+
+// 	move(x, y) {
+// 		this.moveX(x, this.onCollide);
+// 		this.moveY(y, this.onCollide);
+// 	}
+// }

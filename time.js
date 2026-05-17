@@ -21,6 +21,7 @@ class Timer {
 class Time {
     constructor() {
         this.start = window.performance.now();
+        this.scale = 1;
         this.delta = 0;
         
         this._lastTime = 0;
@@ -36,14 +37,14 @@ class Time {
             return;
         }
 		const now = window.performance.now() + 1;
-		this.delta = now - this._lastTime;
+		this.delta = (now - this._lastTime) * this.scale;
 		this._lastTime = now;
-        this.time = now - this.start;
+        this.time += this.delta;
 	}
 
     framesSinceTime(time) {
         if (this.paused) return 0;
-        return Math.floor((this.time - time) * 0.06);
+        return Math.floor((this.time - time) * 0.06 * this.scale);
     }
 
     pause() {

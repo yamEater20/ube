@@ -53,9 +53,9 @@ class Camera {
         this._moveToTarget();
     }
 
-    drawRect(rect, color) {
+    drawRect(x, y, w, h, color) {
         CTX.fillStyle = color ? color : "#29ADFF";
-        CTX.fillRect(rect.getX() + this.getPosition().x, rect.getY() + this.getPosition().y, rect.width, rect.height);
+        CTX.fillRect(x + this.getPosition().x, y + this.getPosition().y, w, h);
     }
     
     drawPixel(x, y, color) {

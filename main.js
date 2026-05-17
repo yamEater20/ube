@@ -9,7 +9,6 @@ import {
     VectorDown,
     VectorLeft,
     VectorZero,
-	Rectangle,
 	numToVec,
 	framesToMs,
 	shuffle
@@ -18,9 +17,10 @@ import * as Sprites from "./sprites.js";
 import { Time } from './time.js';
 import * as Graphics from './graphics.js';
 import { Diagnostics, timeIt } from './diagnostics.js';
-import { DrawablePool } from './pools.js';
+import { DrawablePool, PhysObjPool } from './pools.js';
 import { Entity } from './entity.js';
 import {camera} from './camera.js';
+import {PhysObj, RectHitbox, DummyCollisionHandler, DummyCollidableProvider, DummyUpdateHandler, getDefaultFallV} from './physics.js';
 
 let root;
 
@@ -38,22 +38,77 @@ class DrawableEntity extends Entity {
 			camera
 		);
 	}
+}
 
-	update(time) {
-		this.relativePosition.incrPoint(VectorRight.scalar(1.7 / time.delta));
+function makeWall(parent, relativePosition, sprite) {
+	const hitbox = new RectHitbox(parent, relativePosition, 8, 8);
+
+	const physObj = new PhysObj(
+		hitbox,
+		new DummyUpdateHandler(),
+		new DummyCollisionHandler(),
+		new DummyCollidableProvider()
+	);
+
+	const drawableEntity = new DrawableEntity(hitbox, sprite);
+
+	return {"physObj": physObj, "drawableEntity": drawableEntity};
+}
+
+function makeBox(parent, relativePosition, collidableProvider, sprite) {
+	const hitbox = new RectHitbox(parent, relativePosition, 8, 8);
+	class FallUpdateHandler {
+		update(physObj, time) {
+			physObj.setYVelocity(getDefaultFallV(physObj.getYVelocity(), time.delta));
+		}
 	}
+	const fallUpdateHandler = new FallUpdateHandler();
+	const physObj = new PhysObj(
+		hitbox,
+		fallUpdateHandler,
+		new DummyCollisionHandler(),
+		collidableProvider
+	);
+
+	const drawableEntity = new DrawableEntity(hitbox, sprite);
+
+	return {"physObj": physObj, "drawableEntity": drawableEntity};
 }
 
 class Root {
 	constructor() {
 		this.drawablePool = new DrawablePool();
+		this.physObjPool = new PhysObjPool();
 
-		const s = new Sprites.Sprite(Sprites.SPRITES.MAIN_CHARA_SPRITESHEET);
-		const dE = new DrawableEntity(this, s);
-		this.drawablePool.register(dE);
+		for (let i = 0; i < 10; ++i) {
+			const wall = makeWall(
+				this,
+				Vector({x: i*8, y: 128}),
+				new Sprites.TileSprite(Sprites.SPRITES.WALL_TILESHEET, i === 0 ? VectorZero : i === 9 ? VectorRight.scalar(2) : VectorRight)
+			);
+			this.registerAll(wall);
+		}
+
+		this.registerAll(
+			makeBox(
+				this,
+				VectorDown.scalar(0),
+				this.physObjPool,
+				new Sprites.Sprite(Sprites.SPRITES.BUTTON)
+			)
+		);
+
+		this.registerAll(
+			makeBox(
+				this,
+				Vector({x: 12, y: 20}),
+				this.physObjPool,
+				new Sprites.Sprite(Sprites.SPRITES.BUTTON)
+			)
+		);
+
 		this.children = [
 			camera,
-			dE
 		];
 
 		this.trueTime = new Time();
@@ -70,6 +125,12 @@ class Root {
 	update() {
 		this.trueTime.tick();
 		this.children.forEach(c => c.update(this.trueTime));
+		this.physObjPool.updateAll(this.trueTime);
+	}
+
+	registerAll(payload) {
+		this.drawablePool.register(payload.drawableEntity);
+		this.physObjPool.register(payload.physObj);
 	}
 }
 
@@ -79,6 +140,7 @@ function mainLoop() {
 	Graphics.clearCanvas();
 	root.update();
 	root.draw();
+
 	// TrueTime.tick();
 	// camera.update();
 	// if (!TrueTime.paused) game.update();
@@ -93,8 +155,7 @@ function mainLoop() {
 async function setup() {
 	Graphics.setupCanvas();
 	// perlinTest();
-	document.addEventListener('keydown', keyDownHandler, false);
-	document.addEventListener('keyup', keyUpHandler, false);
+	
 	diagnostics = new Diagnostics();
 	
 	root = new Root();
@@ -108,50 +169,6 @@ async function setup() {
 function main() {
 	var stopMain = window.requestAnimationFrame(main);
 	diagnostics.diagnostics(mainLoop);
-}
-
-let keys = {
-	"ArrowRight": 0,
-	"ArrowLeft": 0,
-	"ArrowDown": 0,
-	"ArrowUp": 0,
-	"KeyZ": 0,
-	"KeyX": 0,
-	"PrevJump": 0,
-	"PrevSlide": 0,
-
-	// //Debug keys
-	"KeyO": 0, //fly
-	"KeyH": 0, //jump
-	"KeyJ": 0,
-	"KeyK": 0,
-	"KeyL": 0,
-	"KeyI": 0,
-
-
-	// "KeyP" : 0,
-	"KeyC": 0,
-	"KeyR": 0,
-	"Enter": 0,
-
-	"KeyW": 0,
-	"KeyA": 0,
-	"KeyS": 0,
-	"KeyD": 0,
-	"KeyN": 0,
-	"KeyM": 0,
-};
-
-function keyDownHandler(event) {
-	if (event.code in keys) {
-		keys[event.code] = 1;
-	}
-}
-
-function keyUpHandler(event) {
-	if (event.code in keys) {
-		keys[event.code] = 0;
-	}
 }
 
 /*
