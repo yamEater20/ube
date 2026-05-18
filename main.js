@@ -22,6 +22,8 @@ import { Entity } from './entity.js';
 import {camera} from './camera.js';
 import {PhysObj, RectHitbox, DummyCollisionHandler, DummyCollidableProvider, DummyUpdateHandler, getDefaultFallV} from './physics.js';
 import {InputProvider} from './input.js';
+import {GroundedProvider, FallUpdateHandler } from './physUpdateHandlers.js';
+import {PlayerUpdateHandler, JumpUpdateHandler, HorizontalUpdateHandler, PlayerFallUpdateHandler} from './player.js';
 
 let root;
 
@@ -38,91 +40,6 @@ class DrawableEntity extends Entity {
 			pos.y,
 			camera
 		);
-	}
-}
-
-class GroundedProvider {
-	constructor(collidableProvider) {
-		this._collidableProvider = collidableProvider;
-	}
-
-	onGround(p) {
-		const onTopOf = this._collidableProvider.getAllCollidingExcept(p, VectorDown, []);
-		return onTopOf.length > 0;
-	}
-}
-
-class FallUpdateHandler {
-	constructor(groundedProvider) {
-		this._groundedProvider = groundedProvider;
-	}
-
-	update(physObj, time) {
-		if (this._groundedProvider.onGround(physObj))
-			physObj.setYVelocity(0); //will cause problems later
-		else
-			physObj.setYVelocity(getDefaultFallV(physObj.getYVelocity(), time.delta));
-	}
-}
-
-class JumpUpdateHandler {
-	constructor() {
-		this._jumpJustPressed = new Timer();
-		this._coyoteTime = new Timer();
-		this._lastGrounded = false;
-	}
-
-	update(physObj, time, input) {
-		if (input.jumpPressed) {
-			this._jumpJustPressed.restart(framesToMs(8));
-		}
-		if (this._lastGrounded && !input.grounded) {
-			this._coyoteTime.restart(framesToMs(8));
-		}
-
-		const shouldJumpFromBuffer = input.grounded && this._jumpJustPressed.running();
-		const shouldJumpFromCoyote = input.jumpPressed && this._coyoteTime.running();
-		if (shouldJumpFromBuffer || shouldJumpFromCoyote) {
-			this.jump(physObj, -0.17);
-		}
-
-		this._jumpJustPressed.update(time.delta);
-		this._coyoteTime.update(time.delta);
-		this._lastGrounded = input.grounded;
-	}
-
-	jump(physObj, jumpV) {
-		physObj.setYVelocity(jumpV);
-	}
-}
-
-class HorizontalUpdateHandler {
-	update(physObj, time, input) {
-		const fric = input.grounded ? 0.001 : 0.0004;
-		const xv = physObj.getXVelocity();
-		if (Math.abs(xv) < 0.01) {
-			physObj.setXVelocity(0);
-		} else {
-			physObj.setXVelocity(Math.min(0, xv - fric * time.delta * Math.sign(xv)));
-		}
-
-		if (input.moveLeft) physObj.setXVelocity(-0.1);
-		else if (input.moveRight) physObj.setXVelocity(0.1);
-	}
-}
-
-class PlayerUpdateHandler {
-	constructor(inputProvider, groundedProvider, updateHandlers) {
-		this._inputProvider = inputProvider;
-		this._groundedProvider = groundedProvider;
-		this._updateHandlers = updateHandlers;
-	}
-
-	update(physObj, time) {
-		const input = this._inputProvider.getInput();
-		input.grounded = this._groundedProvider.onGround(physObj);
-		
-		this._updateHandlers.forEach(u => u.update(physObj, time, input));
 	}
 }
 
@@ -186,7 +103,7 @@ class Root {
 					this.inputProvider,
 					groundedProvider,
 					[
-						new FallUpdateHandler(groundedProvider),
+						new PlayerFallUpdateHandler(),
 						new JumpUpdateHandler(),
 						new HorizontalUpdateHandler()
 					]
