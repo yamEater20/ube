@@ -16,6 +16,7 @@ class Timer {
     framesRemaining() {return msToFrames(this._durationMs);}
 
     finished() {return this._durationMs <= 0;}
+    running() {return this._durationMs > 0;}
 }
 
 class Time {

@@ -14,7 +14,7 @@ import {
 	shuffle
 } from './math.js';
 import * as Sprites from "./sprites.js";
-import { Time } from './time.js';
+import { Time, Timer } from './time.js';
 import * as Graphics from './graphics.js';
 import { Diagnostics, timeIt } from './diagnostics.js';
 import { DrawablePool, PhysObjPool } from './pools.js';
@@ -58,15 +58,23 @@ class FallUpdateHandler {
 	}
 
 	update(physObj, time) {
-		if (!this._groundedProvider.onGround(physObj))
+		if (this._groundedProvider.onGround(physObj))
+			physObj.setYVelocity(0); //will cause problems later
+		else
 			physObj.setYVelocity(getDefaultFallV(physObj.getYVelocity(), time.delta));
+		
 	}
 }
 
 class PlayerUpdateHandler {
-	constructor(inputProvider, fallUpdateHandler) {
+	constructor(inputProvider, fallUpdateHandler, groundedProvider) {
 		this._inputProvider = inputProvider;
 		this._fallUpdateHandler = fallUpdateHandler;
+		this._groundedProvider = groundedProvider;
+
+		this._jumpJustPressed = new Timer();
+		this._coyoteTime = new Timer();
+		this._lastGrounded = false;
 	}
 
 	update(physObj, time) {
@@ -75,11 +83,29 @@ class PlayerUpdateHandler {
 		else if (input.moveRight) physObj.setXVelocity(0.1)
 		else physObj.setXVelocity(0);
 
+		const grounded = this._groundedProvider.onGround(physObj);
 		this._fallUpdateHandler.update(physObj, time);
+		
+		if (this._lastGrounded && !grounded) {
+			this._coyoteTime.restart(framesToMs(8));
+		}
 
 		if (input.jumpPressed) {
-			physObj.setYVelocity(-0.17);
+			this._jumpJustPressed.restart(framesToMs(8));
 		}
+		const shouldJumpFromBuffer = grounded && this._jumpJustPressed.running();
+		const shouldJumpFromCoyote = input.jumpPressed && this._coyoteTime.running();
+		if (shouldJumpFromBuffer || shouldJumpFromCoyote) {
+			this.jump(physObj, -0.17);
+		}
+
+		this._jumpJustPressed.update(time.delta);
+		this._coyoteTime.update(time.delta);
+		this._lastGrounded = grounded;
+	}
+
+	jump(physObj, jumpV) {
+		physObj.setYVelocity(jumpV);
 	}
 }
 
@@ -127,20 +153,19 @@ class Root {
 			this.registerAll(wall);
 		}
 
-		const thingy = makePhysObj(
-			new RectHitbox(this, VectorZero, 8, 8),
-			fallUpdateHandler,
-			this.physObjPool,
-			new Sprites.Sprite(Sprites.SPRITES.BUTTON)
+		this.debugRegisterAll(
+			makePhysObj(
+				new RectHitbox(this, VectorZero, 8, 8),
+				fallUpdateHandler,
+				this.physObjPool,
+				new Sprites.Sprite(Sprites.SPRITES.BUTTON)
+			)
 		);
 
-		this.registerAll(thingy);
-		this.drawablePool.register(thingy.physObj);
-
-		this.registerAll(
+		this.debugRegisterAll(
 			makePhysObj(
-				new RectHitbox(this, Vector({x: 12, y: 20}), 8, 8),
-				new PlayerUpdateHandler(this.inputProvider, fallUpdateHandler),
+				new RectHitbox(this, Vector({x: 12, y: 20}), 6, 6),
+				new PlayerUpdateHandler(this.inputProvider, fallUpdateHandler, groundedProvider),
 				this.physObjPool,
 				new Sprites.Sprite(Sprites.SPRITES.BUTTON)
 			)
@@ -170,6 +195,11 @@ class Root {
 
 	registerAll(payload) {
 		this.drawablePool.register(payload.drawableEntity);
+		this.physObjPool.register(payload.physObj);
+	}
+
+	debugRegisterAll(payload) {
+		this.drawablePool.register(payload.physObj);
 		this.physObjPool.register(payload.physObj);
 	}
 }
@@ -278,7 +308,7 @@ Drawing
 	- new Solid pooler
 	- new ChildFactory(SpritePooler)
 - Game set children
-	- new "Wall" is just a physobj
+	- new "Wall" is just a physObj
 		- new WallBehavior
 		- Set wall children
 			- ChildFactory.NewSprite(new Sprite)
