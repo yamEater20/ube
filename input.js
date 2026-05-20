@@ -55,17 +55,16 @@ export class InputProvider {
     }
 
     update() {
-        const newInput = {
+        this._prevInput = this._input;
+
+        this._input = {
             "moveRight": this._keyCodes.ArrowRight || this._keyCodes.KeyD,
             "moveLeft": this._keyCodes.ArrowLeft || this._keyCodes.KeyA,
 
             "jump": this._keyCodes.KeyZ || this._keyCodes.KeyW || this._keyCodes.Space
         };
 
-        newInput.jumpPressed = newInput.jump && !this._prevInput.jump;
-
-        this._prevInput = this._input;
-        this._input = newInput;
+        this._input.jumpPressed = this._input.jump && !this._prevInput.jump;
     }
     
     getInput() {

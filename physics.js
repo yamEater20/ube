@@ -50,30 +50,28 @@ function isOnTopOf(hitboxA, hitboxB) {
 	const otherPos = hitboxB.globalPosition();
 	const pos = hitboxA.globalPosition();
 	return (
-		otherPos.y + hitboxA.height === otherPos.y &&
-		pos.x + hitboxA.width > pos.x &&
-		pos.x + hitboxB.width > pos.x
+		pos.y + hitboxA.height === otherPos.y &&
+		pos.x + hitboxA.width > otherPos.x &&
+		otherPos.x + hitboxB.width > pos.x
 	);
 }
 
 function isLeftOf(hitboxA, hitboxB) {
 	const pos = hitboxA.globalPosition();
 	const otherPos = hitboxB.globalPosition();
-	let x = pos.x;
-	let y = pos.y;
 	return (
-		x + hitboxA.width === otherPos.x &&
-		y < otherPos.y + hitboxB.height &&
-		y + hitboxA.height > otherPos.y
+		pos.x + hitboxA.width === otherPos.x &&
+		pos.y < otherPos.y + hitboxB.height &&
+		pos.y + hitboxA.height > otherPos.y
 	);
 }
 
 function isUnder(hitboxA, hitboxB) {
-	return hitboxB.isOnTopOf(hitboxA);
+	return isOnTopOf(hitboxB, hitboxA);
 }
 
 function isRightOf(hitboxA, hitboxB) {
-	return hitboxB.isLeftOf(hitboxA);
+	return isLeftOf(hitboxB, hitboxA);
 }
 
 class PhysObj extends Entity {
@@ -160,7 +158,7 @@ class PhysObj extends Entity {
 			const allColliding = this.collidableProvider.getAllCollidingExcept(this, direction, allRiding);
 			let shouldBreak = false;
 			allColliding.some(c => {
-				if (this.collisionHandler.onCollide(c)) {
+				if (this.collisionHandler.onCollide(this, c, direction)) {
 					shouldBreak = true;
 					return true;
 				}
@@ -189,7 +187,7 @@ class PhysObj extends Entity {
 }
 
 class DummyCollisionHandler {
-	onCollide(other) {
+	onCollide(physObj, other, direction) {
 		return true;
 	}
 }

@@ -7,43 +7,54 @@ export class PlayerFallUpdateHandler {
 		let gravity = GRAVITY_COMING_DOWN;
 		const yv = physObj.getYVelocity();
 		if (input.jump && yv <= 0) gravity = GRAVITY_GOING_UP;
-		console.log(input.jump && yv >= 0);
 
-		if (input.grounded)
-			physObj.setYVelocity(0); //might cause problems later
-		else
-			physObj.setYVelocity(getFallV(yv, gravity, time.delta));
+		if(!input.grounded) physObj.setYVelocity(getFallV(yv, gravity, time.delta));
 	}
+}
+
+function jump(physObj, jumpV) {
+	const yv = physObj.getYVelocity();
+	physObj.setYVelocity(Math.min(yv/2 + jumpV, jumpV));
 }
 
 export class JumpUpdateHandler {
 	constructor() {
 		this._jumpJustPressed = new Timer();
 		this._coyoteTime = new Timer();
-		this._lastGrounded = false;
 	}
 
 	update(physObj, time, input) {
 		if (input.jumpPressed) {
 			this._jumpJustPressed.restart(framesToMs(8));
 		}
-		if (this._lastGrounded && !input.grounded) {
-			this._coyoteTime.restart(framesToMs(8));
-		}
 
 		const shouldJumpFromBuffer = input.grounded && this._jumpJustPressed.running();
 		const shouldJumpFromCoyote = input.jumpPressed && this._coyoteTime.running();
 		if (shouldJumpFromBuffer || shouldJumpFromCoyote) {
-			this.jump(physObj, -0.17);
+			jump(physObj, -0.17);
+			this._coyoteTime.stop();
+			input.jumpedThisFrame = true;
+		} else if (input.grounded) {
+			this._coyoteTime.restart(framesToMs(8));
 		}
 
 		this._jumpJustPressed.update(time.delta);
 		this._coyoteTime.update(time.delta);
-		this._lastGrounded = input.grounded;
+	}
+}
+
+export class DoubleJumpHandler {
+	constructor() {
+		this._canDoubleJump = false;
 	}
 
-	jump(physObj, jumpV) {
-		physObj.setYVelocity(jumpV);
+	update(physObj, time, input) {
+		if (input.grounded) {
+			this._canDoubleJump = true;
+		} else if (input.jumpPressed && this._canDoubleJump && !input.jumpedThisFrame) {
+			jump(physObj, -0.145);
+			this._canDoubleJump = false;
+		}
 	}
 }
 

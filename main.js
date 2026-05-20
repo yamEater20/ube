@@ -1,5 +1,5 @@
-// If you're looking at the code, that's awesome! Leave a comment on Itch if you need help!
-// (You can also find the repo at https://github.com/alexander-i-yang/minigame)
+// If you're looking at the code, that's awesome!
+// (You can also find the repo at https://github.com/alexander-i-yang/ube)
 // From Yam (the Dev)
 
 import {
@@ -23,7 +23,7 @@ import {camera} from './camera.js';
 import {PhysObj, RectHitbox, DummyCollisionHandler, DummyCollidableProvider, DummyUpdateHandler, getDefaultFallV} from './physics.js';
 import {InputProvider} from './input.js';
 import {GroundedProvider, FallUpdateHandler } from './physUpdateHandlers.js';
-import {PlayerUpdateHandler, JumpUpdateHandler, HorizontalUpdateHandler, PlayerFallUpdateHandler} from './player.js';
+import {PlayerUpdateHandler, JumpUpdateHandler, HorizontalUpdateHandler, PlayerFallUpdateHandler, DoubleJumpHandler} from './player.js';
 
 let root;
 
@@ -50,7 +50,7 @@ function makeWall(parent, relativePosition, sprite) {
 		hitbox,
 		new DummyUpdateHandler(),
 		new DummyCollisionHandler(),
-		new DummyCollidableProvider()
+		new DummyCollidableProvider(),
 	);
 
 	const drawableEntity = new DrawableEntity(hitbox, sprite);
@@ -58,11 +58,26 @@ function makeWall(parent, relativePosition, sprite) {
 	return {"physObj": physObj, "drawableEntity": drawableEntity};
 }
 
+class PlayerCollisionHandler {
+	onCollide(physObj, other, direction) {
+		if (direction.y < 0) {
+			physObj.setYVelocity(Math.max(physObj.getYVelocity(), -0.05));
+		} else if (direction.y > 0) {
+			physObj.setYVelocity(0);
+		}
+		if (direction.x != 0) {
+			other.moveDirection(direction.x, direction);
+			return false;
+		}
+		return true;
+	}
+}
+
 function makePhysObj(hitbox, updateHandler, collidableProvider, sprite) {
 	const physObj = new PhysObj(
 		hitbox,
 		updateHandler,
-		new DummyCollisionHandler(),
+		new PlayerCollisionHandler(),
 		collidableProvider
 	);
 
@@ -79,17 +94,34 @@ class Root {
 		const fallUpdateHandler  = new FallUpdateHandler(groundedProvider);
 
 		for (let i = 0; i < 10; ++i) {
-			const wall = makeWall(
-				this,
-				Vector({x: i*8, y: 128}),
-				new Sprites.TileSprite(Sprites.SPRITES.WALL_TILESHEET, i === 0 ? VectorZero : i === 9 ? VectorRight.scalar(2) : VectorRight)
+			this.registerAll(
+				makeWall(
+					this,
+					Vector({x: i*8, y: 128}),
+					new Sprites.TileSprite(Sprites.SPRITES.WALL_TILESHEET, i === 0 ? VectorZero : i === 9 ? VectorRight.scalar(2) : VectorRight)
+				)
 			);
-			this.registerAll(wall);
+			this.registerAll(
+				makeWall(
+					this,
+					Vector({x: i*8, y: 100}),
+					new Sprites.TileSprite(Sprites.SPRITES.WALL_TILESHEET, i === 0 ? VectorZero : i === 9 ? VectorRight.scalar(2) : VectorRight)
+				)
+			);
 		}
 
 		this.debugRegisterAll(
 			makePhysObj(
-				new RectHitbox(this, VectorZero, 8, 8),
+				new RectHitbox(this, VectorRight.scalar(40), 8, 8),
+				fallUpdateHandler,
+				this.physObjPool,
+				new Sprites.Sprite(Sprites.SPRITES.BUTTON)
+			)
+		);
+
+		this.debugRegisterAll(
+			makePhysObj(
+				new RectHitbox(this, VectorRight.scalar(64), 8, 8),
 				fallUpdateHandler,
 				this.physObjPool,
 				new Sprites.Sprite(Sprites.SPRITES.BUTTON)
@@ -105,6 +137,7 @@ class Root {
 					[
 						new PlayerFallUpdateHandler(),
 						new JumpUpdateHandler(),
+						new DoubleJumpHandler(),
 						new HorizontalUpdateHandler()
 					]
 				),

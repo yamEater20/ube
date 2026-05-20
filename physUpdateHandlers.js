@@ -18,9 +18,11 @@ export class FallUpdateHandler {
 	}
 
 	update(physObj, time) {
-		if (this._groundedProvider.onGround(physObj))
-			physObj.setYVelocity(0); //will cause problems later
-		else
+		// if (this._groundedProvider.onGround(physObj))
+		// 	physObj.setYVelocity(0); //will cause problems later
+		// else
+		// 	physObj.setYVelocity(getDefaultFallV(physObj.getYVelocity(), time.delta));
+		if (!this._groundedProvider.onGround(physObj))
 			physObj.setYVelocity(getDefaultFallV(physObj.getYVelocity(), time.delta));
 	}
 }

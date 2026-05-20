@@ -12,6 +12,10 @@ class Timer {
         this._durationMs = Math.max(this._durationMs - timeDelta, 0);
     }
 
+    stop() {
+        this._durationMs = 0;
+    }
+
     msRemaining() {return this._durationMs;}
     framesRemaining() {return msToFrames(this._durationMs);}
 
