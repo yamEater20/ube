@@ -17,13 +17,13 @@ import * as Sprites from "./sprites.js";
 import { Time, Timer } from './time.js';
 import * as Graphics from './graphics.js';
 import { Diagnostics, timeIt } from './diagnostics.js';
-import { DrawablePool, PhysObjPool } from './pools.js';
+import { DrawablePool, CollidablePool, UpdateablePool } from './pools.js';
 import { Entity } from './entity.js';
 import {camera} from './camera.js';
 import {PhysObj, RectHitbox, DummyCollisionHandler, DummyCollidableProvider, DummyUpdateHandler, getDefaultFallV} from './physics.js';
-import {InputProvider} from './input.js';
+import {InputProvider, TASInputProvider} from './input.js';
 import {GroundedProvider, FallUpdateHandler } from './physUpdateHandlers.js';
-import {PlayerUpdateHandler, JumpUpdateHandler, HorizontalUpdateHandler, PlayerFallUpdateHandler, DoubleJumpHandler} from './player.js';
+import * as Player from './player.js';
 
 let root;
 
@@ -43,7 +43,25 @@ class DrawableEntity extends Entity {
 	}
 }
 
-function makeWall(parent, relativePosition, sprite) {
+class UpdatableDrawableEntity extends DrawableEntity {
+	constructor(parent, drawable, updateHandler) {
+		super(parent, drawable);
+		this._updateHandler = updateHandler;
+	}
+
+	draw(camera) {
+		const pos = this.globalPosition().trunc();
+		this.drawable.draw(
+			pos.x,
+			pos.y,
+			camera
+		);
+	}
+
+	update(time) {this._updateHandler.update(time, this);}
+}
+
+function makeWall(parent, relativePosition, sprite, registrar) {
 	const hitbox = new RectHitbox(parent, relativePosition, 8, 8);
 
 	const physObj = new PhysObj(
@@ -54,101 +72,118 @@ function makeWall(parent, relativePosition, sprite) {
 	);
 
 	const drawableEntity = new DrawableEntity(hitbox, sprite);
-
-	return {"physObj": physObj, "drawableEntity": drawableEntity};
+	registrar.registerCollidable(physObj);
+	registrar.registerUpdateable(physObj);
+	registrar.registerDrawable(drawableEntity);
 }
 
-class PlayerCollisionHandler {
-	onCollide(physObj, other, direction) {
-		if (direction.y < 0) {
-			physObj.setYVelocity(Math.max(physObj.getYVelocity(), -0.05));
-		} else if (direction.y > 0) {
-			physObj.setYVelocity(0);
-		}
-		if (direction.x != 0) {
-			other.moveDirection(direction.x, direction);
-			return false;
-		}
-		return true;
-	}
-}
-
-function makePhysObj(hitbox, updateHandler, collidableProvider, sprite) {
+function makePhysObj(hitbox, updateHandler, collidableProvider, sprite, registrar) {
 	const physObj = new PhysObj(
 		hitbox,
 		updateHandler,
-		new PlayerCollisionHandler(),
+		new Player.CollisionHandler(),
 		collidableProvider
 	);
 
-	const drawableEntity = new DrawableEntity(hitbox, sprite);
-	return {"physObj": physObj, "drawableEntity": drawableEntity};
+	const drawableEntity = new DrawableEntity(physObj, sprite);
+	registrar.registerCollidable(physObj);
+	registrar.registerUpdateable(physObj);
+	registrar.registerDrawable(drawableEntity);
+}
+
+function makePlayer(parent, position, inputProvider, groundedProvider, collidableProvider, registrar) {
+	const physObj = new PhysObj(
+		new RectHitbox(parent, position, 8, 8),
+		new Player.UpdateHandler(
+			inputProvider,
+			groundedProvider,
+			[
+				new Player.FallUpdateHandler(),
+				new Player.JumpUpdateHandler(),
+				new Player.DoubleJumpHandler(),
+				new Player.HorizontalUpdateHandler()
+			]
+		),
+		new Player.CollisionHandler(),
+		collidableProvider
+	);
+
+	const drawableEntity = new UpdatableDrawableEntity(
+		physObj,
+		new Sprites.AnimatedSprite(
+			Sprites.SPRITES.MAIN_CHARA_SPRITESHEET,
+			[
+				{frames: 1, onComplete: "stop"},
+				{frames: 6, onComplete: "loop", nth: 10},
+				{frames: 1, onComplete: "stay", nth: 1}],
+			null
+		),
+		new Player.DrawableUpdateHandler(physObj)
+	);
+
+	registrar.registerCollidable(physObj);
+	registrar.registerUpdateable(physObj);
+	registrar.registerUpdateable(drawableEntity);
+	registrar.registerDrawable(drawableEntity);
 }
 
 class Root {
 	constructor() {
-		this.drawablePool = new DrawablePool();
-		this.physObjPool = new PhysObjPool();
-		this.inputProvider = new InputProvider();
-		const groundedProvider = new GroundedProvider(this.physObjPool);
+		this._drawablePool = new DrawablePool();
+		this._collidablePool = new CollidablePool();
+		this._updateablePool = new UpdateablePool();
+		this._inputProvider = new InputProvider();
+		// this._inputProvider = new TASInputProvider();
+		const groundedProvider = new GroundedProvider(this._collidablePool);
 		const fallUpdateHandler  = new FallUpdateHandler(groundedProvider);
 
+		this._updateablePool.register(camera);
+
+		const registrar = new Registrar(
+			this._collidablePool,
+			this._drawablePool,
+			this._updateablePool
+		); //TODO - move into constructor injection
+
 		for (let i = 0; i < 10; ++i) {
-			this.registerAll(
-				makeWall(
-					this,
-					Vector({x: i*8, y: 128}),
-					new Sprites.TileSprite(Sprites.SPRITES.WALL_TILESHEET, i === 0 ? VectorZero : i === 9 ? VectorRight.scalar(2) : VectorRight)
-				)
+			makeWall(
+				this,
+				Vector({x: i*8, y: 128}),
+				new Sprites.TileSprite(Sprites.SPRITES.WALL_TILESHEET, i === 0 ? VectorZero : i === 9 ? VectorRight.scalar(2) : VectorRight),
+				registrar
 			);
-			this.registerAll(
-				makeWall(
-					this,
-					Vector({x: i*8, y: 100}),
-					new Sprites.TileSprite(Sprites.SPRITES.WALL_TILESHEET, i === 0 ? VectorZero : i === 9 ? VectorRight.scalar(2) : VectorRight)
-				)
+			makeWall(
+				this,
+				Vector({x: i*8, y: 100}),
+				new Sprites.TileSprite(Sprites.SPRITES.WALL_TILESHEET, i === 0 ? VectorZero : i === 9 ? VectorRight.scalar(2) : VectorRight),
+				registrar
 			);
 		}
 
-		this.debugRegisterAll(
-			makePhysObj(
-				new RectHitbox(this, VectorRight.scalar(40), 8, 8),
-				fallUpdateHandler,
-				this.physObjPool,
-				new Sprites.Sprite(Sprites.SPRITES.BUTTON)
-			)
-		);
+		makePhysObj(
+			new RectHitbox(this, VectorRight.scalar(40), 8, 8),
+			fallUpdateHandler,
+			this._collidablePool,
+			new Sprites.AnimatedSprite(Sprites.SPRITES.BUTTON, [{"frames": 0, onComplete: "stop"}, {"frames": 6, onComplete: "stop", nth: 10}]),
+			registrar
+		)
 
-		this.debugRegisterAll(
-			makePhysObj(
-				new RectHitbox(this, VectorRight.scalar(64), 8, 8),
-				fallUpdateHandler,
-				this.physObjPool,
-				new Sprites.Sprite(Sprites.SPRITES.BUTTON)
-			)
-		);
+		makePhysObj(
+			new RectHitbox(this, VectorRight.scalar(64), 8, 8),
+			fallUpdateHandler,
+			this._collidablePool,
+			new Sprites.AnimatedSprite(Sprites.SPRITES.BUTTON, [{"frames": 0, onComplete: "stop"}, {"frames": 6, onComplete: "stop", nth: 10}]),
+			registrar
+		)
 
-		this.debugRegisterAll(
-			makePhysObj(
-				new RectHitbox(this, Vector({x: 12, y: 20}), 6, 6),
-				new PlayerUpdateHandler(
-					this.inputProvider,
-					groundedProvider,
-					[
-						new PlayerFallUpdateHandler(),
-						new JumpUpdateHandler(),
-						new DoubleJumpHandler(),
-						new HorizontalUpdateHandler()
-					]
-				),
-				this.physObjPool,
-				new Sprites.Sprite(Sprites.SPRITES.BUTTON)
-			)
+		makePlayer(
+			this,
+			Vector({x: 12, y: 20}),
+			this._inputProvider,
+			groundedProvider,
+			this._collidablePool,
+			registrar
 		);
-
-		this.children = [
-			camera,
-		];
 
 		this.trueTime = new Time();
 	}
@@ -158,24 +193,54 @@ class Root {
 	}
 
 	draw() {
-		this.drawablePool.drawAll(camera);
+		this._drawablePool.drawAll(camera);
 	}
 
 	update() {
 		this.trueTime.tick();
-		this.inputProvider.update();
-		this.children.forEach(c => c.update(this.trueTime));
-		this.physObjPool.updateAll(this.trueTime);
+		this._inputProvider.update();
+		this._updateablePool.updateAll(this.trueTime);
+	}
+}
+
+class Registrar {
+	constructor(collidablePool, drawablePool, updateablePool) {
+		this._drawablePool = drawablePool;
+		this._collidablePool = collidablePool;
+		this._updateablePool = updateablePool;
 	}
 
-	registerAll(payload) {
-		this.drawablePool.register(payload.drawableEntity);
-		this.physObjPool.register(payload.physObj);
+	registerDrawable(d) {
+		this._drawablePool.register(d);
 	}
 
-	debugRegisterAll(payload) {
-		this.drawablePool.register(payload.physObj);
-		this.physObjPool.register(payload.physObj);
+	registerCollidable(c) {
+		this._collidablePool.register(c);
+	}
+
+	registerUpdateable(u) {
+		this._updateablePool.register(u);
+	}
+}
+
+class RegistrarDebug {
+	constructor(collidablePool, drawablePool, updateablePool) {
+		this._drawablePool = drawablePool;
+		this._collidablePool = collidablePool;
+		this._updateablePool = updateablePool;
+	}
+
+	registerDrawable(d) {
+		this._drawablePool.register(d);
+	}
+
+	registerCollidable(c) {
+		this._collidablePool.register(c);
+		this.registerDrawable(c);
+	}
+
+	registerUpdateable(u) {
+		this._updateablePool.register(u);
 	}
 }
 

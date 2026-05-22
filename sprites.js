@@ -76,8 +76,8 @@ class Sprite {
 }
 
 class AnimatedSprite extends Sprite {
-	constructor(spritesheet, direction, animationData, w, h, camera) {
-		super(spritesheet, camera, direction);
+	constructor(spritesheet, animationData, direction, w, h) {
+		super(spritesheet, direction);
 		this.curCol = 0;
 		this.row = 0;
 		this.animationData = animationData;
@@ -92,12 +92,12 @@ class AnimatedSprite extends Sprite {
 		}
 	}
 
-	drawSelf(x, y) {
+	draw(x, y, camera) {
 		const realColumn = this.curCol + this.getCumulativeFrames();
-
+		const cameraPos = camera.getPosition();
 		const xOffset = realColumn * this.w;
 		const d = () => {
-			CTX.drawImage(super.getImage(), xOffset, 0, this.w, this.h, x, y, this.w, this.h);
+			CTX.drawImage(super.getImage(), xOffset, 0, this.w, this.h, x + cameraPos.x, y + cameraPos.y, this.w, this.h);
 		};
 		if (this.flip) {
 			CTX.save();
@@ -111,26 +111,25 @@ class AnimatedSprite extends Sprite {
 		}
 	}
 
-	setRow(r) {
+	setRow(r, time) {
 		if (r === 0) {
 			this.playing = false;
 		} else {
+			if (!this.playing) this.startTime = time.time;
 			this.playing = true;
-			this.startTime = TrueTime.time;
 		}
 
 		this.curCol = 0;
 		this.row = r;
 	}
 
-	update() {
+	update(time) {
 		if (this.playing) {
 			const data = this.animationData[this.row];
 			const maxFrames = data.frames;
 
-			let framesSinceStart = TrueTime.framesSinceTime(this.startTime);
+			let framesSinceStart = time.framesSinceTime(this.startTime);
 			framesSinceStart = Math.floor(framesSinceStart / data.nth);
-			
 			const onComplete = data.onComplete;
 			const lastFrame = framesSinceStart >= maxFrames;
 

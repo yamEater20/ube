@@ -71,3 +71,22 @@ export class InputProvider {
         return this._input;
     }
 }
+
+export class TASInputProvider {
+    constructor() {this.frame = 0;}
+    update() {
+        this.frame = (this.frame+1) % 30;
+        console.log(this.frame);
+    }
+    keyDownHandler(event) {}
+    keyUpHandler(event) {}
+
+    getInput() {
+        return {
+            "moveRight": this.frame < 15,
+            "moveLeft": this.frame >= 15,
+            "jump": false,
+            "jumpPressed": false
+        };;
+    }
+}

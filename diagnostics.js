@@ -11,9 +11,9 @@ class Diagnostics {
 	}
 
 	diagnostics(func) {
-		const t = window.performance.now();
 		func();
-	
+		
+		const t = window.performance.now();
 		this.frameCount++;
 		if (t - this.startTime > this.secondInterval * 1000 * this.secondsPerPrint) {
 			this.fps = this.frameCount / this.secondsPerPrint

@@ -2,7 +2,9 @@ import { Timer } from "./time.js";
 import { getFallV, GRAVITY_COMING_DOWN, GRAVITY_GOING_UP } from "./physics.js";
 import { framesToMs } from "./math.js";
 
-export class PlayerFallUpdateHandler {
+//TODO: provide constants for magic numbers
+
+export class FallUpdateHandler {
 	update(physObj, time, input) {
 		let gravity = GRAVITY_COMING_DOWN;
 		const yv = physObj.getYVelocity();
@@ -14,7 +16,7 @@ export class PlayerFallUpdateHandler {
 
 function jump(physObj, jumpV) {
 	const yv = physObj.getYVelocity();
-	physObj.setYVelocity(Math.min(yv/2 + jumpV, jumpV));
+	physObj.setYVelocity(Math.min(yv/2 + jumpV, jumpV)); //TODO: play around with yv/2.
 }
 
 export class JumpUpdateHandler {
@@ -76,7 +78,7 @@ export class HorizontalUpdateHandler {
 	}
 }
 
-export class PlayerUpdateHandler {
+export class UpdateHandler {
 	constructor(inputProvider, groundedProvider, updateHandlers) {
 		this._inputProvider = inputProvider;
 		this._groundedProvider = groundedProvider;
@@ -88,6 +90,47 @@ export class PlayerUpdateHandler {
 		input.grounded = this._groundedProvider.onGround(physObj);
 		
 		this._updateHandlers.forEach(u => u.update(physObj, time, input));
+	}
+}
+
+export class CollisionHandler {
+	onCollide(physObj, other, direction) {
+		if (direction.y < 0) {
+			physObj.setYVelocity(Math.max(physObj.getYVelocity(), -0.05));
+		} else if (direction.y > 0) {
+			physObj.setYVelocity(0);
+		}
+		if (direction.x != 0) {
+			other.moveDirection(direction.x, direction);
+			return false;
+		}
+		return true;
+	}
+}
+
+export class DrawableUpdateHandler {
+	constructor(physObj) {
+		this._physObj = physObj;
+	}
+
+	update(time, drawableEnity) {
+		const xv = this._physObj.getXVelocity();
+		const drawable = drawableEnity.drawable;
+		if (xv > 0) {
+			drawable.flip = true;
+		} else if (xv < 0) {
+			drawable.flip = false;
+		}
+
+		if (this._physObj.getYVelocity() !== 0) {
+			drawable.setRow(2, time);
+		} else if (xv !== 0) {
+			drawable.setRow(1, time);
+		} else {
+			drawable.setRow(0);
+		}
+
+		drawable.update(time);
 	}
 }
 

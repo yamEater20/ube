@@ -181,7 +181,8 @@ class PhysObj extends Entity {
 			pos.x,
 			pos.y,
 			this.parent.width,
-			this.parent.height
+			this.parent.height,
+			"#ff000060"
 		);
 	}
 }
