@@ -1,5 +1,16 @@
 import { getDefaultFallV } from "./physics.js";
 import { VectorDown } from "./math.js";
+import { AdjectiveIds } from "./collisionHandlers.js";
+
+export class Composite {
+	constructor(handlers) {
+		this._handlers = handlers;
+	}
+
+	update(physObj, time) {
+		this._handlers.forEach(u => u.update(physObj, time));
+	}
+}
 
 export class GroundedProvider {
 	constructor(collidableProvider) {
@@ -7,7 +18,9 @@ export class GroundedProvider {
 	}
 
 	onGround(p) {
-		const onTopOf = this._collidableProvider.getAllCollidingExcept(p, VectorDown, []);
+		const onTopOf = this._collidableProvider
+			.getAllCollidingExcept(p, VectorDown, [])
+			.filter(physObj => physObj.collisionHandler.containsAdjective(AdjectiveIds.GROUND));
 		return onTopOf.length > 0;
 	}
 }
@@ -24,5 +37,11 @@ export class FallUpdateHandler {
 		// 	physObj.setYVelocity(getDefaultFallV(physObj.getYVelocity(), time.delta));
 		if (!this._groundedProvider.onGround(physObj))
 			physObj.setYVelocity(getDefaultFallV(physObj.getYVelocity(), time.delta));
+	}
+}
+
+export class MovingGuy {
+	update(physObj, time) {
+		physObj.setXVelocity(0.05);
 	}
 }

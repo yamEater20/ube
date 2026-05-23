@@ -370,7 +370,7 @@ export {
 // 	onCollide(physObj) {
 // 		console.error("Implement method onCollide");
 // 		console.trace();
-// 		console.log("Physobj:", physObj);
+// 		console.log("physObj:", physObj);
 // 		console.log("This: ", this);
 // 	}
 

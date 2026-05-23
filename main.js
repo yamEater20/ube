@@ -11,21 +11,21 @@ import {
     VectorZero,
 	numToVec,
 	framesToMs,
-	shuffle
+	shuffle,
+	getMethods
 } from './math.js';
 import * as Sprites from "./sprites.js";
 import { Time, Timer } from './time.js';
 import * as Graphics from './graphics.js';
 import { Diagnostics, timeIt } from './diagnostics.js';
-import { DrawablePool, CollidablePool, UpdateablePool } from './pools.js';
+import { DrawablePool, CollidablePool, UpdateablePool, Registrar, RegistrarDebug } from './pools.js';
 import { Entity } from './entity.js';
 import {camera} from './camera.js';
 import {PhysObj, RectHitbox, DummyCollisionHandler, DummyCollidableProvider, DummyUpdateHandler, getDefaultFallV} from './physics.js';
 import {InputProvider, TASInputProvider} from './input.js';
-import {GroundedProvider, FallUpdateHandler } from './physUpdateHandlers.js';
+import * as UpdateHandlers from './physUpdateHandlers.js';
 import * as Player from './player.js';
-
-let root;
+import * as CollisionHandlers from './collisionHandlers.js';
 
 class DrawableEntity extends Entity {
 	constructor(parent, drawable) {
@@ -67,13 +67,14 @@ function makeWall(parent, relativePosition, sprite, registrar) {
 	const physObj = new PhysObj(
 		hitbox,
 		new DummyUpdateHandler(),
-		new DummyCollisionHandler(),
+		new CollisionHandlers.AdjectiveOnly(
+			[new CollisionHandlers.Wall(), new CollisionHandlers.Ground()]
+		),
 		new DummyCollidableProvider(),
 	);
 
 	const drawableEntity = new DrawableEntity(hitbox, sprite);
 	registrar.registerCollidable(physObj);
-	registrar.registerUpdateable(physObj);
 	registrar.registerDrawable(drawableEntity);
 }
 
@@ -81,7 +82,17 @@ function makePhysObj(hitbox, updateHandler, collidableProvider, sprite, registra
 	const physObj = new PhysObj(
 		hitbox,
 		updateHandler,
-		new Player.CollisionHandler(),
+		new CollisionHandlers.Composite(
+			[
+				new CollisionHandlers.Ground(),
+				new CollisionHandlers.PushableBox()
+			],
+			[
+				new CollisionHandlers.PushableBoxReaction(),
+				new CollisionHandlers.WallReaction(),
+				new CollisionHandlers.GroundReaction()
+			]
+		),
 		collidableProvider
 	);
 
@@ -104,7 +115,18 @@ function makePlayer(parent, position, inputProvider, groundedProvider, collidabl
 				new Player.HorizontalUpdateHandler()
 			]
 		),
-		new Player.CollisionHandler(),
+		new CollisionHandlers.Composite(
+			[
+				new CollisionHandlers.Wall(),
+				new CollisionHandlers.Ground(),
+				new CollisionHandlers.Ridable()
+			],
+			[
+				new CollisionHandlers.PushableBoxReaction(),
+				new CollisionHandlers.WallReaction(),
+				new CollisionHandlers.GroundReaction()
+			]
+		),
 		collidableProvider
 	);
 
@@ -128,14 +150,13 @@ function makePlayer(parent, position, inputProvider, groundedProvider, collidabl
 }
 
 class Root {
-	constructor() {
+	constructor(trueTime, inputProvider) {
 		this._drawablePool = new DrawablePool();
 		this._collidablePool = new CollidablePool();
 		this._updateablePool = new UpdateablePool();
-		this._inputProvider = new InputProvider();
-		// this._inputProvider = new TASInputProvider();
-		const groundedProvider = new GroundedProvider(this._collidablePool);
-		const fallUpdateHandler  = new FallUpdateHandler(groundedProvider);
+		this._inputProvider = inputProvider;
+		const groundedProvider = new UpdateHandlers.GroundedProvider(this._collidablePool);
+		const fallUpdateHandler  = new UpdateHandlers.FallUpdateHandler(groundedProvider);
 
 		this._updateablePool.register(camera);
 
@@ -145,24 +166,25 @@ class Root {
 			this._updateablePool
 		); //TODO - move into constructor injection
 
-		for (let i = 0; i < 10; ++i) {
+		for (let i = 0; i < 20; ++i) {
 			makeWall(
 				this,
 				Vector({x: i*8, y: 128}),
-				new Sprites.TileSprite(Sprites.SPRITES.WALL_TILESHEET, i === 0 ? VectorZero : i === 9 ? VectorRight.scalar(2) : VectorRight),
+				new Sprites.TileSprite(Sprites.SPRITES.WALL_TILESHEET, i === 0 ? VectorZero : i === 19 ? VectorRight.scalar(2) : VectorRight),
 				registrar
 			);
 			makeWall(
 				this,
 				Vector({x: i*8, y: 100}),
-				new Sprites.TileSprite(Sprites.SPRITES.WALL_TILESHEET, i === 0 ? VectorZero : i === 9 ? VectorRight.scalar(2) : VectorRight),
+				new Sprites.TileSprite(Sprites.SPRITES.WALL_TILESHEET, i === 0 ? VectorZero : i === 19 ? VectorRight.scalar(2) : VectorRight),
 				registrar
 			);
 		}
 
+		//There's like a stack overflow error or smth.
 		makePhysObj(
-			new RectHitbox(this, VectorRight.scalar(40), 8, 8),
-			fallUpdateHandler,
+			new RectHitbox(this, VectorRight.scalar(16), 8, 8),
+			new UpdateHandlers.Composite([fallUpdateHandler, new UpdateHandlers.MovingGuy()]),
 			this._collidablePool,
 			new Sprites.AnimatedSprite(Sprites.SPRITES.BUTTON, [{"frames": 0, onComplete: "stop"}, {"frames": 6, onComplete: "stop", nth: 10}]),
 			registrar
@@ -185,7 +207,7 @@ class Root {
 			registrar
 		);
 
-		this.trueTime = new Time();
+		this.trueTime = trueTime;
 	}
 
 	globalPosition() {
@@ -203,48 +225,9 @@ class Root {
 	}
 }
 
-class Registrar {
-	constructor(collidablePool, drawablePool, updateablePool) {
-		this._drawablePool = drawablePool;
-		this._collidablePool = collidablePool;
-		this._updateablePool = updateablePool;
-	}
-
-	registerDrawable(d) {
-		this._drawablePool.register(d);
-	}
-
-	registerCollidable(c) {
-		this._collidablePool.register(c);
-	}
-
-	registerUpdateable(u) {
-		this._updateablePool.register(u);
-	}
-}
-
-class RegistrarDebug {
-	constructor(collidablePool, drawablePool, updateablePool) {
-		this._drawablePool = drawablePool;
-		this._collidablePool = collidablePool;
-		this._updateablePool = updateablePool;
-	}
-
-	registerDrawable(d) {
-		this._drawablePool.register(d);
-	}
-
-	registerCollidable(c) {
-		this._collidablePool.register(c);
-		this.registerDrawable(c);
-	}
-
-	registerUpdateable(u) {
-		this._updateablePool.register(u);
-	}
-}
-
 let diagnostics;
+let root;
+
 function mainLoop() {
 	Graphics.setMaxSize();
 	Graphics.clearCanvas();
@@ -264,11 +247,13 @@ function mainLoop() {
 
 async function setup() {
 	Graphics.setupCanvas();
-	// perlinTest();
 	
 	diagnostics = new Diagnostics();
 	
-	root = new Root();
+	root = new Root(
+		new Time(),
+		new InputProvider()
+	);
 	
 	// let levelData = await timeIt("Read level data", getLevelData);
 	
@@ -282,44 +267,6 @@ function main() {
 }
 
 /*
-# Enity
-Entity has:
-- position
-- parent
-- ~~components~~ Nah, we can do the Godot method. All components are children.
-- children?
-- ~~update function (pass input into update function)~~
-- ~~draw function~~
-
-IUpdateable
-- Update() method
-
-IDrawable
-- Draw() method
-- GetLayer() method/layer property
-
-Only one parent (Game) can be root
-
-# Game
-Game has:
-- position
-
-Ex: PhysObj
-- Is a component?
-- Contains behaviors...
-- Hm maybe this should be an entity.
-- Can this extend Entity?
-
-Ex: Wall
-- Set components
-	- Phys behavior - wall
-	- Sprite
-Physobj is an entity
-- Everything extends entity
-
-Sprite Component
-- Sprite needs a camera + sprite
-- Custom draw functions necessary
 
 Drawing
 - Priority queue

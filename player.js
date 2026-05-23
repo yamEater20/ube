@@ -35,6 +35,7 @@ export class JumpUpdateHandler {
 		if (shouldJumpFromBuffer || shouldJumpFromCoyote) {
 			jump(physObj, -0.17);
 			this._coyoteTime.stop();
+			this._jumpJustPressed.stop();
 			input.jumpedThisFrame = true;
 		} else if (input.grounded) {
 			this._coyoteTime.restart(framesToMs(8));
@@ -90,21 +91,6 @@ export class UpdateHandler {
 		input.grounded = this._groundedProvider.onGround(physObj);
 		
 		this._updateHandlers.forEach(u => u.update(physObj, time, input));
-	}
-}
-
-export class CollisionHandler {
-	onCollide(physObj, other, direction) {
-		if (direction.y < 0) {
-			physObj.setYVelocity(Math.max(physObj.getYVelocity(), -0.05));
-		} else if (direction.y > 0) {
-			physObj.setYVelocity(0);
-		}
-		if (direction.x != 0) {
-			other.moveDirection(direction.x, direction);
-			return false;
-		}
-		return true;
 	}
 }
 

@@ -1,4 +1,5 @@
-import { VectorZero } from "./math.js";
+import { AdjectiveIds } from "./collisionHandlers.js";
+import { VectorDown, VectorZero } from "./math.js";
 
 export class DrawablePool {
     constructor() {
@@ -23,7 +24,13 @@ export class CollidablePool {
         this.pool.push(p);
     }
 
-    getAllRiding(physObj) {return [];}
+    getAllRiding(physObj) {
+		return this.pool.filter(
+			p =>
+				p.isOverlap(physObj, VectorDown)
+				&& p.collisionHandler.containsAdjective(AdjectiveIds.RIDABLE)
+			);
+	}
 
 	getAllCollidingExcept(physObj, offset, except) {
         return this.pool.filter(p => physObj.isOverlap(p, offset));
@@ -42,4 +49,45 @@ export class UpdateablePool {
     updateAll(time) {
         this.pool.forEach(c => c.update(time));
     }
+}
+
+export class Registrar {
+	constructor(collidablePool, drawablePool, updateablePool) {
+		this._drawablePool = drawablePool;
+		this._collidablePool = collidablePool;
+		this._updateablePool = updateablePool;
+	}
+
+	registerDrawable(d) {
+		this._drawablePool.register(d);
+	}
+
+	registerCollidable(c) {
+		this._collidablePool.register(c);
+	}
+
+	registerUpdateable(u) {
+		this._updateablePool.register(u);
+	}
+}
+
+export class RegistrarDebug {
+	constructor(collidablePool, drawablePool, updateablePool) {
+		this._drawablePool = drawablePool;
+		this._collidablePool = collidablePool;
+		this._updateablePool = updateablePool;
+	}
+
+	registerDrawable(d) {
+		this._drawablePool.register(d);
+	}
+
+	registerCollidable(c) {
+		this._collidablePool.register(c);
+		this.registerDrawable(c);
+	}
+
+	registerUpdateable(u) {
+		this._updateablePool.register(u);
+	}
 }

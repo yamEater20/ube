@@ -85,6 +85,17 @@ function shuffle(array) {
 	return array;
 }
 
+function getMethods(obj)
+{
+	var res = [];
+    for(var m in obj) {
+        if(typeof obj[m] == "function") {
+            res.push(m)
+        }
+    }
+    return res;
+}
+
 export {
     Vector, 
     vToRad,
@@ -96,5 +107,6 @@ export {
 	numToVec,
 	Direction,
 	framesToMs,
-	shuffle
+	shuffle,
+	getMethods
 };
