@@ -1,4 +1,5 @@
-const PIXEL_GAME_SIZE = [256, 144];
+// const PIXEL_GAME_SIZE = [256, 144];
+const PIXEL_GAME_SIZE = [128, 128];
 const TILE_SIZE = 8;
 
 const canvas = document.createElement("canvas");

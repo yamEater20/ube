@@ -113,7 +113,7 @@ export class PushableBoxReaction {
     id() {return AdjectiveIds.PUSHABLE_BOX;}
     react(physObj, other, pushable, direction) {
         if (direction.x !== 0) {
-            other.moveDirection(direction.x, direction);
+            return other.moveDirection(direction.x, direction);
         }
         return false;
     }

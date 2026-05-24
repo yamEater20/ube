@@ -153,6 +153,7 @@ class PhysObj extends Entity {
 
 	moveDirection(amount, direction) {
 		const directionScalar = direction.x + direction.y;
+		let didCollide = false;
 		while (amount !== 0) {
 			const allRiding = this.collidableProvider.getAllRiding(this);
 			const allColliding = this.collidableProvider.getAllCollidingExcept(this, direction, allRiding);
@@ -164,6 +165,7 @@ class PhysObj extends Entity {
 				}
 			});
 			if (shouldBreak) {
+				didCollide = true;
 				break;
 			}
 
@@ -173,6 +175,8 @@ class PhysObj extends Entity {
 			});
 			amount -= directionScalar;
 		}
+
+		return didCollide;
 	}
 
 	draw(camera) {
@@ -184,6 +188,11 @@ class PhysObj extends Entity {
 			this.parent.height,
 			"#ff000060"
 		);
+	}
+
+	reset() {
+		this.velocity = Vector({x: 0, y: 0});
+		this.subpixels = Vector({x: 0, y: 0});
 	}
 }
 

@@ -1,65 +1,25 @@
 // If you're looking at the code, that's awesome!
-// (You can also find the repo at https://github.com/alexander-i-yang/ube)
+// (You can also find the repo at https://github.com/yamEater20/ube)
 // From Yam (the Dev)
 
 import {
 	Vector,
-	VectorUp,
     VectorRight,
-    VectorDown,
-    VectorLeft,
-    VectorZero,
-	numToVec,
-	framesToMs,
-	shuffle,
-	getMethods
+    VectorZero
 } from './math.js';
 import * as Sprites from "./sprites.js";
 import { Time, Timer } from './time.js';
 import * as Graphics from './graphics.js';
 import { Diagnostics, timeIt } from './diagnostics.js';
-import { DrawablePool, CollidablePool, UpdateablePool, Registrar, RegistrarDebug } from './pools.js';
-import { Entity } from './entity.js';
+import { DrawablePool, CollidablePool, UpdateablePool, Registrar, RegistrarDebug, ResettablePool } from './pools.js';
 import {camera} from './camera.js';
 import {PhysObj, RectHitbox, DummyCollisionHandler, DummyCollidableProvider, DummyUpdateHandler, getDefaultFallV} from './physics.js';
 import {InputProvider, TASInputProvider} from './input.js';
 import * as UpdateHandlers from './physUpdateHandlers.js';
 import * as Player from './player.js';
 import * as CollisionHandlers from './collisionHandlers.js';
-
-class DrawableEntity extends Entity {
-	constructor(parent, drawable) {
-		super(parent);
-		this.drawable = drawable;
-	}
-
-	draw(camera) {
-		const pos = this.globalPosition().trunc();
-		this.drawable.draw(
-			pos.x,
-			pos.y,
-			camera
-		);
-	}
-}
-
-class UpdatableDrawableEntity extends DrawableEntity {
-	constructor(parent, drawable, updateHandler) {
-		super(parent, drawable);
-		this._updateHandler = updateHandler;
-	}
-
-	draw(camera) {
-		const pos = this.globalPosition().trunc();
-		this.drawable.draw(
-			pos.x,
-			pos.y,
-			camera
-		);
-	}
-
-	update(time) {this._updateHandler.update(time, this);}
-}
+import { DrawableEntity } from './drawableEntity.js';
+import { ResetAtSpawn } from './reset.js';
 
 function makeWall(parent, relativePosition, sprite, registrar) {
 	const hitbox = new RectHitbox(parent, relativePosition, 8, 8);
@@ -79,15 +39,18 @@ function makeWall(parent, relativePosition, sprite, registrar) {
 }
 
 function makePhysObj(hitbox, updateHandler, collidableProvider, sprite, registrar) {
+	const position = Vector({x: hitbox.relativePosition.x, y: hitbox.relativePosition.y});
 	const physObj = new PhysObj(
 		hitbox,
 		updateHandler,
 		new CollisionHandlers.Composite(
 			[
 				new CollisionHandlers.Ground(),
-				new CollisionHandlers.PushableBox()
+				new CollisionHandlers.PushableBox(),
+				new CollisionHandlers.Ridable()
 			],
 			[
+				//TODO: figure out lifetimes. These are stateless and should be singletons.
 				new CollisionHandlers.PushableBoxReaction(),
 				new CollisionHandlers.WallReaction(),
 				new CollisionHandlers.GroundReaction()
@@ -100,53 +63,8 @@ function makePhysObj(hitbox, updateHandler, collidableProvider, sprite, registra
 	registrar.registerCollidable(physObj);
 	registrar.registerUpdateable(physObj);
 	registrar.registerDrawable(drawableEntity);
-}
-
-function makePlayer(parent, position, inputProvider, groundedProvider, collidableProvider, registrar) {
-	const physObj = new PhysObj(
-		new RectHitbox(parent, position, 8, 8),
-		new Player.UpdateHandler(
-			inputProvider,
-			groundedProvider,
-			[
-				new Player.FallUpdateHandler(),
-				new Player.JumpUpdateHandler(),
-				new Player.DoubleJumpHandler(),
-				new Player.HorizontalUpdateHandler()
-			]
-		),
-		new CollisionHandlers.Composite(
-			[
-				new CollisionHandlers.Wall(),
-				new CollisionHandlers.Ground(),
-				new CollisionHandlers.Ridable()
-			],
-			[
-				new CollisionHandlers.PushableBoxReaction(),
-				new CollisionHandlers.WallReaction(),
-				new CollisionHandlers.GroundReaction()
-			]
-		),
-		collidableProvider
-	);
-
-	const drawableEntity = new UpdatableDrawableEntity(
-		physObj,
-		new Sprites.AnimatedSprite(
-			Sprites.SPRITES.MAIN_CHARA_SPRITESHEET,
-			[
-				{frames: 1, onComplete: "stop"},
-				{frames: 6, onComplete: "loop", nth: 10},
-				{frames: 1, onComplete: "stay", nth: 1}],
-			null
-		),
-		new Player.DrawableUpdateHandler(physObj)
-	);
-
-	registrar.registerCollidable(physObj);
-	registrar.registerUpdateable(physObj);
-	registrar.registerUpdateable(drawableEntity);
-	registrar.registerDrawable(drawableEntity);
+	registrar.registerResettable(physObj);
+	registrar.registerResettable(new ResetAtSpawn(hitbox, position));
 }
 
 class Root {
@@ -154,16 +72,18 @@ class Root {
 		this._drawablePool = new DrawablePool();
 		this._collidablePool = new CollidablePool();
 		this._updateablePool = new UpdateablePool();
+		this._resettablePool = new ResettablePool();
 		this._inputProvider = inputProvider;
 		const groundedProvider = new UpdateHandlers.GroundedProvider(this._collidablePool);
 		const fallUpdateHandler  = new UpdateHandlers.FallUpdateHandler(groundedProvider);
 
 		this._updateablePool.register(camera);
 
-		const registrar = new Registrar(
+		const registrar = new RegistrarDebug(
 			this._collidablePool,
 			this._drawablePool,
-			this._updateablePool
+			this._updateablePool,
+			this._resettablePool
 		); //TODO - move into constructor injection
 
 		for (let i = 0; i < 20; ++i) {
@@ -181,10 +101,10 @@ class Root {
 			);
 		}
 
-		//There's like a stack overflow error or smth.
 		makePhysObj(
 			new RectHitbox(this, VectorRight.scalar(16), 8, 8),
-			new UpdateHandlers.Composite([fallUpdateHandler, new UpdateHandlers.MovingGuy()]),
+			// new UpdateHandlers.Composite([fallUpdateHandler, new UpdateHandlers.MovingGuy()]),
+			fallUpdateHandler,
 			this._collidablePool,
 			new Sprites.AnimatedSprite(Sprites.SPRITES.BUTTON, [{"frames": 0, onComplete: "stop"}, {"frames": 6, onComplete: "stop", nth: 10}]),
 			registrar
@@ -198,7 +118,7 @@ class Root {
 			registrar
 		)
 
-		makePlayer(
+		Player.make(
 			this,
 			Vector({x: 12, y: 20}),
 			this._inputProvider,
@@ -221,7 +141,14 @@ class Root {
 	update() {
 		this.trueTime.tick();
 		this._inputProvider.update();
-		this._updateablePool.updateAll(this.trueTime);
+		if (this._inputProvider.getInput().pausePressed)
+			this.trueTime.togglePause();
+
+		if (this._inputProvider.getInput().resetPressed)
+			this._resettablePool.resetAll();
+		
+		if (!this.trueTime.getPaused())
+			this._updateablePool.updateAll(this.trueTime);
 	}
 }
 
@@ -233,12 +160,6 @@ function mainLoop() {
 	Graphics.clearCanvas();
 	root.update();
 	root.draw();
-
-	// TrueTime.tick();
-	// camera.update();
-	// if (!TrueTime.paused) game.update();
-	// game.setKeys(keys);
-	// game.drawAll();
 }
 
 ;(function () {

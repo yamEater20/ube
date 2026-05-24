@@ -51,11 +51,26 @@ export class UpdateablePool {
     }
 }
 
+export class ResettablePool {
+	constructor() {
+		this.pool = [];
+	}
+
+	register(p) {
+        this.pool.push(p);
+    }
+
+    resetAll() {
+        this.pool.forEach(c => c.reset());
+    }
+}
+
 export class Registrar {
-	constructor(collidablePool, drawablePool, updateablePool) {
+	constructor(collidablePool, drawablePool, updateablePool, resettablePool) {
 		this._drawablePool = drawablePool;
 		this._collidablePool = collidablePool;
 		this._updateablePool = updateablePool;
+		this._resettablePool = resettablePool;
 	}
 
 	registerDrawable(d) {
@@ -69,13 +84,18 @@ export class Registrar {
 	registerUpdateable(u) {
 		this._updateablePool.register(u);
 	}
+
+	registerResettable(r) {
+		this._resettablePool.register(r);
+	}
 }
 
 export class RegistrarDebug {
-	constructor(collidablePool, drawablePool, updateablePool) {
+	constructor(collidablePool, drawablePool, updateablePool, resettablePool) {
 		this._drawablePool = drawablePool;
 		this._collidablePool = collidablePool;
 		this._updateablePool = updateablePool;
+		this._resettablePool = resettablePool;
 	}
 
 	registerDrawable(d) {
@@ -89,5 +109,9 @@ export class RegistrarDebug {
 
 	registerUpdateable(u) {
 		this._updateablePool.register(u);
+	}
+
+	registerResettable(r) {
+		this._resettablePool.register(r);
 	}
 }

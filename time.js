@@ -32,12 +32,12 @@ class Time {
         this._lastTime = 0;
         this.time = window.performance.now();
 
-        this.paused = false;
+        this._paused = false;
         this.timers = [];
     }
 
     tick() {
-        if (this.paused) {
+        if (this._paused) {
             this.delta = 0;
             return;
         }
@@ -48,16 +48,14 @@ class Time {
 	}
 
     framesSinceTime(time) {
-        if (this.paused) return 0;
         return Math.floor((this.time - time) * 0.06 * this.scale);
     }
 
-    pause() {
-        this.paused = true;
-    }
+    getPaused() {return this._paused;}
 
-    unpause() {
-        this.paused = false;
+    togglePause() {
+        this._paused = !this._paused;
+        if (!this._paused) this._lastTime = window.performance.now();
     }
 
     newTimer(_durationMs) {

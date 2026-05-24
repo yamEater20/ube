@@ -1,10 +1,16 @@
 import { Timer } from "./time.js";
 import { getFallV, GRAVITY_COMING_DOWN, GRAVITY_GOING_UP } from "./physics.js";
 import { framesToMs } from "./math.js";
+import {PhysObj, RectHitbox} from "./physics.js";
+import * as CollisionHandlers from "./collisionHandlers.js";
+import * as Sprites from "./sprites.js";
+import { UpdatableDrawableEntity } from "./drawableEntity.js";
+import { Vector } from "./math.js";
+import { ResetAtSpawn } from "./reset.js";
 
 //TODO: provide constants for magic numbers
 
-export class FallUpdateHandler {
+class FallUpdateHandler {
 	update(physObj, time, input) {
 		let gravity = GRAVITY_COMING_DOWN;
 		const yv = physObj.getYVelocity();
@@ -19,7 +25,7 @@ function jump(physObj, jumpV) {
 	physObj.setYVelocity(Math.min(yv/2 + jumpV, jumpV)); //TODO: play around with yv/2.
 }
 
-export class JumpUpdateHandler {
+class JumpUpdateHandler {
 	constructor() {
 		this._jumpJustPressed = new Timer();
 		this._coyoteTime = new Timer();
@@ -61,7 +67,7 @@ export class DoubleJumpHandler {
 	}
 }
 
-export class HorizontalUpdateHandler {
+class HorizontalUpdateHandler {
 	update(physObj, time, input) {
 		if (input.moveLeft) physObj.setXVelocity(-0.1);
 		else if (input.moveRight) physObj.setXVelocity(0.1);
@@ -79,7 +85,7 @@ export class HorizontalUpdateHandler {
 	}
 }
 
-export class UpdateHandler {
+class UpdateHandler {
 	constructor(inputProvider, groundedProvider, updateHandlers) {
 		this._inputProvider = inputProvider;
 		this._groundedProvider = groundedProvider;
@@ -94,7 +100,7 @@ export class UpdateHandler {
 	}
 }
 
-export class DrawableUpdateHandler {
+class DrawableUpdateHandler {
 	constructor(physObj) {
 		this._physObj = physObj;
 	}
@@ -118,6 +124,58 @@ export class DrawableUpdateHandler {
 
 		drawable.update(time);
 	}
+}
+
+export function make(parent, position, inputProvider, groundedProvider, collidableProvider, registrar) {
+	const hitbox = new RectHitbox(parent, position, 6, 6);
+
+	const physObj = new PhysObj(
+		hitbox,
+		new UpdateHandler(
+			inputProvider,
+			groundedProvider,
+			[
+				new FallUpdateHandler(),
+				new JumpUpdateHandler(),
+				new DoubleJumpHandler(),
+				new HorizontalUpdateHandler()
+			]
+		),
+		new CollisionHandlers.Composite(
+			[
+				new CollisionHandlers.Wall(),
+				new CollisionHandlers.Ground(),
+				new CollisionHandlers.Ridable()
+			],
+			[
+				new CollisionHandlers.PushableBoxReaction(),
+				new CollisionHandlers.WallReaction(),
+				new CollisionHandlers.GroundReaction()
+			]
+		),
+		collidableProvider
+	);
+
+	const drawableEntity = new UpdatableDrawableEntity(
+		hitbox,
+		new Sprites.AnimatedSprite(
+			Sprites.SPRITES.MAIN_CHARA_SPRITESHEET,
+			[
+				{frames: 1, onComplete: "stop"},
+				{frames: 6, onComplete: "loop", nth: 10},
+				{frames: 1, onComplete: "stay", nth: 1}],
+			null
+		),
+		new DrawableUpdateHandler(physObj),
+		Vector({x: -1, y: -2})
+	);
+
+	registrar.registerCollidable(physObj);
+	registrar.registerUpdateable(physObj);
+	registrar.registerUpdateable(drawableEntity);
+	registrar.registerDrawable(drawableEntity);
+	registrar.registerResettable(physObj);
+	registrar.registerResettable(new ResetAtSpawn(hitbox, position));
 }
 
 // import {Actor, GRAVITY_COMING_DOWN, GRAVITY_GOING_UP } from "./physics.js";

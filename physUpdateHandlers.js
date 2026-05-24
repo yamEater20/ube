@@ -42,6 +42,6 @@ export class FallUpdateHandler {
 
 export class MovingGuy {
 	update(physObj, time) {
-		physObj.setXVelocity(0.05);
+		physObj.setXVelocity(0.01);
 	}
 }

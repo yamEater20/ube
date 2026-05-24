@@ -7,6 +7,7 @@ export class InputProvider {
             "ArrowUp": false,
             "KeyZ": false,
             "KeyX": false,
+            "KeyV": false,
         
             // //Debug keys
             "KeyO": false, //fly
@@ -61,15 +62,24 @@ export class InputProvider {
             "moveRight": this._keyCodes.ArrowRight || this._keyCodes.KeyD,
             "moveLeft": this._keyCodes.ArrowLeft || this._keyCodes.KeyA,
 
-            "jump": this._keyCodes.KeyZ || this._keyCodes.KeyW || this._keyCodes.Space
+            "jump": this._keyCodes.KeyZ || this._keyCodes.KeyW || this._keyCodes.Space,
+
+            "pause": this._keyCodes.KeyV,
+            "reset": this._keyCodes.KeyR
         };
 
-        this._input.jumpPressed = this._input.jump && !this._prevInput.jump;
+        setPressed(this._input, this._prevInput, "jump");
+        setPressed(this._input, this._prevInput, "pause");
+        setPressed(this._input, this._prevInput, "reset");
     }
     
     getInput() {
         return this._input;
     }
+}
+
+function setPressed(input, prevInput, name) {
+    input[name + "Pressed"] = input[name] && !prevInput[name];
 }
 
 export class TASInputProvider {
@@ -86,7 +96,7 @@ export class TASInputProvider {
             "moveRight": this.frame < 15,
             "moveLeft": this.frame >= 15,
             "jump": false,
-            "jumpPressed": false
+            "jumpPressed": false,
         };;
     }
 }
