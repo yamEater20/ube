@@ -13,7 +13,7 @@ import * as Graphics from './graphics.js';
 import { Diagnostics, timeIt } from './diagnostics.js';
 import { DrawablePool, CollidablePool, UpdateablePool, Registrar, RegistrarDebug, ResettablePool } from './pools.js';
 import {camera} from './camera.js';
-import {PhysObj, RectHitbox, DummyCollisionHandler, DummyCollidableProvider, DummyUpdateHandler, getDefaultFallV} from './physics.js';
+import {PhysObj, RectHitbox, DummyCollisionHandler, DummyCollidableProvider, DummyUpdateHandler} from './physics.js';
 import {InputProvider, TASInputProvider} from './input.js';
 import * as UpdateHandlers from './physUpdateHandlers.js';
 import * as Player from './player.js';
@@ -38,7 +38,7 @@ function makeWall(parent, relativePosition, sprite, registrar) {
 	registrar.registerDrawable(drawableEntity);
 }
 
-function makePhysObj(hitbox, updateHandler, collidableProvider, sprite, registrar) {
+function makePhysObj(hitbox, updateHandler, collidableProvider, groundedProvider, sprite, registrar) {
 	const position = Vector({x: hitbox.relativePosition.x, y: hitbox.relativePosition.y});
 	const physObj = new PhysObj(
 		hitbox,
@@ -53,7 +53,7 @@ function makePhysObj(hitbox, updateHandler, collidableProvider, sprite, registra
 				//TODO: figure out lifetimes. These are stateless and should be singletons.
 				new CollisionHandlers.PushableBoxReaction(),
 				new CollisionHandlers.WallReaction(),
-				new CollisionHandlers.GroundReaction()
+				new CollisionHandlers.GroundReaction(groundedProvider)
 			]
 		),
 		collidableProvider
@@ -89,34 +89,38 @@ class Root {
 		for (let i = 0; i < 20; ++i) {
 			makeWall(
 				this,
-				Vector({x: i*8, y: 128}),
-				new Sprites.TileSprite(Sprites.SPRITES.WALL_TILESHEET, i === 0 ? VectorZero : i === 19 ? VectorRight.scalar(2) : VectorRight),
-				registrar
-			);
-			makeWall(
-				this,
 				Vector({x: i*8, y: 100}),
 				new Sprites.TileSprite(Sprites.SPRITES.WALL_TILESHEET, i === 0 ? VectorZero : i === 19 ? VectorRight.scalar(2) : VectorRight),
 				registrar
 			);
 		}
 
+		for (let i = 5; i < 20; ++i) {
+			makeWall(
+				this,
+				Vector({x: i*8, y: 80}),
+				new Sprites.TileSprite(Sprites.SPRITES.WALL_TILESHEET, i === 0 ? VectorZero : i === 19 ? VectorRight.scalar(2) : VectorRight),
+				registrar
+			);
+		}
+
 		makePhysObj(
-			new RectHitbox(this, VectorRight.scalar(16), 8, 8),
+			new RectHitbox(this, VectorRight.scalar(12), 8, 8),
 			// new UpdateHandlers.Composite([fallUpdateHandler, new UpdateHandlers.MovingGuy()]),
 			fallUpdateHandler,
 			this._collidablePool,
+			groundedProvider,
 			new Sprites.AnimatedSprite(Sprites.SPRITES.BUTTON, [{"frames": 0, onComplete: "stop"}, {"frames": 6, onComplete: "stop", nth: 10}]),
 			registrar
-		)
+		);
 
-		makePhysObj(
-			new RectHitbox(this, VectorRight.scalar(64), 8, 8),
-			fallUpdateHandler,
-			this._collidablePool,
-			new Sprites.AnimatedSprite(Sprites.SPRITES.BUTTON, [{"frames": 0, onComplete: "stop"}, {"frames": 6, onComplete: "stop", nth: 10}]),
-			registrar
-		)
+		// makePhysObj(
+		// 	new RectHitbox(this, VectorRight.scalar(64), 8, 8),
+		// 	fallUpdateHandler,
+		// 	this._collidablePool,
+		// 	new Sprites.AnimatedSprite(Sprites.SPRITES.BUTTON, [{"frames": 0, onComplete: "stop"}, {"frames": 6, onComplete: "stop", nth: 10}]),
+		// 	registrar
+		// );
 
 		Player.make(
 			this,

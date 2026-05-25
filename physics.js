@@ -171,7 +171,7 @@ class PhysObj extends Entity {
 
 			this.parent.relativePosition = this.parent.relativePosition.addPoint(direction);
 			allRiding.forEach(actor => {
-				actor.moveDirection(1, direction);
+				actor.moveDirection(directionScalar, direction);
 			});
 			amount -= directionScalar;
 		}
@@ -214,14 +214,10 @@ class DummyUpdateHandler {
 	update(physObj, time) {}
 }
 
-function getFallV(vy, gravity, timeDelta) {
+function getFallV(vy, timeDelta, gravity) {
+	gravity = gravity ?? (vy > 0 ? GRAVITY_COMING_DOWN : GRAVITY_GOING_UP);
 	return Math.min(MAXFALL, vy + timeDelta * gravity);
 }
-
-function getDefaultFallV(vy, timeDelta) {
-	return getFallV(vy, vy > 0 ? GRAVITY_COMING_DOWN : GRAVITY_GOING_UP, timeDelta);
-}
-
 
 export {
     PhysObj,
@@ -232,8 +228,7 @@ export {
 
 	GRAVITY_COMING_DOWN,
 	GRAVITY_GOING_UP,
-	getFallV,
-	getDefaultFallV
+	getFallV
 }
 
 

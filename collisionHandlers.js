@@ -71,13 +71,22 @@ export class Composite {
 }
 
 export class GroundReaction {
+    constructor(groundedProvider) {
+        this._groundedProvider = groundedProvider;
+    }
+    
     id() {return AdjectiveIds.GROUND;}
 
     react(physObj, other, ground, direction) {
         const canCollide = direction.y !== 0 && ground.isGround(physObj, direction);
         if (!canCollide) return false;
+
         if (direction.y < 0) {
-            physObj.setYVelocity(Math.max(physObj.getYVelocity(), -0.05));
+            if (this._groundedProvider.onGround(physObj)) {
+                physObj.setYVelocity(0);                
+            } else {
+                physObj.setYVelocity(Math.max(physObj.getYVelocity(), -0.05));
+            }
         } else if (direction.y > 0) {
             physObj.setYVelocity(0);
         }

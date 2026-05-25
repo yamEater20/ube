@@ -1,4 +1,4 @@
-import { getDefaultFallV } from "./physics.js";
+import { getFallV } from "./physics.js";
 import { VectorDown } from "./math.js";
 import { AdjectiveIds } from "./collisionHandlers.js";
 
@@ -30,13 +30,10 @@ export class FallUpdateHandler {
 		this._groundedProvider = groundedProvider;
 	}
 
-	update(physObj, time) {
-		// if (this._groundedProvider.onGround(physObj))
-		// 	physObj.setYVelocity(0); //will cause problems later
-		// else
-		// 	physObj.setYVelocity(getDefaultFallV(physObj.getYVelocity(), time.delta));
+	update(physObj, time, gravity) {
+		const yv = physObj.getYVelocity();
 		if (!this._groundedProvider.onGround(physObj))
-			physObj.setYVelocity(getDefaultFallV(physObj.getYVelocity(), time.delta));
+			physObj.setYVelocity(getFallV(yv, time.delta, gravity));
 	}
 }
 

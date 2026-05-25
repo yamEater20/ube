@@ -7,16 +7,20 @@ import * as Sprites from "./sprites.js";
 import { UpdatableDrawableEntity } from "./drawableEntity.js";
 import { Vector } from "./math.js";
 import { ResetAtSpawn } from "./reset.js";
+import * as GeneralUpdateHandlers from "./physUpdateHandlers.js";
 
 //TODO: provide constants for magic numbers
 
 class FallUpdateHandler {
+	constructor(generalFallUpdateHandler) {
+		this._otherFallUpdateHandler = generalFallUpdateHandler;
+	}
+
 	update(physObj, time, input) {
 		let gravity = GRAVITY_COMING_DOWN;
 		const yv = physObj.getYVelocity();
 		if (input.jump && yv <= 0) gravity = GRAVITY_GOING_UP;
-
-		if(!input.grounded) physObj.setYVelocity(getFallV(yv, gravity, time.delta));
+		this._otherFallUpdateHandler.update(physObj, time, gravity);
 	}
 }
 
@@ -101,8 +105,9 @@ class UpdateHandler {
 }
 
 class DrawableUpdateHandler {
-	constructor(physObj) {
+	constructor(physObj, groundedProvider) {
 		this._physObj = physObj;
+		this._groundedProvider = groundedProvider;
 	}
 
 	update(time, drawableEnity) {
@@ -114,7 +119,7 @@ class DrawableUpdateHandler {
 			drawable.flip = false;
 		}
 
-		if (this._physObj.getYVelocity() !== 0) {
+		if (this._physObj.getYVelocity() !== 0 && !this._groundedProvider.onGround(this._physObj)) {
 			drawable.setRow(2, time);
 		} else if (xv !== 0) {
 			drawable.setRow(1, time);
@@ -126,6 +131,20 @@ class DrawableUpdateHandler {
 	}
 }
 
+class NonRidableCollidableProvider {
+	constructor (collidableProvider) {
+		this._collidableProvider = collidableProvider;
+	}
+
+	getAllRiding(physObj) {
+		return [];
+	}
+
+	getAllCollidingExcept(physObj, offset, except) {
+        return this._collidableProvider.getAllCollidingExcept(physObj, offset, except);
+    }
+}
+
 export function make(parent, position, inputProvider, groundedProvider, collidableProvider, registrar) {
 	const hitbox = new RectHitbox(parent, position, 6, 6);
 
@@ -135,7 +154,7 @@ export function make(parent, position, inputProvider, groundedProvider, collidab
 			inputProvider,
 			groundedProvider,
 			[
-				new FallUpdateHandler(),
+				new FallUpdateHandler(new GeneralUpdateHandlers.FallUpdateHandler(groundedProvider)),
 				new JumpUpdateHandler(),
 				new DoubleJumpHandler(),
 				new HorizontalUpdateHandler()
@@ -150,10 +169,10 @@ export function make(parent, position, inputProvider, groundedProvider, collidab
 			[
 				new CollisionHandlers.PushableBoxReaction(),
 				new CollisionHandlers.WallReaction(),
-				new CollisionHandlers.GroundReaction()
+				new CollisionHandlers.GroundReaction(groundedProvider)
 			]
 		),
-		collidableProvider
+		new NonRidableCollidableProvider(collidableProvider)
 	);
 
 	const drawableEntity = new UpdatableDrawableEntity(
@@ -166,14 +185,14 @@ export function make(parent, position, inputProvider, groundedProvider, collidab
 				{frames: 1, onComplete: "stay", nth: 1}],
 			null
 		),
-		new DrawableUpdateHandler(physObj),
+		new DrawableUpdateHandler(physObj, groundedProvider),
 		Vector({x: -1, y: -2})
 	);
 
-	registrar.registerCollidable(physObj);
-	registrar.registerUpdateable(physObj);
-	registrar.registerUpdateable(drawableEntity);
 	registrar.registerDrawable(drawableEntity);
+	registrar.registerUpdateable(drawableEntity);
+	registrar.registerUpdateable(physObj);
+	registrar.registerCollidable(physObj);
 	registrar.registerResettable(physObj);
 	registrar.registerResettable(new ResetAtSpawn(hitbox, position));
 }

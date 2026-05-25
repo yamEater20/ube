@@ -27,13 +27,14 @@ export class CollidablePool {
     getAllRiding(physObj) {
 		return this.pool.filter(
 			p =>
-				p.isOverlap(physObj, VectorDown)
+				p != physObj
+				&& p.isOverlap(physObj, VectorDown)
 				&& p.collisionHandler.containsAdjective(AdjectiveIds.RIDABLE)
 			);
 	}
 
 	getAllCollidingExcept(physObj, offset, except) {
-        return this.pool.filter(p => physObj.isOverlap(p, offset));
+        return this.pool.filter(p => physObj.isOverlap(p, offset) && !except.includes(p));
     }
 }
 
