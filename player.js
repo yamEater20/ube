@@ -1,11 +1,10 @@
 import { Timer } from "./time.js";
-import { getFallV, GRAVITY_COMING_DOWN, GRAVITY_GOING_UP } from "./physics.js";
-import { framesToMs } from "./math.js";
-import {PhysObj, RectHitbox} from "./physics.js";
+import { GRAVITY_COMING_DOWN, GRAVITY_GOING_UP, PhysObj, RectHitbox } from "./engine/physics.js";
+import { framesToMs } from "./engine/math.js";
 import * as CollisionHandlers from "./collisionHandlers.js";
-import * as Sprites from "./sprites.js";
-import { UpdatableDrawableEntity } from "./drawableEntity.js";
-import { Vector } from "./math.js";
+import * as Sprites from "./engine/sprites.js";
+import { UpdatableDrawableEntity } from "./engine/drawableEntity.js";
+import { Vector } from "./engine/math.js";
 import { ResetAtSpawn } from "./reset.js";
 import * as GeneralUpdateHandlers from "./physUpdateHandlers.js";
 

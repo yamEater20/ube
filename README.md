@@ -1,3 +1,5 @@
-![Ube logo](./images/Ube%20Logo.png)
+<img src="./images/Ube Logo.png" alt="Ube logo" style="width: 80px">
+
+<br/>
 
 # Quick & Dirty JS game engine

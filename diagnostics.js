@@ -1,5 +1,5 @@
 class Diagnostics {
-	constructor() {
+	constructor(func) {
 		this.secondInterval = 0;
 		this.startTime = window.performance.now();
 		
@@ -8,10 +8,13 @@ class Diagnostics {
 		this.secondsPerPrint = 10;
 
 		this.fps = 0;
+		this._func = func;
+
+		this.call = this.call.bind(this)
 	}
 
-	diagnostics(func) {
-		func();
+	call() {
+		this._func();
 		
 		const t = window.performance.now();
 		this.frameCount++;

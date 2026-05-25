@@ -1,4 +1,4 @@
-import {CTX} from './graphics.js';
+import {CTX} from './engine/graphics.js';
 
 function getWidthOfText(txt, size) {
 	let ret = 0;

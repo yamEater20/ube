@@ -6,128 +6,73 @@ import {
 	Vector,
     VectorRight,
     VectorZero
-} from './math.js';
-import * as Sprites from "./sprites.js";
-import { Time, Timer } from './time.js';
-import * as Graphics from './graphics.js';
+} from './engine/math.js';
+import { Time } from './time.js';
+import * as Graphics from './engine/graphics.js';
 import { Diagnostics, timeIt } from './diagnostics.js';
-import { DrawablePool, CollidablePool, UpdateablePool, Registrar, RegistrarDebug, ResettablePool } from './pools.js';
+import { DrawablePool, CollidablePool as CollidableProvider, UpdateablePool, Registrar, RegistrarDebug, ResettablePool } from './pools.js';
 import {camera} from './camera.js';
-import {PhysObj, RectHitbox, DummyCollisionHandler, DummyCollidableProvider, DummyUpdateHandler} from './physics.js';
 import {InputProvider, TASInputProvider} from './input.js';
 import * as UpdateHandlers from './physUpdateHandlers.js';
 import * as Player from './player.js';
-import * as CollisionHandlers from './collisionHandlers.js';
-import { DrawableEntity } from './drawableEntity.js';
-import { ResetAtSpawn } from './reset.js';
+import { Room } from './world.js';
+import * as Setup from './engine/setup.js';
 
-function makeWall(parent, relativePosition, sprite, registrar) {
-	const hitbox = new RectHitbox(parent, relativePosition, 8, 8);
+class RoomsCollidableProvider {
+	constructor() {
+		this._rooms = [];
+		this._collidablePool = new CollidableProvider();
+		this.roomIndex = 0;
+	}
 
-	const physObj = new PhysObj(
-		hitbox,
-		new DummyUpdateHandler(),
-		new CollisionHandlers.AdjectiveOnly(
-			[new CollisionHandlers.Wall(), new CollisionHandlers.Ground()]
-		),
-		new DummyCollidableProvider(),
-	);
+	registerRooms(rooms) {this._rooms = rooms;}
+	register(c) {this._collidablePool.register(c);}
 
-	const drawableEntity = new DrawableEntity(hitbox, sprite);
-	registrar.registerCollidable(physObj);
-	registrar.registerDrawable(drawableEntity);
-}
+	getAllRiding(physObj) {
+		const myAllRiding = this._collidablePool.getAllRiding(physObj);
+		const roomAllRiding = this._rooms[this.roomIndex].getAllRiding(physObj);
+		return myAllRiding.concat(roomAllRiding);
+	}
 
-function makePhysObj(hitbox, updateHandler, collidableProvider, groundedProvider, sprite, registrar) {
-	const position = Vector({x: hitbox.relativePosition.x, y: hitbox.relativePosition.y});
-	const physObj = new PhysObj(
-		hitbox,
-		updateHandler,
-		new CollisionHandlers.Composite(
-			[
-				new CollisionHandlers.Ground(),
-				new CollisionHandlers.PushableBox(),
-				new CollisionHandlers.Ridable()
-			],
-			[
-				//TODO: figure out lifetimes. These are stateless and should be singletons.
-				new CollisionHandlers.PushableBoxReaction(),
-				new CollisionHandlers.WallReaction(),
-				new CollisionHandlers.GroundReaction(groundedProvider)
-			]
-		),
-		collidableProvider
-	);
-
-	const drawableEntity = new DrawableEntity(physObj, sprite);
-	registrar.registerCollidable(physObj);
-	registrar.registerUpdateable(physObj);
-	registrar.registerDrawable(drawableEntity);
-	registrar.registerResettable(physObj);
-	registrar.registerResettable(new ResetAtSpawn(hitbox, position));
+	getAllCollidingExcept(physObj, offset, except) {
+        const myAllColliding = this._collidablePool.getAllCollidingExcept(physObj, offset, except);
+		const roomAllColliding = this._rooms[this.roomIndex].getAllCollidingExcept(physObj, offset, except);
+		return myAllColliding.concat(roomAllColliding);
+    }
 }
 
 class Root {
 	constructor(trueTime, inputProvider) {
 		this._drawablePool = new DrawablePool();
-		this._collidablePool = new CollidablePool();
+		this._collidableProvider = new RoomsCollidableProvider();
 		this._updateablePool = new UpdateablePool();
 		this._resettablePool = new ResettablePool();
 		this._inputProvider = inputProvider;
-		const groundedProvider = new UpdateHandlers.GroundedProvider(this._collidablePool);
-		const fallUpdateHandler  = new UpdateHandlers.FallUpdateHandler(groundedProvider);
+		const groundedProvider = new UpdateHandlers.GroundedProvider(this._collidableProvider);
 
 		this._updateablePool.register(camera);
 
 		const registrar = new RegistrarDebug(
-			this._collidablePool,
+			this._collidableProvider,
 			this._drawablePool,
 			this._updateablePool,
 			this._resettablePool
 		); //TODO - move into constructor injection
 
-		for (let i = 0; i < 20; ++i) {
-			makeWall(
-				this,
-				Vector({x: i*8, y: 100}),
-				new Sprites.TileSprite(Sprites.SPRITES.WALL_TILESHEET, i === 0 ? VectorZero : i === 19 ? VectorRight.scalar(2) : VectorRight),
-				registrar
-			);
-		}
-
-		for (let i = 5; i < 20; ++i) {
-			makeWall(
-				this,
-				Vector({x: i*8, y: 80}),
-				new Sprites.TileSprite(Sprites.SPRITES.WALL_TILESHEET, i === 0 ? VectorZero : i === 19 ? VectorRight.scalar(2) : VectorRight),
-				registrar
-			);
-		}
-
-		makePhysObj(
-			new RectHitbox(this, VectorRight.scalar(12), 8, 8),
-			// new UpdateHandlers.Composite([fallUpdateHandler, new UpdateHandlers.MovingGuy()]),
-			fallUpdateHandler,
-			this._collidablePool,
-			groundedProvider,
-			new Sprites.AnimatedSprite(Sprites.SPRITES.BUTTON, [{"frames": 0, onComplete: "stop"}, {"frames": 6, onComplete: "stop", nth: 10}]),
-			registrar
-		);
-
-		// makePhysObj(
-		// 	new RectHitbox(this, VectorRight.scalar(64), 8, 8),
-		// 	fallUpdateHandler,
-		// 	this._collidablePool,
-		// 	new Sprites.AnimatedSprite(Sprites.SPRITES.BUTTON, [{"frames": 0, onComplete: "stop"}, {"frames": 6, onComplete: "stop", nth: 10}]),
-		// 	registrar
-		// );
+		const room = new Room(this, VectorZero, this._collidableProvider);
+		const room2 = new Room(this, VectorRight.scalar(128), this._collidableProvider);
+		registrar.registerDrawable(room);
+		registrar.registerDrawable(room2);
+		registrar.registerUpdateable(room);
+		registrar.registerUpdateable(room2);
+		this._collidableProvider.registerRooms([room, room2]);
 
 		Player.make(
 			this,
 			Vector({x: 12, y: 20}),
 			this._inputProvider,
 			groundedProvider,
-			this._collidablePool,
+			this._collidableProvider,
 			registrar
 		);
 
@@ -156,25 +101,17 @@ class Root {
 	}
 }
 
-let diagnostics;
 let root;
 
 function mainLoop() {
-	Graphics.setMaxSize();
-	Graphics.clearCanvas();
 	root.update();
 	root.draw();
 }
 
-;(function () {
-	timeIt("Total setup", setup);
-})();
+let mainLoopDiagnostics = new Diagnostics(mainLoop);
 
 async function setup() {
-	Graphics.setupCanvas();
-	
-	diagnostics = new Diagnostics();
-	
+	Setup.setup();
 	root = new Root(
 		new Time(),
 		new InputProvider()
@@ -183,13 +120,14 @@ async function setup() {
 	// let levelData = await timeIt("Read level data", getLevelData);
 	
 	// timeIt("Build levels", () => game.buildLevels(levelData));
-	main();
+
+	Setup.beginGameLoop(mainLoopDiagnostics.call);
 }
 
-function main() {
-	var stopMain = window.requestAnimationFrame(main);
-	diagnostics.diagnostics(mainLoop);
-}
+;(function () {
+	timeIt("Total setup", setup);
+})();
+
 
 /*
 

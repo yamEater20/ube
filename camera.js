@@ -1,5 +1,5 @@
-import {framesToMs, Vector} from './math.js';
-import {CTX} from './graphics.js';
+import {framesToMs, Vector} from './engine/math.js';
+import {CTX} from './engine/graphics.js';
 import * as Text from './text.js';
 import {msToFrames, Timer} from './time.js';
 

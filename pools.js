@@ -1,5 +1,5 @@
 import { AdjectiveIds } from "./collisionHandlers.js";
-import { VectorDown, VectorZero } from "./math.js";
+import { VectorDown, VectorZero } from "./engine/math.js";
 
 export class DrawablePool {
     constructor() {

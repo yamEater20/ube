@@ -180,6 +180,16 @@ class TileSprite extends Sprite {
 	}
 }
 
+/*
+TODO: refactor.
+1. pass this data into sprites as a map between [enumName : filepath], or maybe [enumName : elementId]
+2. sprites will populate this data and store it in itself.
+3. Sprites exports this data and provides it elsewhere.
+
+This will probably cause temporal coupling but maybe that's ok.
+The "correct" way to do it is to make a SpriteService class that's initialized using the sprite mapping.
+But that's not very ergonomic. I don't want to call SpriteService.GetSprite(enumName) every time I want an image.
+*/
 const SPRITES = {
 	SPIKES_IMG: document.getElementById("spikes-img"),
 	WALL_TILESHEET: document.getElementById("wall-tilesheet"),

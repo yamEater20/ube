@@ -1,15 +1,90 @@
-import { Vector, VectorUp, Direction} from "./math.js";
-import * as Graphics from "./graphics.js";
-import { audioCon, SOUNDS } from './audio.js';
+import {
+	Vector,
+    VectorRight,
+    VectorZero
+} from './engine/math.js';
+import * as Sprites from "./engine/sprites.js";
+import { DrawablePool, CollidablePool, UpdateablePool, Registrar, RegistrarDebug, ResettablePool } from './pools.js';
+import {camera} from './camera.js';
+import * as UpdateHandlers from './physUpdateHandlers.js';
+import { makeWall } from './entities/wall.js';
+import {Entity} from "./engine/entity.js";
+import { makePushableBox } from './entities/pushableBox.js';
+import { RectHitbox } from './engine/physics.js';
 
-const TILE_MAP_SIZE = [
-	Graphics.PIXEL_GAME_SIZE[0] / Graphics.TILE_SIZE,
-	Graphics.PIXEL_GAME_SIZE[1] / Graphics.TILE_SIZE
+const ROOM_SIZE_PIXELS = [
+	128, 128
 ];
 
-class Room extends Entity {
-	constructor(parent, relativePosition) {
-		
+export class Room extends Entity {
+	constructor(parent, relativePosition, globalCollidablePool) {
+		super(parent, relativePosition);
+
+		//Control freak anti-pattern? Maybe, but very close to composition root.
+		this._drawablePool = new DrawablePool();
+		this._collidablePool = new CollidablePool();
+		this._updateablePool = new UpdateablePool();
+		this._resettablePool = new ResettablePool();
+
+		const groundedProvider = new UpdateHandlers.GroundedProvider(globalCollidablePool);
+		const fallUpdateHandler = new UpdateHandlers.FallUpdateHandler(groundedProvider);
+
+		this._updateablePool.register(camera);
+
+		// TODO: I think you're thinking about Registrars wrong.
+		// Right now, everybody has to make a registrar, because everyone has their own pools.
+		// But really, you want the registrar to be shared behavior among all sources.
+		// You could try giving everyone a registrar factory, but I don't think that's a good idea.
+		const registrar = new RegistrarDebug(
+			this._collidablePool,
+			this._drawablePool,
+			this._updateablePool,
+			this._resettablePool
+		);
+
+		for (let i = 0; i < 20; ++i) {
+			makeWall(
+				this,
+				Vector({x: i*8, y: 100}),
+				new Sprites.TileSprite(Sprites.SPRITES.WALL_TILESHEET, i === 0 ? VectorZero : i === 19 ? VectorRight.scalar(2) : VectorRight),
+				registrar
+			);
+		}
+
+		for (let i = 5; i < 20; ++i) {
+			makeWall(
+				this,
+				Vector({x: i*8, y: 80}),
+				new Sprites.TileSprite(Sprites.SPRITES.WALL_TILESHEET, i === 0 ? VectorZero : i === 19 ? VectorRight.scalar(2) : VectorRight),
+				registrar
+			);
+		}
+
+		makePushableBox(
+			new RectHitbox(this, VectorRight.scalar(12), 8, 8),
+			new UpdateHandlers.Composite([fallUpdateHandler, new UpdateHandlers.MovingGuy()]),
+			// fallUpdateHandler,
+			globalCollidablePool,
+			groundedProvider,
+			registrar
+		);
+	}
+
+	draw(camera) {
+		this._drawablePool.drawAll(camera);
+	}
+
+	update(time) {
+		if (!time.getPaused())
+			this._updateablePool.updateAll(time);
+	}
+
+	getAllRiding(physObj) {
+		return this._collidablePool.getAllRiding(physObj);
+	}
+
+	getAllCollidingExcept(physObj, offset, except) {
+        return this._collidablePool.getAllCollidingExcept(physObj, offset, except);
 	}
 }
 
