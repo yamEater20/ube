@@ -4,13 +4,14 @@ import {
     VectorZero
 } from './engine/math.js';
 import * as Sprites from "./engine/sprites.js";
-import { DrawablePool, CollidablePool, UpdateablePool, Registrar, RegistrarDebug, ResettablePool } from './pools.js';
+import { Pool, CollidableProvider, Registrar } from './pools.js';
 import {camera} from './camera.js';
 import * as UpdateHandlers from './physUpdateHandlers.js';
 import { makeWall } from './entities/wall.js';
 import {Entity} from "./engine/entity.js";
 import { makePushableBox } from './entities/pushableBox.js';
 import { RectHitbox } from './engine/physics.js';
+import { debugOptions } from './engine/debug.js';
 
 const ROOM_SIZE_PIXELS = [
 	128, 128
@@ -21,10 +22,11 @@ export class Room extends Entity {
 		super(parent, relativePosition);
 
 		//Control freak anti-pattern? Maybe, but very close to composition root.
-		this._drawablePool = new DrawablePool();
-		this._collidablePool = new CollidablePool();
-		this._updateablePool = new UpdateablePool();
-		this._resettablePool = new ResettablePool();
+		this._drawablePool = new Pool();
+		this._debugDrawablePool = new Pool();
+		this._collidablePool = new CollidableProvider();
+		this._updateablePool = new Pool();
+		this._resettablePool = new Pool();
 
 		const groundedProvider = new UpdateHandlers.GroundedProvider(globalCollidablePool);
 		const fallUpdateHandler = new UpdateHandlers.FallUpdateHandler(groundedProvider);
@@ -35,14 +37,15 @@ export class Room extends Entity {
 		// Right now, everybody has to make a registrar, because everyone has their own pools.
 		// But really, you want the registrar to be shared behavior among all sources.
 		// You could try giving everyone a registrar factory, but I don't think that's a good idea.
-		const registrar = new RegistrarDebug(
+		const registrar = new Registrar(
 			this._collidablePool,
 			this._drawablePool,
 			this._updateablePool,
-			this._resettablePool
+			this._resettablePool,
+			this._debugDrawablePool
 		);
 
-		for (let i = 0; i < 20; ++i) {
+		for (let i = 0; i < 16; ++i) {
 			makeWall(
 				this,
 				Vector({x: i*8, y: 100}),
@@ -51,7 +54,7 @@ export class Room extends Entity {
 			);
 		}
 
-		for (let i = 5; i < 20; ++i) {
+		for (let i = 5; i < 16; ++i) {
 			makeWall(
 				this,
 				Vector({x: i*8, y: 80}),
@@ -71,12 +74,13 @@ export class Room extends Entity {
 	}
 
 	draw(camera) {
-		this._drawablePool.drawAll(camera);
+		this._drawablePool.foreach(item => item.draw(camera));
+		if (debugOptions.showHitboxes) this._debugDrawablePool.foreach(item => item.draw(camera));
 	}
 
 	update(time) {
 		if (!time.getPaused())
-			this._updateablePool.updateAll(time);
+			this._updateablePool.foreach(item => item.update(time));
 	}
 
 	getAllRiding(physObj) {

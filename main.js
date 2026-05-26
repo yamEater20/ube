@@ -8,15 +8,15 @@ import {
     VectorZero
 } from './engine/math.js';
 import { Time } from './time.js';
-import * as Graphics from './engine/graphics.js';
 import { Diagnostics, timeIt } from './diagnostics.js';
-import { DrawablePool, CollidablePool as CollidableProvider, UpdateablePool, Registrar, RegistrarDebug, ResettablePool } from './pools.js';
+import { Pool, CollidableProvider, Registrar } from './pools.js';
 import {camera} from './camera.js';
 import {InputProvider, TASInputProvider} from './input.js';
 import * as UpdateHandlers from './physUpdateHandlers.js';
 import * as Player from './player.js';
 import { Room } from './world.js';
 import * as Setup from './engine/setup.js';
+import {toggleDebugAll, debugOptions} from "./engine/debug.js";
 
 class RoomsCollidableProvider {
 	constructor() {
@@ -43,20 +43,22 @@ class RoomsCollidableProvider {
 
 class Root {
 	constructor(trueTime, inputProvider) {
-		this._drawablePool = new DrawablePool();
+		this._drawablePool = new Pool();
+		this._debugDrawablePool = new Pool();
 		this._collidableProvider = new RoomsCollidableProvider();
-		this._updateablePool = new UpdateablePool();
-		this._resettablePool = new ResettablePool();
+		this._updateablePool = new Pool();
+		this._resettablePool = new Pool();
 		this._inputProvider = inputProvider;
 		const groundedProvider = new UpdateHandlers.GroundedProvider(this._collidableProvider);
 
 		this._updateablePool.register(camera);
 
-		const registrar = new RegistrarDebug(
+		const registrar = new Registrar(
 			this._collidableProvider,
 			this._drawablePool,
 			this._updateablePool,
-			this._resettablePool
+			this._resettablePool,
+			this._debugDrawablePool
 		); //TODO - move into constructor injection
 
 		const room = new Room(this, VectorZero, this._collidableProvider);
@@ -84,7 +86,8 @@ class Root {
 	}
 
 	draw() {
-		this._drawablePool.drawAll(camera);
+		this._drawablePool.foreach(item => item.draw(camera));
+		if (debugOptions.showHitboxes) this._debugDrawablePool.foreach(item => item.draw(camera));
 	}
 
 	update() {
@@ -95,9 +98,15 @@ class Root {
 
 		if (this._inputProvider.getInput().resetPressed)
 			this._resettablePool.resetAll();
+
+		if (this._inputProvider.getInput().debugPressed)
+			toggleDebugAll();
+
+		if (this._inputProvider.getInput().debugHitboxesPressed)
+			debugOptions.showHitboxes = !debugOptions.showHitboxes;
 		
 		if (!this.trueTime.getPaused())
-			this._updateablePool.updateAll(this.trueTime);
+			this._updateablePool.foreach(item => item.update(this.trueTime));
 	}
 }
 

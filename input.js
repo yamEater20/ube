@@ -39,6 +39,14 @@ export class InputProvider {
 
         this._prevInput = structuredClone(this._input);
 
+        this._pressCodes = [
+            "jump",
+            "pause",
+            "reset",
+            "debug",
+            "debugHitboxes"
+        ];
+
         document.addEventListener('keydown', this.keyDownHandler.bind(this), false);
         document.addEventListener('keyup', this.keyUpHandler.bind(this), false);
     }
@@ -62,15 +70,20 @@ export class InputProvider {
             "moveRight": this._keyCodes.ArrowRight || this._keyCodes.KeyD,
             "moveLeft": this._keyCodes.ArrowLeft || this._keyCodes.KeyA,
 
+            "moveUp": this._keyCodes.ArrowUp || this._keyCodes.KeyW,
+            "moveDown": this._keyCodes.ArrowDown || this._keyCodes.KeyS,
+
             "jump": this._keyCodes.KeyZ || this._keyCodes.KeyW || this._keyCodes.Space,
 
             "pause": this._keyCodes.KeyV,
-            "reset": this._keyCodes.KeyR
+            "reset": this._keyCodes.KeyR,
+            "debug": this._keyCodes.KeyO,
+            "debugHitboxes": this._keyCodes.KeyH
         };
 
-        setPressed(this._input, this._prevInput, "jump");
-        setPressed(this._input, this._prevInput, "pause");
-        setPressed(this._input, this._prevInput, "reset");
+        this._pressCodes.forEach(
+            k => setPressed(this._input, this._prevInput, k)
+        );
     }
     
     getInput() {

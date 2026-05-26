@@ -1,31 +1,23 @@
 import { AdjectiveIds } from "./collisionHandlers.js";
 import { VectorDown, VectorZero } from "./engine/math.js";
 
-export class DrawablePool {
+export class Pool {
     constructor() {
-        this.drawables = [];
+        this._items = [];
     }
 
     register(d) {
-        this.drawables.push(d);
+        this._items.push(d);
     }
 
-    drawAll(camera) {
-        this.drawables.forEach(d => d.draw(camera));
-    }
+    get() {return this._items}
+
+	foreach(func) {this._items.forEach(item => func(item));}
 }
 
-export class CollidablePool {
-    constructor() {
-        this.pool = [];
-    }
-
-    register(p) {
-        this.pool.push(p);
-    }
-
+export class CollidableProvider extends Pool {
     getAllRiding(physObj) {
-		return this.pool.filter(
+		return this.get().filter(
 			p =>
 				p != physObj
 				&& p.isOverlap(physObj, VectorDown)
@@ -34,44 +26,17 @@ export class CollidablePool {
 	}
 
 	getAllCollidingExcept(physObj, offset, except) {
-        return this.pool.filter(p => physObj.isOverlap(p, offset) && !except.includes(p));
-    }
-}
-
-export class UpdateablePool {
-    constructor() {
-        this.pool = [];
-    }
-
-    register(p) {
-        this.pool.push(p);
-    }
-
-    updateAll(time) {
-        this.pool.forEach(c => c.update(time));
-    }
-}
-
-export class ResettablePool {
-	constructor() {
-		this.pool = [];
-	}
-
-	register(p) {
-        this.pool.push(p);
-    }
-
-    resetAll() {
-        this.pool.forEach(c => c.reset());
+        return this.get().filter(p => physObj.isOverlap(p, offset) && !except.includes(p));
     }
 }
 
 export class Registrar {
-	constructor(collidablePool, drawablePool, updateablePool, resettablePool) {
+	constructor(collidablePool, drawablePool, updateablePool, resettablePool, debugDrawablePool) {
 		this._drawablePool = drawablePool;
 		this._collidablePool = collidablePool;
 		this._updateablePool = updateablePool;
 		this._resettablePool = resettablePool;
+		this._debugDrawablePool = debugDrawablePool;
 	}
 
 	registerDrawable(d) {
@@ -80,32 +45,7 @@ export class Registrar {
 
 	registerCollidable(c) {
 		this._collidablePool.register(c);
-	}
-
-	registerUpdateable(u) {
-		this._updateablePool.register(u);
-	}
-
-	registerResettable(r) {
-		this._resettablePool.register(r);
-	}
-}
-
-export class RegistrarDebug {
-	constructor(collidablePool, drawablePool, updateablePool, resettablePool) {
-		this._drawablePool = drawablePool;
-		this._collidablePool = collidablePool;
-		this._updateablePool = updateablePool;
-		this._resettablePool = resettablePool;
-	}
-
-	registerDrawable(d) {
-		this._drawablePool.register(d);
-	}
-
-	registerCollidable(c) {
-		this._collidablePool.register(c);
-		this.registerDrawable(c);
+		this._debugDrawablePool.register(c);
 	}
 
 	registerUpdateable(u) {

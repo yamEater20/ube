@@ -23,11 +23,15 @@ export function adjectiveName(id) {
 
 export class AdjectiveOnly {
     constructor(adjectives) {
-        this.adjectives = adjectiveListIntoDictionary(adjectives);
+        this._adjectives = adjectiveListIntoDictionary(adjectives);
+    }
+
+    getAdjectives() {
+        return this._adjectives;
     }
 
     containsAdjective(adjective) {
-        return this.adjectives[adjective] != undefined;
+        return this._adjectives[adjective] != undefined;
     }
 
     onCollide() {
@@ -35,29 +39,14 @@ export class AdjectiveOnly {
     }
 }
 
-export class Composite {
+export class Composite extends AdjectiveOnly {
     constructor (adjectives, reactions) {
-        this.adjectives = adjectiveListIntoDictionary(adjectives);
+        super(adjectives);
         this.reactions = reactions;
     }
-
-    containsAdjective(adjective) {
-        return this.adjectives[adjective] != undefined;
-    }
-
-    intoDictionary(collisionPieces) {
-        const ret = {};
-        collisionPieces.forEach(p => {
-            const id = p.id();
-            if (id) {
-                throw new Error(`Duplicate Adjective Ids for ${adjectiveName(id)}: current ${ret[id]}, new ${p}.\nI can't imagine why you'd want this.`);
-            }
-            ret[id] = p;
-        });
-    }
-
+    
     onCollide(physObj, other, direction) {
-		const otherAdjectives = other.collisionHandler.adjectives;
+		const otherAdjectives = other.collisionHandler.getAdjectives();
         const myReactions = physObj.collisionHandler.reactions;
 
         return myReactions.some(reaction => {

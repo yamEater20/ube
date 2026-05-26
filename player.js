@@ -7,6 +7,7 @@ import { UpdatableDrawableEntity } from "./engine/drawableEntity.js";
 import { Vector } from "./engine/math.js";
 import { ResetAtSpawn } from "./reset.js";
 import * as GeneralUpdateHandlers from "./physUpdateHandlers.js";
+import { debugOptions } from "./engine/debug.js";
 
 //TODO: provide constants for magic numbers
 
@@ -93,13 +94,47 @@ class UpdateHandler {
 		this._inputProvider = inputProvider;
 		this._groundedProvider = groundedProvider;
 		this._updateHandlers = updateHandlers;
+		this._debugUpdateHandler = new DebugUpdateHandler();
 	}
 
 	update(physObj, time) {
 		const input = this._inputProvider.getInput();
-		input.grounded = this._groundedProvider.onGround(physObj);
-		
-		this._updateHandlers.forEach(u => u.update(physObj, time, input));
+		if (debugOptions.noClip) {
+			this._debugUpdateHandler.update(physObj, time, input);
+		} else {
+			input.grounded = this._groundedProvider.onGround(physObj);
+			this._updateHandlers.forEach(u => u.update(physObj, time, input));
+		}
+	}
+}
+
+class DebugUpdateHandler {
+	update(physObj, time, input) {
+		const signX = input.moveLeft ? -1 : (input.moveRight ? 1 : 0);
+		const signY = input.moveUp ? -1 : (input.moveDown ? 1 : 0);
+		physObj.setXVelocity(0.3 * signX);
+		physObj.setYVelocity(0.3 * signY);
+	}
+}
+
+class CollisionHandlerDebugDecorator {
+	constructor(businessHandler) {
+		this._businessHandler = businessHandler;
+		this.reactions = this._businessHandler.reactions;
+	}
+
+	getAdjectives() {
+		return debugOptions.noClip ? [] : this._businessHandler.getAdjectives();
+	}
+
+	containsAdjective(adjective) {
+		if (debugOptions.noClip) return false;
+		return this._businessHandler.containsAdjective(adjective);
+	}
+
+	onCollide(physObj, other, direction) {
+		if (debugOptions.noClip) return false;
+		return this._businessHandler.onCollide(physObj, other, direction);
 	}
 }
 
@@ -159,17 +194,19 @@ export function make(parent, position, inputProvider, groundedProvider, collidab
 				new HorizontalUpdateHandler()
 			]
 		),
-		new CollisionHandlers.Composite(
-			[
-				new CollisionHandlers.Wall(),
-				new CollisionHandlers.Ground(),
-				new CollisionHandlers.Ridable()
-			],
-			[
-				new CollisionHandlers.PushableBoxReaction(),
-				new CollisionHandlers.WallReaction(),
-				new CollisionHandlers.GroundReaction(groundedProvider)
-			]
+		new CollisionHandlerDebugDecorator(
+			new CollisionHandlers.Composite(
+				[
+					new CollisionHandlers.Wall(),
+					new CollisionHandlers.Ground(),
+					new CollisionHandlers.Ridable()
+				],
+				[
+					new CollisionHandlers.PushableBoxReaction(),
+					new CollisionHandlers.WallReaction(),
+					new CollisionHandlers.GroundReaction(groundedProvider)
+				]
+			)
 		),
 		new NonRidableCollidableProvider(collidableProvider)
 	);

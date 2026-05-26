@@ -169,10 +169,10 @@ class PhysObj extends Entity {
 				break;
 			}
 
-			this.parent.relativePosition = this.parent.relativePosition.addPoint(direction);
 			allRiding.forEach(actor => {
 				actor.moveDirection(directionScalar, direction);
 			});
+			this.parent.relativePosition = this.parent.relativePosition.addPoint(direction);
 			amount -= directionScalar;
 		}
 
