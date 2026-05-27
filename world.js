@@ -4,7 +4,7 @@ import {
     VectorZero
 } from './engine/math.js';
 import * as Sprites from "./engine/sprites.js";
-import { Pool, CollidableProvider, Registrar } from './pools.js';
+import { PoolTypesFactory, POOL_TYPES, Registrar } from './pools.js';
 import {camera} from './camera.js';
 import * as UpdateHandlers from './physUpdateHandlers.js';
 import { makeWall } from './entities/wall.js';
@@ -18,39 +18,21 @@ const ROOM_SIZE_PIXELS = [
 ];
 
 export class Room extends Entity {
-	constructor(parent, relativePosition, globalCollidablePool) {
+	constructor(parent, relativePosition, globalCollidableProvider) {
 		super(parent, relativePosition);
 
 		//Control freak anti-pattern? Maybe, but very close to composition root.
-		this._drawablePool = new Pool();
-		this._debugDrawablePool = new Pool();
-		this._collidablePool = new CollidableProvider();
-		this._updateablePool = new Pool();
-		this._resettablePool = new Pool();
+		this._registrar = new Registrar(PoolTypesFactory());
 
-		const groundedProvider = new UpdateHandlers.GroundedProvider(globalCollidablePool);
+		const groundedProvider = new UpdateHandlers.GroundedProvider(globalCollidableProvider);
 		const fallUpdateHandler = new UpdateHandlers.FallUpdateHandler(groundedProvider);
-
-		this._updateablePool.register(camera);
-
-		// TODO: I think you're thinking about Registrars wrong.
-		// Right now, everybody has to make a registrar, because everyone has their own pools.
-		// But really, you want the registrar to be shared behavior among all sources.
-		// You could try giving everyone a registrar factory, but I don't think that's a good idea.
-		const registrar = new Registrar(
-			this._collidablePool,
-			this._drawablePool,
-			this._updateablePool,
-			this._resettablePool,
-			this._debugDrawablePool
-		);
 
 		for (let i = 0; i < 16; ++i) {
 			makeWall(
 				this,
 				Vector({x: i*8, y: 100}),
 				new Sprites.TileSprite(Sprites.SPRITES.WALL_TILESHEET, i === 0 ? VectorZero : i === 19 ? VectorRight.scalar(2) : VectorRight),
-				registrar
+				this._registrar
 			);
 		}
 
@@ -59,7 +41,7 @@ export class Room extends Entity {
 				this,
 				Vector({x: i*8, y: 80}),
 				new Sprites.TileSprite(Sprites.SPRITES.WALL_TILESHEET, i === 0 ? VectorZero : i === 19 ? VectorRight.scalar(2) : VectorRight),
-				registrar
+				this._registrar
 			);
 		}
 
@@ -67,30 +49,33 @@ export class Room extends Entity {
 			new RectHitbox(this, VectorRight.scalar(12), 8, 8),
 			new UpdateHandlers.Composite([fallUpdateHandler, new UpdateHandlers.MovingGuy()]),
 			// fallUpdateHandler,
-			globalCollidablePool,
+			globalCollidableProvider,
 			groundedProvider,
-			registrar
+			this._registrar
 		);
 	}
 
+	getPool(poolType) {return this._registrar.getPool(poolType);}
+
 	draw(camera) {
-		this._drawablePool.foreach(item => item.draw(camera));
-		if (debugOptions.showHitboxes) this._debugDrawablePool.foreach(item => item.draw(camera));
+		this.getPool(POOL_TYPES.DRAWABLE).foreach(item => item.draw(camera));
+		if (debugOptions.showHitboxes) this.getPool(POOL_TYPES.DRAWABLE_DEBUG).foreach(item => item.draw(camera));
 	}
 
 	update(time) {
 		if (!time.getPaused())
-			this._updateablePool.foreach(item => item.update(time));
+			this.getPool(POOL_TYPES.UPDATEABLE).foreach(item => item.update(time));
 	}
 
 	getAllRiding(physObj) {
-		return this._collidablePool.getAllRiding(physObj);
+		return this.getPool(POOL_TYPES.COLLIDABLE).getAllRiding(physObj);
 	}
 
 	getAllCollidingExcept(physObj, offset, except) {
-        return this._collidablePool.getAllCollidingExcept(physObj, offset, except);
+        return this.getPool(POOL_TYPES.COLLIDABLE).getAllCollidingExcept(physObj, offset, except);
 	}
 }
+
 
 // class Level {
 // 	constructor(tileArr, game, levelInd, location, tilecodeToObj, createPlayer) {

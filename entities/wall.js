@@ -1,6 +1,7 @@
 import { RectHitbox, PhysObj, DummyCollidableProvider, DummyUpdateHandler } from "../engine/physics.js";
 import { DrawableEntity } from "../engine/drawableEntity.js";
 import * as CollisionHandlers from "../collisionHandlers.js";
+import { POOL_TYPES } from "../pools.js";
 
 //Control freak? No, this is a composition root function.
 export function makeWall(parent, relativePosition, sprite, registrar) {
@@ -16,6 +17,8 @@ export function makeWall(parent, relativePosition, sprite, registrar) {
 	);
 
 	const drawableEntity = new DrawableEntity(hitbox, sprite);
-	registrar.registerCollidable(physObj);
-	registrar.registerDrawable(drawableEntity);
+	registrar.registerItem(POOL_TYPES.COLLIDABLE, physObj);
+	registrar.registerItem(POOL_TYPES.DRAWABLE_DEBUG, physObj);
+	
+	registrar.registerItem(POOL_TYPES.DRAWABLE, drawableEntity);
 }

@@ -8,6 +8,7 @@ import { Vector } from "./engine/math.js";
 import { ResetAtSpawn } from "./reset.js";
 import * as GeneralUpdateHandlers from "./physUpdateHandlers.js";
 import { debugOptions } from "./engine/debug.js";
+import {POOL_TYPES} from "./pools.js";
 
 //TODO: provide constants for magic numbers
 
@@ -225,12 +226,15 @@ export function make(parent, position, inputProvider, groundedProvider, collidab
 		Vector({x: -1, y: -2})
 	);
 
-	registrar.registerDrawable(drawableEntity);
-	registrar.registerUpdateable(drawableEntity);
-	registrar.registerUpdateable(physObj);
-	registrar.registerCollidable(physObj);
-	registrar.registerResettable(physObj);
-	registrar.registerResettable(new ResetAtSpawn(hitbox, position));
+	registrar.registerItem(POOL_TYPES.DRAWABLE, drawableEntity);
+	registrar.registerItem(POOL_TYPES.UPDATEABLE, drawableEntity);
+
+	registrar.registerItem(POOL_TYPES.UPDATEABLE, physObj);
+	registrar.registerItem(POOL_TYPES.RESETTABLE, physObj);
+	registrar.registerItem(POOL_TYPES.COLLIDABLE, physObj);
+	registrar.registerItem(POOL_TYPES.DRAWABLE_DEBUG, physObj);
+
+	registrar.registerItem(POOL_TYPES.RESETTABLE, new ResetAtSpawn(hitbox, position));
 }
 
 // import {Actor, GRAVITY_COMING_DOWN, GRAVITY_GOING_UP } from "./physics.js";

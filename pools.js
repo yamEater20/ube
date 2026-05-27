@@ -12,10 +12,18 @@ export class Pool {
 
     get() {return this._items}
 
+	concat(otherPool) {
+		return new Pool(this.get().concat(otherPool.get()));
+	}
+
 	foreach(func) {this._items.forEach(item => func(item));}
 }
 
 export class CollidableProvider extends Pool {
+	concat(otherPool) {
+		return new CollidableProvider(this.get().concat(otherPool.get()));
+	}
+
     getAllRiding(physObj) {
 		return this.get().filter(
 			p =>
@@ -30,29 +38,37 @@ export class CollidableProvider extends Pool {
     }
 }
 
+// TODO: can this be changed to a Dict<type, pool> ?
+export const POOL_TYPES = Object.freeze({
+	COLLIDABLE: 0,
+	DRAWABLE: 1,
+	UPDATEABLE: 2,
+	RESETTABLE: 3,
+	DRAWABLE_DEBUG: 4,
+	ROOM: 5
+});
+
+//Pool of pools
 export class Registrar {
-	constructor(collidablePool, drawablePool, updateablePool, resettablePool, debugDrawablePool) {
-		this._drawablePool = drawablePool;
-		this._collidablePool = collidablePool;
-		this._updateablePool = updateablePool;
-		this._resettablePool = resettablePool;
-		this._debugDrawablePool = debugDrawablePool;
+	constructor(pools) {
+		this._pools = pools;
 	}
 
-	registerDrawable(d) {
-		this._drawablePool.register(d);
+	getPool(poolType) {
+		return this._pools[poolType];
 	}
 
-	registerCollidable(c) {
-		this._collidablePool.register(c);
-		this._debugDrawablePool.register(c);
+	registerItem(poolType, object) {
+		this.getPool(poolType).register(object);
 	}
+}
 
-	registerUpdateable(u) {
-		this._updateablePool.register(u);
-	}
-
-	registerResettable(r) {
-		this._resettablePool.register(r);
-	}
+export function PoolTypesFactory() {
+	const poolDict = {};
+	poolDict[POOL_TYPES.COLLIDABLE] = new CollidableProvider();
+	poolDict[POOL_TYPES.DRAWABLE] = new Pool();
+	poolDict[POOL_TYPES.UPDATEABLE] = new Pool();
+	poolDict[POOL_TYPES.DRAWABLE_DEBUG] = new Pool();
+	poolDict[POOL_TYPES.RESETTABLE] = new Pool();
+	return poolDict;
 }
