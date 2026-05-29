@@ -44,7 +44,8 @@ export class InputProvider {
             "pause",
             "reset",
             "debug",
-            "debugHitboxes"
+            "debugHitboxes",
+            "nextRoom"
         ];
 
         document.addEventListener('keydown', this.keyDownHandler.bind(this), false);
@@ -77,7 +78,9 @@ export class InputProvider {
 
             "pause": this._keyCodes.KeyV,
             "reset": this._keyCodes.KeyR,
+
             "debug": this._keyCodes.KeyO,
+            "nextRoom": this._keyCodes.KeyI,
             "debugHitboxes": this._keyCodes.KeyH
         };
 

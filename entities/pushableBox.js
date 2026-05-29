@@ -6,7 +6,7 @@ import * as Sprites from "../engine/sprites.js";
 import { ResetAtSpawn } from "../reset.js";
 import { POOL_TYPES } from "../pools.js";
 
-export function makePushableBox(hitbox, updateHandler, collidableProvider, groundedProvider, registrar) {
+export function makePushableBox(hitbox, updateHandler, collidableProvider, groundedProvider) {
 	const position = Vector({x: hitbox.relativePosition.x, y: hitbox.relativePosition.y});
 	const physObj = new PhysObj(
 		hitbox,
@@ -35,11 +35,11 @@ export function makePushableBox(hitbox, updateHandler, collidableProvider, groun
         )
     );
 
-	registrar.registerItem(POOL_TYPES.COLLIDABLE, physObj);
-	registrar.registerItem(POOL_TYPES.UPDATEABLE, physObj);
-	registrar.registerItem(POOL_TYPES.DRAWABLE_DEBUG, physObj);
-	registrar.registerItem(POOL_TYPES.RESETTABLE, physObj);
-	
-	registrar.registerItem(POOL_TYPES.DRAWABLE, drawableEntity);
-	registrar.registerItem(POOL_TYPES.RESETTABLE, new ResetAtSpawn(hitbox, position));
+	const ret = {};
+	ret[POOL_TYPES.COLLIDABLE] = [physObj];
+	ret[POOL_TYPES.UPDATEABLE] = [physObj];
+	ret[POOL_TYPES.DRAWABLE_DEBUG] = [physObj];
+	ret[POOL_TYPES.DRAWABLE] = [drawableEntity];
+	ret[POOL_TYPES.RESETTABLE] = [physObj, new ResetAtSpawn(hitbox, position)];
+	return ret;
 }

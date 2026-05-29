@@ -4,7 +4,7 @@ import {
     VectorZero
 } from './engine/math.js';
 import * as Sprites from "./engine/sprites.js";
-import { PoolTypesFactory, POOL_TYPES, Registrar } from './pools.js';
+import { PoolTypesFactory, POOL_TYPES, Registrar, CollidableProvider } from './pools.js';
 import {camera} from './camera.js';
 import * as UpdateHandlers from './physUpdateHandlers.js';
 import { makeWall } from './entities/wall.js';
@@ -28,31 +28,32 @@ export class Room extends Entity {
 		const fallUpdateHandler = new UpdateHandlers.FallUpdateHandler(groundedProvider);
 
 		for (let i = 0; i < 16; ++i) {
-			makeWall(
+			this._registrar.registerEntity(makeWall(
 				this,
 				Vector({x: i*8, y: 100}),
 				new Sprites.TileSprite(Sprites.SPRITES.WALL_TILESHEET, i === 0 ? VectorZero : i === 19 ? VectorRight.scalar(2) : VectorRight),
 				this._registrar
-			);
+			));
 		}
 
 		for (let i = 5; i < 16; ++i) {
-			makeWall(
+			this._registrar.registerEntity(makeWall(
 				this,
 				Vector({x: i*8, y: 80}),
 				new Sprites.TileSprite(Sprites.SPRITES.WALL_TILESHEET, i === 0 ? VectorZero : i === 19 ? VectorRight.scalar(2) : VectorRight),
 				this._registrar
-			);
+			));
 		}
 
-		makePushableBox(
+		this._registrar.registerEntity(makePushableBox(
 			new RectHitbox(this, VectorRight.scalar(12), 8, 8),
 			new UpdateHandlers.Composite([fallUpdateHandler, new UpdateHandlers.MovingGuy()]),
-			// fallUpdateHandler,
 			globalCollidableProvider,
 			groundedProvider,
 			this._registrar
-		);
+		));
+
+		this._collidableProvider = new CollidableProvider(this.getPool(POOL_TYPES.COLLIDABLE));
 	}
 
 	getPool(poolType) {return this._registrar.getPool(poolType);}
@@ -67,12 +68,8 @@ export class Room extends Entity {
 			this.getPool(POOL_TYPES.UPDATEABLE).foreach(item => item.update(time));
 	}
 
-	getAllRiding(physObj) {
-		return this.getPool(POOL_TYPES.COLLIDABLE).getAllRiding(physObj);
-	}
-
-	getAllCollidingExcept(physObj, offset, except) {
-        return this.getPool(POOL_TYPES.COLLIDABLE).getAllCollidingExcept(physObj, offset, except);
+	getLocalCollidableProvider() {
+		return this._collidableProvider;
 	}
 }
 

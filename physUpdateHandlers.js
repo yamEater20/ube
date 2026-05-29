@@ -19,7 +19,7 @@ export class GroundedProvider {
 
 	onGround(p) {
 		const onTopOf = this._collidableProvider
-			.getAllCollidingExcept(p, VectorDown, [])
+			.getAllColliding(p, VectorDown)
 			.filter(physObj => physObj.collisionHandler.containsAdjective(AdjectiveIds.GROUND));
 		return onTopOf.length > 0;
 	}

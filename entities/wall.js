@@ -4,7 +4,7 @@ import * as CollisionHandlers from "../collisionHandlers.js";
 import { POOL_TYPES } from "../pools.js";
 
 //Control freak? No, this is a composition root function.
-export function makeWall(parent, relativePosition, sprite, registrar) {
+export function makeWall(parent, relativePosition, sprite) {
 	const hitbox = new RectHitbox(parent, relativePosition, 8, 8);
 
 	const physObj = new PhysObj(
@@ -17,8 +17,9 @@ export function makeWall(parent, relativePosition, sprite, registrar) {
 	);
 
 	const drawableEntity = new DrawableEntity(hitbox, sprite);
-	registrar.registerItem(POOL_TYPES.COLLIDABLE, physObj);
-	registrar.registerItem(POOL_TYPES.DRAWABLE_DEBUG, physObj);
-	
-	registrar.registerItem(POOL_TYPES.DRAWABLE, drawableEntity);
+	const ret = {};
+	ret[POOL_TYPES.COLLIDABLE] = [physObj];
+	ret[POOL_TYPES.DRAWABLE_DEBUG] = [physObj];
+	ret[POOL_TYPES.DRAWABLE] = [drawableEntity];
+	return ret;
 }

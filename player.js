@@ -175,12 +175,12 @@ class NonRidableCollidableProvider {
 		return [];
 	}
 
-	getAllCollidingExcept(physObj, offset, except) {
-        return this._collidableProvider.getAllCollidingExcept(physObj, offset, except);
+	getAllColliding(physObj, offset) {
+        return this._collidableProvider.getAllColliding(physObj, offset);
     }
 }
 
-export function make(parent, position, inputProvider, groundedProvider, collidableProvider, registrar) {
+export function make(parent, position, inputProvider, groundedProvider, collidableProvider) {
 	const hitbox = new RectHitbox(parent, position, 6, 6);
 
 	const physObj = new PhysObj(
@@ -226,15 +226,15 @@ export function make(parent, position, inputProvider, groundedProvider, collidab
 		Vector({x: -1, y: -2})
 	);
 
-	registrar.registerItem(POOL_TYPES.DRAWABLE, drawableEntity);
-	registrar.registerItem(POOL_TYPES.UPDATEABLE, drawableEntity);
+	const ret = {};
 
-	registrar.registerItem(POOL_TYPES.UPDATEABLE, physObj);
-	registrar.registerItem(POOL_TYPES.RESETTABLE, physObj);
-	registrar.registerItem(POOL_TYPES.COLLIDABLE, physObj);
-	registrar.registerItem(POOL_TYPES.DRAWABLE_DEBUG, physObj);
+	ret[POOL_TYPES.DRAWABLE] = [drawableEntity];
+	ret[POOL_TYPES.UPDATEABLE] = [drawableEntity, physObj];
+	ret[POOL_TYPES.RESETTABLE] = [physObj, new ResetAtSpawn(hitbox, position)];
+	ret[POOL_TYPES.COLLIDABLE] = [physObj];
+	ret[POOL_TYPES.DRAWABLE_DEBUG] = [physObj];
 
-	registrar.registerItem(POOL_TYPES.RESETTABLE, new ResetAtSpawn(hitbox, position));
+	return ret;
 }
 
 // import {Actor, GRAVITY_COMING_DOWN, GRAVITY_GOING_UP } from "./physics.js";

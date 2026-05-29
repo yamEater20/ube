@@ -18,42 +18,42 @@ import { Room } from './world.js';
 import * as Setup from './engine/setup.js';
 import {toggleDebugAll, debugOptions} from "./engine/debug.js";
 
-// class RoomsCollidableProvider {
-// 	constructor() {
-// 		this._rooms = [];
-// 		this._collidablePool = new CollidableProvider();
-// 		this.roomIndex = 0;
-// 	}
-
-// 	registerRooms(rooms) {this._rooms = rooms;}
-// 	register(c) {this._collidablePool.register(c);}
-
-// 	getAllRiding(physObj) {
-// 		const myAllRiding = this._collidablePool.getAllRiding(physObj);
-// 		const roomAllRiding = this._rooms[this.roomIndex].getAllRiding(physObj);
-// 		return myAllRiding.concat(roomAllRiding);
-// 	}
-
-// 	getAllCollidingExcept(physObj, offset, except) {
-//         const myAllColliding = this._collidablePool.getAllCollidingExcept(physObj, offset, except);
-// 		const roomAllColliding = this._rooms[this.roomIndex].getAllCollidingExcept(physObj, offset, except);
-// 		return myAllColliding.concat(roomAllColliding);
-//     }
-// }
-
 class RegistrarWithRooms {
 	constructor(registrar) {
-		this._registrar = registrar,
-		this._roomsPool = new RoomsPool();
+		this._registrar = registrar;
 	}
 
+	setRoomsPool(r) {this._roomsPool = r;}
+	getRoomsPool() {return this._roomsPool;}
+
 	getPool(poolType) {
-		return this._registrar.getPool(poolType).concat(this._roomsPool.getCurrentPool(poolType));
+		return this._registrar.getPool(poolType).concat(this._roomsPool.getPool(poolType));
 	}
 
 	registerItem(poolType, object) {
 		this._registrar.registerItem(poolType, object);
 	}
+}
+
+class GlobalCollidableProvider {
+	constructor(persistentCollidableProvider) {
+		this._persistentCollidableProvider = persistentCollidableProvider;
+	}
+
+	setRoomsPool(r) {this._roomsPool = r;}
+	getRoomsPool() {return this._roomsPool;}
+
+	getAllRiding(physObj) {
+		return this
+			._roomsPool.getCurrentRoom().getLocalCollidableProvider().getAllRiding(physObj)
+			.concat(this._persistentCollidableProvider.getAllRiding(physObj));
+	}
+
+	getAllColliding(physObj, offset) {
+		return this
+			._roomsPool.getCurrentRoom().getLocalCollidableProvider().getAllColliding(physObj, offset)
+			.concat(this._persistentCollidableProvider.getAllColliding(physObj, offset))
+    }
 }
 
 class RoomsPool extends Pool {
@@ -69,34 +69,17 @@ class RoomsPool extends Pool {
 	getPool(poolType) {
 		return this.getCurrentRoom().getPool(poolType);
 	}
+
+	nextRoom() {
+		this.roomIndex = (this.roomIndex + 1) % this._items.length;
+	}
 }
 
 class Root {
 	constructor(trueTime, inputProvider, registrar) {
 		this._trueTime = trueTime;
 		this._inputProvider = inputProvider;
-		
-		this._registrar = Regis;
-
-		const globalCollidableProvider = this._registrar.getPool(POOL_TYPES.COLLIDABLE);
-		const groundedProvider = new UpdateHandlers.GroundedProvider(globalCollidableProvider);
-
-		const room = new Room(this, VectorZero, globalCollidableProvider);
-		const room2 = new Room(this, VectorRight.scalar(128), globalCollidableProvider);
-		
-		
-
-		this._registrar.registerItem(POOL_TYPES.UPDATEABLE, camera);
-
-		Player.make(
-			this,
-			Vector({x: 12, y: 20}),
-			this._inputProvider,
-			groundedProvider,
-			globalCollidableProvider,
-			this._registrar
-		);
-
+		this._registrar = registrar;
 	}
 
 	globalPosition() {
@@ -112,26 +95,18 @@ class Root {
 		this._trueTime.tick();
 		this._inputProvider.update();
 
+		const input = this._inputProvider.getInput();
 
-		if (this._inputProvider.getInput().pausePressed)
-			this._trueTime.togglePause();
-
-		if (this._inputProvider.getInput().resetPressed)
-			this._resettablePool.resetAll();
-
-		if (this._inputProvider.getInput().debugPressed)
-			toggleDebugAll();
-
-		if (this._inputProvider.getInput().debugHitboxesPressed)
-			debugOptions.showHitboxes = !debugOptions.showHitboxes;
-		
+		if (input.pausePressed) this._trueTime.togglePause();
+		if (input.resetPressed) this._registrar.getPool(POOL_TYPES.RESETTABLE).foreach(r => r.reset());
+		if (input.debugPressed) toggleDebugAll();
+		if (input.debugHitboxesPressed) debugOptions.showHitboxes = !debugOptions.showHitboxes;
+		if (input.nextRoomPressed) this._registrar.getRoomsPool().nextRoom();
 		
 		if (!this._trueTime.getPaused())
-			this._registrar
-				.getPool(POOL_TYPES.UPDATEABLE)
-				.foreach(
-					item => item.update(this._trueTime)
-				);
+		{
+			this._registrar.getPool(POOL_TYPES.UPDATEABLE).foreach(item => item.update(this._trueTime));
+		}
 	}
 }
 
@@ -146,11 +121,39 @@ let mainLoopDiagnostics = new Diagnostics(mainLoop);
 
 async function setup() {
 	Setup.setup();
+
+	const inputProvider = new InputProvider();
+
+	const persistentRegistrar = new Registrar(PoolTypesFactory());
+	const orphanedCollidableProvider = new CollidableProvider(persistentRegistrar.getPool(POOL_TYPES.COLLIDABLE));
+	const globalRegistrar = new RegistrarWithRooms(persistentRegistrar);
+	const globalCollidableProvider = new GlobalCollidableProvider(orphanedCollidableProvider);
+	const groundedProvider = new UpdateHandlers.GroundedProvider(globalCollidableProvider);
+
+	persistentRegistrar.registerItem(POOL_TYPES.UPDATEABLE, camera);
+
 	root = new Root(
 		new Time(),
-		new InputProvider(),
-		new Registrar(PoolTypesFactory())
+		inputProvider,
+		globalRegistrar
 	);
+
+	persistentRegistrar.registerEntity(Player.make(
+		root,
+		Vector({x: 12, y: 20}),
+		inputProvider,
+		groundedProvider,
+		globalCollidableProvider,
+		globalRegistrar
+	));
+
+	const roomsPool = new RoomsPool([
+		new Room(root, VectorZero, globalCollidableProvider),
+		new Room(root, VectorRight.scalar(128), globalCollidableProvider)
+	]);
+
+	globalRegistrar.setRoomsPool(roomsPool);
+	globalCollidableProvider.setRoomsPool(roomsPool);
 	
 	// let levelData = await timeIt("Read level data", getLevelData);
 	

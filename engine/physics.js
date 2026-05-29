@@ -82,7 +82,7 @@ class PhysObj extends Entity {
 
 		this.updateHandler = updateHandler;
 		this.collisionHandler = collisionHandler;
-		this.collidableProvider = collidableProvider;
+		this._collidableProvider = collidableProvider;
 	}
 
 	setXVelocity(vx) {
@@ -155,8 +155,8 @@ class PhysObj extends Entity {
 		const directionScalar = direction.x + direction.y;
 		let didCollide = false;
 		while (amount !== 0) {
-			const allRiding = this.collidableProvider.getAllRiding(this);
-			const allColliding = this.collidableProvider.getAllCollidingExcept(this, direction, allRiding);
+			const allRiding = this._collidableProvider.getAllRiding(this);
+			const allColliding = this._collidableProvider.getAllColliding(this, direction).filter(p => !allRiding.includes(p));
 			let shouldBreak = false;
 			allColliding.some(c => {
 				if (this.collisionHandler.onCollide(this, c, direction)) {
@@ -205,7 +205,7 @@ class DummyCollisionHandler {
 class DummyCollidableProvider {
 	getAllRiding(physObj) {return [];}
 
-	getAllCollidingExcept(physObj, offset, except) {
+	getAllColliding(physObj, offset) {
 		return [];
     }
 }
