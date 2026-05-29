@@ -17,6 +17,7 @@ import * as Player from './player.js';
 import { Room } from './world.js';
 import * as Setup from './engine/setup.js';
 import {toggleDebugAll, debugOptions} from "./engine/debug.js";
+import { getLevelData } from './levelEditor.js';
 
 class RegistrarWithRooms {
 	constructor(registrar) {
@@ -155,7 +156,8 @@ async function setup() {
 	globalRegistrar.setRoomsPool(roomsPool);
 	globalCollidableProvider.setRoomsPool(roomsPool);
 	
-	// let levelData = await timeIt("Read level data", getLevelData);
+	let levelData = await timeIt("Read level data", getLevelData);
+	console.log(levelData);
 	
 	// timeIt("Build levels", () => game.buildLevels(levelData));
 

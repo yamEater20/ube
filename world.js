@@ -13,9 +13,7 @@ import { makePushableBox } from './entities/pushableBox.js';
 import { RectHitbox } from './engine/physics.js';
 import { debugOptions } from './engine/debug.js';
 
-const ROOM_SIZE_PIXELS = [
-	128, 128
-];
+export const ROOM_SIZE_TILES = [16, 16];
 
 export class Room extends Entity {
 	constructor(parent, relativePosition, globalCollidableProvider) {
