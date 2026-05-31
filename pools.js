@@ -16,7 +16,7 @@ export class Pool {
 
     get() {return this._items}
 
-	foreach(func) {this._items.forEach(item => func(item));}
+	foreach(func) {this._items.forEach((item, index) => func(item, index));}
 }
 
 export class CollidableProvider {

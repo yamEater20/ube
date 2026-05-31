@@ -180,7 +180,7 @@ class NonRidableCollidableProvider {
     }
 }
 
-export function make(parent, position, inputProvider, groundedProvider, collidableProvider) {
+export function make(parent, position, inputProvider, groundedProvider, collidableProvider, onRoomCollide) {
 	const hitbox = new RectHitbox(parent, position, 6, 6);
 
 	const physObj = new PhysObj(
@@ -205,7 +205,8 @@ export function make(parent, position, inputProvider, groundedProvider, collidab
 				[
 					new CollisionHandlers.PushableBoxReaction(),
 					new CollisionHandlers.WallReaction(),
-					new CollisionHandlers.GroundReaction(groundedProvider)
+					new CollisionHandlers.GroundReaction(groundedProvider),
+					new CollisionHandlers.RoomColliderReaction(onRoomCollide)
 				]
 			)
 		),
@@ -233,7 +234,7 @@ export function make(parent, position, inputProvider, groundedProvider, collidab
 	ret[POOL_TYPES.RESETTABLE] = [physObj, new ResetAtSpawn(hitbox, position)];
 	ret[POOL_TYPES.COLLIDABLE] = [physObj];
 	ret[POOL_TYPES.DRAWABLE_DEBUG] = [hitbox];
-	ret[POOL_TYPES.CAMERA_FOLLOW] = [hitbox];
+	// ret[POOL_TYPES.CAMERA_FOLLOW] = [hitbox];
 
 	return ret;
 }

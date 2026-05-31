@@ -22,6 +22,7 @@ import { postProcessWalls } from './levelEditor/postProcess.js';
 import { TILE_SIZE } from './engine/graphics.js';
 import { CACHED_LEVELS } from './levelEditor/cache.js';
 import { makeRoomCollider } from './entities/roomCollider.js';
+import { Entity } from './engine/entity.js';
 
 class RegistrarWithRooms {
 	constructor(registrar) {
@@ -82,10 +83,11 @@ class RoomsPool extends Pool {
 	}
 
 	getPool(poolType) {
-		if (debugOptions.showAll && (poolType === POOL_TYPES.DRAWABLE || poolType === POOL_TYPES.DRAWABLE_DEBUG)) {
-			return this.get().map(r => r.getPool(poolType)).reduce((a, b) => a.concat(b));
-		}
-		return this.getCurrentRoom().getPool(poolType);
+		// if (debugOptions.showAll && (poolType === POOL_TYPES.DRAWABLE || poolType === POOL_TYPES.DRAWABLE_DEBUG)) {
+		// 	return this.get().map(r => r.getPool(poolType)).reduce((a, b) => a.concat(b));
+		// }
+		// return this.getCurrentRoom().getPool(poolType);
+		return this.get().map(r => r.getPool(poolType)).reduce((a, b) => a.concat(b));
 	}
 
 	nextRoom() {
@@ -171,18 +173,6 @@ async function setup() {
 		globalRegistrar
 	);
 
-	const player = Player.make(
-		root,
-		Vector({x: 32, y: 98}),
-		inputProvider,
-		groundedProvider,
-		globalCollidableProvider,
-		globalRegistrar
-	);
-	
-	persistentRegistrar.registerEntity(player);
-	persistentRegistrar.registerItem(POOL_TYPES.UPDATEABLE, camera);
-
 	const roomsPool = new RoomsPool(levelData.levels.map(data => 
 		new Room(
 			root,
@@ -192,9 +182,23 @@ async function setup() {
 		)
 	));
 
-	roomsPool.foreach(room =>
-		persistentRegistrar.registerEntity(makeRoomCollider(room, ROOM_SIZE_TILES.scalar(TILE_SIZE)))
+	const player = Player.make(
+		root,
+		Vector({x: 32, y: 98}),
+		inputProvider,
+		groundedProvider,
+		globalCollidableProvider,
+		roomCollider => roomsPool.roomIndex = roomCollider.roomIndex
 	);
+	
+	persistentRegistrar.registerEntity(player);
+	persistentRegistrar.registerItem(POOL_TYPES.UPDATEABLE, camera);
+
+	roomsPool.foreach((room, index) => {
+		const roomSizeWorldSpace = ROOM_SIZE_TILES.scalar(TILE_SIZE);
+		persistentRegistrar.registerEntity(makeRoomCollider(room, index, roomSizeWorldSpace));
+		persistentRegistrar.registerItem(POOL_TYPES.CAMERA_FOLLOW, new Entity(room, roomSizeWorldSpace.scalar(0.5)));
+	});
 	globalRegistrar.setRoomsPool(roomsPool);
 	globalCollidableProvider.setRoomsPool(roomsPool);
 	

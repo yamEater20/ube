@@ -123,5 +123,19 @@ export class PushableBox {
 }
 
 export class RoomCollider {
+    constructor(roomIndex) {
+        this.roomIndex = roomIndex;
+    }
     id() {return TAG_IDS.ROOM;}
+}
+
+export class RoomColliderReaction {
+    constructor(func) {
+        this._handler = func;
+    }
+    id() {return TAG_IDS.ROOM;}
+    react(physObj, other, room, direction) {
+        this._handler(room);
+        return false;
+    }
 }

@@ -3,12 +3,12 @@ import { VectorZero } from "../engine/math.js";
 import { DummyCollidableProvider, DummyUpdateHandler, PhysObj, RectHitbox } from "../engine/physics.js";
 import { POOL_TYPES } from "../pools.js";
 
-export function makeRoomCollider(room, colliderSize) {
+export function makeRoomCollider(room, roomIndex, colliderSize) {
     const hitbox = new RectHitbox(room, VectorZero, colliderSize.x, colliderSize.x, "#558fc930")
     const physObj = new PhysObj(
         hitbox,
         new DummyUpdateHandler(),
-        new TagOnly([new RoomCollider]),
+        new TagOnly([new RoomCollider(roomIndex)]),
         new DummyCollidableProvider()
     );
 

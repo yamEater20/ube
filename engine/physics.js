@@ -14,7 +14,7 @@ class RectHitbox extends Entity {
 		this.width = width;
 		this.height = height;
 
-		this._color = color ?? "#ff000030";
+		this._color = color ?? "#ff000040";
     }
 
 	toStr() {
