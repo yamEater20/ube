@@ -1,7 +1,7 @@
-import {framesToMs, Vector} from './engine/math.js';
-import {CTX} from './engine/graphics.js';
-import * as Text from './text.js';
-import {msToFrames, Timer} from './time.js';
+import {framesToMs, Vector} from './math.js';
+import {CTX, PIXEL_GAME_SIZE} from './graphics.js';
+import * as Text from '../text.js';
+import {msToFrames, Timer} from '../time.js';
 
 const SCREEN_SHAKES = [
 	Vector({x: 0, y: 0}),
@@ -16,15 +16,15 @@ const SCREEN_SHAKES = [
 ];
 
 class Camera {
-    constructor(followPool) {
-        this._position = Vector({x: 0, y: 0});
+    constructor(initialPosition, getFollowingFunc) {
+        this._position = initialPosition ?? Vector({x: 0, y: 0});
         this.screenShakePos = Vector({x: 0, y: 0});
         this.screenshakeTime = 0;
 
         this.strength = 0;
         this.shakeTimer = new Timer(1000);
 
-        this._followPool = followPool;
+        this._getFollowingFunc = getFollowingFunc;
     }
 
     getPosition() {
@@ -37,8 +37,6 @@ class Camera {
     }
 
     update(time) {
-        // this._position.x = Math.floor(Math.sin(TrueTime.time / 1000) * 10);
-        
         if (this.shakeTimer.finished()) {
             this.screenShakePos = Vector({x: 0, y: 0});
         } else {
@@ -51,7 +49,7 @@ class Camera {
             canvas.style.backgroundPosition = `top ${this.screenShakePos.x * 3}px left ${this.screenShakePos.y * 2}px`;
         }
 
-        this._moveToTarget(time, this._followPool.get()[0].globalPosition().add(-256/2, -144/2)); //TODO: change this pool to a queue for cinematics
+        this._moveToTarget(time, this._getFollowingFunc().globalPosition().add(-PIXEL_GAME_SIZE.x/2, -PIXEL_GAME_SIZE.y/2)); //TODO: change this pool to a queue for cinematics, remove hardcoded logic
     }
 
     drawRect(x, y, w, h, color) {
@@ -120,13 +118,13 @@ class Camera {
     _moveToTarget(time, targetPosition) {
 		var v = targetPosition.addPoint(this._position.scalar(-1));
 		const mag = v.magnitude();
-        if (mag < 0.01) {
+        if (mag < 1) {
             this._position = targetPosition;
 			return;
 		}
 
-		const speed = Math.min(6, mag / 4);
-		v = v.scalar(speed / mag * time.delta / 16.6);
+		const speed = Math.min(6, mag / 3) * 0.05;
+		v = v.scalar(speed / mag * time.delta);
 		this._position = this._position.addPoint(v);
     }
 }

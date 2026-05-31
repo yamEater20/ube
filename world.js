@@ -9,8 +9,9 @@ import { makeWall } from './entities/wall.js';
 import {Entity} from "./engine/entity.js";
 import { DummyCollidableProvider, DummyUpdateHandler, PhysObj, RectHitbox } from './engine/physics.js';
 import { debugOptions } from './engine/debug.js';
-import {ENTITY_NAMES} from "./entities/entityCodes.js";
+import {ENTITY_NAMES} from "./levelEditor/entityCodes.js";
 import { TAG_IDS, TagOnly } from './collisionHandlers.js';
+import { TILE_SIZE } from './engine/graphics.js';
 
 export const ROOM_SIZE_TILES = Vector({x: 16, y: 16});
 
@@ -50,6 +51,9 @@ export class Room extends Entity {
 				}
 			}
 		}
+
+		const roomSizeWorldSpace = ROOM_SIZE_TILES.scalar(TILE_SIZE);
+		registrar.registerItem(POOL_TYPES.CAMERA_FOLLOW, new Entity(this, roomSizeWorldSpace.scalar(0.5)));
 	}
 
 	getPool(poolType) {return this._registrar.getPool(poolType);}

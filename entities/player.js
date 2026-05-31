@@ -1,14 +1,14 @@
-import { Timer } from "./time.js";
-import { GRAVITY_COMING_DOWN, GRAVITY_GOING_UP, PhysObj, RectHitbox } from "./engine/physics.js";
-import { framesToMs } from "./engine/math.js";
-import * as CollisionHandlers from "./collisionHandlers.js";
-import * as Sprites from "./engine/sprites.js";
-import { UpdatableDrawableEntity } from "./engine/drawableEntity.js";
-import { Vector } from "./engine/math.js";
-import { ResetAtSpawn } from "./reset.js";
-import * as GeneralUpdateHandlers from "./physUpdateHandlers.js";
-import { debugOptions } from "./engine/debug.js";
-import {POOL_TYPES} from "./pools.js";
+import { Timer } from "../time.js";
+import { GRAVITY_COMING_DOWN, GRAVITY_GOING_UP, PhysObj, RectHitbox } from "../engine/physics.js";
+import { framesToMs } from "../engine/math.js";
+import * as CollisionHandlers from "../collisionHandlers.js";
+import * as Sprites from "../engine/sprites.js";
+import { UpdatableDrawableEntity } from "../engine/drawableEntity.js";
+import { Vector } from "../engine/math.js";
+import { ResetAtSpawn } from "../reset.js";
+import * as GeneralUpdateHandlers from "../physUpdateHandlers.js";
+import { debugOptions } from "../engine/debug.js";
+import {POOL_TYPES} from "../pools.js";
 
 //TODO: provide constants for magic numbers
 
@@ -119,13 +119,17 @@ class DebugUpdateHandler {
 }
 
 class CollisionHandlerDebugDecorator {
-	constructor(businessHandler) {
+	constructor(businessHandler, debugReactions) {
 		this._businessHandler = businessHandler;
-		this.reactions = this._businessHandler.reactions;
+		this._debugReactions = debugReactions;
 	}
 
 	getTags() {
-		return debugOptions.noClip ? [] : this._businessHandler.getAdjecgetTagstives();
+		return debugOptions.noClip ? [] : this._businessHandler.getTags();
+	}
+
+	getReactions() {
+		return debugOptions.noClip ? this._debugReactions : this._businessHandler.getReactions();
 	}
 
 	containsTag(tag) {
@@ -134,7 +138,6 @@ class CollisionHandlerDebugDecorator {
 	}
 
 	onCollide(physObj, other, direction) {
-		if (debugOptions.noClip) return false;
 		return this._businessHandler.onCollide(physObj, other, direction);
 	}
 }
@@ -183,6 +186,7 @@ class NonRidableCollidableProvider {
 export function make(parent, position, inputProvider, groundedProvider, collidableProvider, onRoomCollide) {
 	const hitbox = new RectHitbox(parent, position, 6, 6);
 
+	const roomColliderReaction = new CollisionHandlers.RoomColliderReaction(onRoomCollide);
 	const physObj = new PhysObj(
 		hitbox,
 		new UpdateHandler(
@@ -206,9 +210,10 @@ export function make(parent, position, inputProvider, groundedProvider, collidab
 					new CollisionHandlers.PushableBoxReaction(),
 					new CollisionHandlers.WallReaction(),
 					new CollisionHandlers.GroundReaction(groundedProvider),
-					new CollisionHandlers.RoomColliderReaction(onRoomCollide)
+					roomColliderReaction
 				]
-			)
+			),
+			[roomColliderReaction]
 		),
 		new NonRidableCollidableProvider(collidableProvider)
 	);
@@ -234,6 +239,7 @@ export function make(parent, position, inputProvider, groundedProvider, collidab
 	ret[POOL_TYPES.RESETTABLE] = [physObj, new ResetAtSpawn(hitbox, position)];
 	ret[POOL_TYPES.COLLIDABLE] = [physObj];
 	ret[POOL_TYPES.DRAWABLE_DEBUG] = [hitbox];
+	ret[POOL_TYPES.DRAWABLE] = [hitbox];
 	// ret[POOL_TYPES.CAMERA_FOLLOW] = [hitbox];
 
 	return ret;

@@ -10,10 +10,10 @@ import {
 import { Time } from './time.js';
 import { Diagnostics, timeIt } from './diagnostics.js';
 import { CollidableProvider, POOL_TYPES, Registrar, PoolTypesFactory, Pool } from './pools.js';
-import {Camera} from './camera.js';
+import {Camera} from './engine/camera.js';
 import {InputProvider, TASInputProvider} from './input.js';
 import * as UpdateHandlers from './physUpdateHandlers.js';
-import * as Player from './player.js';
+import * as Player from './entities/player.js';
 import { Room, ROOM_SIZE_TILES } from './world.js';
 import * as Setup from './engine/setup.js';
 import {toggleDebugAll, debugOptions} from "./engine/debug.js";
@@ -22,7 +22,6 @@ import { postProcessWalls } from './levelEditor/postProcess.js';
 import { TILE_SIZE } from './engine/graphics.js';
 import { CACHED_LEVELS } from './levelEditor/cache.js';
 import { makeRoomCollider } from './entities/roomCollider.js';
-import { Entity } from './engine/entity.js';
 
 class RegistrarWithRooms {
 	constructor(registrar) {
@@ -75,7 +74,7 @@ class GlobalCollidableProvider {
 class RoomsPool extends Pool {
 	constructor(items) {
 		super(items);
-		this.roomIndex = 0;
+		this.roomIndex = 12;
 	}
 
 	getCurrentRoom() {
@@ -86,8 +85,11 @@ class RoomsPool extends Pool {
 		// if (debugOptions.showAll && (poolType === POOL_TYPES.DRAWABLE || poolType === POOL_TYPES.DRAWABLE_DEBUG)) {
 		// 	return this.get().map(r => r.getPool(poolType)).reduce((a, b) => a.concat(b));
 		// }
-		// return this.getCurrentRoom().getPool(poolType);
-		return this.get().map(r => r.getPool(poolType)).reduce((a, b) => a.concat(b));
+		if ((poolType === POOL_TYPES.DRAWABLE || poolType === POOL_TYPES.DRAWABLE_DEBUG)) {
+			return this.get().map(r => r.getPool(poolType)).reduce((a, b) => a.concat(b));
+		}
+		return this.getCurrentRoom().getPool(poolType);
+		// return this.get().map(r => r.getPool(poolType)).reduce((a, b) => a.concat(b));
 	}
 
 	nextRoom() {
@@ -96,8 +98,9 @@ class RoomsPool extends Pool {
 }
 
 class Root {
-	constructor(trueTime, camera, inputProvider, registrar) {
+	constructor(trueTime, worldTime, camera, inputProvider, registrar) {
 		this._trueTime = trueTime;
+		this._worldTime = worldTime;
 		this._camera = camera;
 		this._inputProvider = inputProvider;
 		this._registrar = registrar;
@@ -114,11 +117,12 @@ class Root {
 
 	update() {
 		this._trueTime.tick();
+		this._worldTime.tick();
 		this._inputProvider.update();
 
 		const input = this._inputProvider.getInput();
 
-		if (input.pausePressed) this._trueTime.togglePause();
+		if (input.pausePressed) this._worldTime.togglePause();
 		if (input.resetPressed) this._registrar.getPool(POOL_TYPES.RESETTABLE).foreach(r => r.reset());
 
 		//Debug only
@@ -128,9 +132,11 @@ class Root {
 		if (input.nextRoomPressed) this._registrar.getRoomsPool().nextRoom();
 		if (input.showAllPressed) debugOptions.showAll = !debugOptions.showAll;
 		
-		if (!this._trueTime.getPaused())
+		this._camera.update(this._trueTime);
+
+		if (!this._worldTime.getPaused())
 		{
-			this._registrar.getPool(POOL_TYPES.UPDATEABLE).foreach(item => item.update(this._trueTime));
+			this._registrar.getPool(POOL_TYPES.UPDATEABLE).foreach(item => item.update(this._worldTime));
 		}
 	}
 }
@@ -164,9 +170,13 @@ async function setup() {
 	const globalCollidableProvider = new GlobalCollidableProvider(orphanedCollidableProvider);
 	const groundedProvider = new UpdateHandlers.GroundedProvider(globalCollidableProvider);
 
-	const camera = new Camera(persistentRegistrar.getPool(POOL_TYPES.CAMERA_FOLLOW));
+	const camera = new Camera(
+		Vector({x: 128*2, y: 128*2}),
+		() => globalRegistrar.getPool(POOL_TYPES.CAMERA_FOLLOW).get()[0]
+	);
 
 	root = new Root(
+		new Time(),
 		new Time(),
 		camera,
 		inputProvider,
@@ -184,7 +194,7 @@ async function setup() {
 
 	const player = Player.make(
 		root,
-		Vector({x: 32, y: 98}),
+		Vector({x: 128*2+40, y: 128*2+40}),
 		inputProvider,
 		groundedProvider,
 		globalCollidableProvider,
@@ -192,12 +202,11 @@ async function setup() {
 	);
 	
 	persistentRegistrar.registerEntity(player);
-	persistentRegistrar.registerItem(POOL_TYPES.UPDATEABLE, camera);
+	// persistentRegistrar.registerItem(POOL_TYPES.UPDATEABLE, camera);
 
 	roomsPool.foreach((room, index) => {
 		const roomSizeWorldSpace = ROOM_SIZE_TILES.scalar(TILE_SIZE);
 		persistentRegistrar.registerEntity(makeRoomCollider(room, index, roomSizeWorldSpace));
-		persistentRegistrar.registerItem(POOL_TYPES.CAMERA_FOLLOW, new Entity(room, roomSizeWorldSpace.scalar(0.5)));
 	});
 	globalRegistrar.setRoomsPool(roomsPool);
 	globalCollidableProvider.setRoomsPool(roomsPool);

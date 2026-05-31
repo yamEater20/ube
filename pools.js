@@ -81,5 +81,6 @@ export function PoolTypesFactory() {
 	poolDict[POOL_TYPES.UPDATEABLE] = new Pool();
 	poolDict[POOL_TYPES.DRAWABLE_DEBUG] = new Pool();
 	poolDict[POOL_TYPES.RESETTABLE] = new Pool();
+	poolDict[POOL_TYPES.CAMERA_FOLLOW] = new Pool();
 	return poolDict;
 }

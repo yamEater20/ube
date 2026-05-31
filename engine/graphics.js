@@ -1,11 +1,13 @@
-const PIXEL_GAME_SIZE = [256, 144];
-// const PIXEL_GAME_SIZE = [128, 128];
+import { Vector } from "./math.js";
+
+// const PIXEL_GAME_SIZE = Vector({x: 256, y: 144});
+const PIXEL_GAME_SIZE = Vector({x: 128, y: 128});
 const TILE_SIZE = 8;
 
 const canvas = document.createElement("canvas");
 const CTX = canvas.getContext("2d");
-canvas.width = PIXEL_GAME_SIZE[0];
-canvas.height = PIXEL_GAME_SIZE[1];
+canvas.width = PIXEL_GAME_SIZE.x;
+canvas.height = PIXEL_GAME_SIZE.y;
 document.body.insertBefore(canvas, document.body.childNodes[0]);
 function setupCanvas() {
     canvas.style.backgroundImage = 'url("images/Background.png")';
@@ -19,13 +21,13 @@ function setupCanvas() {
 function setMaxSize() {
 	const screenHeight = document.body.scrollHeight;
 	const screenWidth = document.body.scrollWidth;
-	let canvasHeight = Math.floor(screenHeight / PIXEL_GAME_SIZE[1]);
-	let canvasWidth = Math.floor(screenWidth / PIXEL_GAME_SIZE[0]);
+	let canvasHeight = Math.floor(screenHeight / PIXEL_GAME_SIZE.y);
+	let canvasWidth = Math.floor(screenWidth / PIXEL_GAME_SIZE.x);
 
 	const smallestRatio = Math.min(canvasWidth, canvasHeight);
 
-	canvasWidth = smallestRatio * PIXEL_GAME_SIZE[0];
-	canvasHeight = smallestRatio * PIXEL_GAME_SIZE[1];
+	canvasWidth = smallestRatio * PIXEL_GAME_SIZE.x;
+	canvasHeight = smallestRatio * PIXEL_GAME_SIZE.y;
 	canvas.style.width = canvasWidth + "px";
 	canvas.style.height = canvasHeight + "px";
 	canvas.style.backgroundSize = canvasHeight + "px";

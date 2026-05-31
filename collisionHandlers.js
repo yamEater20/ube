@@ -43,12 +43,14 @@ export class TagOnly {
 export class Composite extends TagOnly {
     constructor (tags, reactions) {
         super(tags);
-        this.reactions = reactions;
+        this._reactions = reactions;
     }
+
+    getReactions() {return this._reactions;}
     
     onCollide(physObj, other, direction) {
 		const otherTags = other.collisionHandler.getTags();
-        const myReactions = physObj.collisionHandler.reactions;
+        const myReactions = physObj.collisionHandler.getReactions();
 
         return myReactions.some(reaction => {
             const tag = otherTags[reaction.id()];

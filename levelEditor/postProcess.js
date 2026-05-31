@@ -1,4 +1,4 @@
-import { ENTITY_NAMES } from "../entities/entityCodes.js";
+import { ENTITY_NAMES } from "./entityCodes.js";
 import { Vector } from "../engine/math.js";
 
 const VEC_TILES = Object.freeze([
