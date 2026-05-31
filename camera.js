@@ -58,6 +58,11 @@ class Camera {
         CTX.fillStyle = color ? color : "#29ADFF";
         CTX.fillRect(x + this.getPosition().x, y + this.getPosition().y, w, h);
     }
+
+    drawRectOutline(x, y, w, h, color) {
+        CTX.strokeStyle = color;
+        CTX.strokeRect(x + this.getPosition().x, y + this.getPosition().y, w, h);
+    }
     
     drawPixel(x, y, color) {
         CTX.fillStyle = color ? color : 'black';

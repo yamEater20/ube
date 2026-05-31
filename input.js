@@ -10,10 +10,10 @@ export class InputProvider {
             "KeyV": false,
         
             // //Debug keys
-            "KeyO": false, //fly
-            "KeyH": false, //jump
-            "KeyJ": false,
-            "KeyK": false,
+            "KeyO": false, //all debug
+            "KeyH": false, //show hitboxes
+            "KeyJ": false, //fly
+            "KeyK": false, //show all
             "KeyL": false,
             "KeyI": false,
         
@@ -47,6 +47,7 @@ export class InputProvider {
             "debug",
             "debugHitboxes",
             "noClip",
+            "showAll",
             "nextRoom"
         ];
 
@@ -83,6 +84,7 @@ export class InputProvider {
 
             "debug": this._keyCodes.KeyO,
             "noClip": this._keyCodes.KeyJ,
+            "showAll": this._keyCodes.KeyK,
             "nextRoom": this._keyCodes.KeyI,
             "debugHitboxes": this._keyCodes.KeyH
         };

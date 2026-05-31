@@ -1,6 +1,6 @@
 import { getFallV } from "./engine/physics.js";
 import { VectorDown } from "./engine/math.js";
-import { AdjectiveIds } from "./collisionHandlers.js";
+import { TAG_IDS } from "./collisionHandlers.js";
 
 export class Composite {
 	constructor(handlers) {
@@ -20,7 +20,7 @@ export class GroundedProvider {
 	onGround(p) {
 		const onTopOf = this._collidableProvider
 			.getAllColliding(p, VectorDown)
-			.filter(physObj => physObj.collisionHandler.containsAdjective(AdjectiveIds.GROUND));
+			.filter(physObj => physObj.collisionHandler.containsTag(TAG_IDS.GROUND));
 		return onTopOf.length > 0;
 	}
 }

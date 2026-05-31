@@ -5,19 +5,17 @@ import {
 } from './engine/math.js';
 import * as Sprites from "./engine/sprites.js";
 import { PoolTypesFactory, POOL_TYPES, Registrar, CollidableProvider } from './pools.js';
-import * as UpdateHandlers from './physUpdateHandlers.js';
 import { makeWall } from './entities/wall.js';
 import {Entity} from "./engine/entity.js";
-import { makePushableBox } from './entities/pushableBox.js';
-import { RectHitbox } from './engine/physics.js';
+import { DummyCollidableProvider, DummyUpdateHandler, PhysObj, RectHitbox } from './engine/physics.js';
 import { debugOptions } from './engine/debug.js';
 import {ENTITY_NAMES} from "./entities/entityCodes.js";
-import { TILE_SIZE } from './engine/graphics.js';
+import { TAG_IDS, TagOnly } from './collisionHandlers.js';
 
-export const ROOM_SIZE_TILES = [16, 16];
+export const ROOM_SIZE_TILES = Vector({x: 16, y: 16});
 
 export class Room extends Entity {
-	constructor(parent, relativePosition, levelData, globalCollidableProvider) {
+	constructor(parent, relativePosition, levelData) {
 		super(parent, relativePosition);
 
 		//Control freak anti-pattern? Maybe, but very close to composition root.

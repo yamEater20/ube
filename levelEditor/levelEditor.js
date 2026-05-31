@@ -58,7 +58,7 @@ async function getLevelData() {
     const h = data.height;
     data = data.data;
     const levels = chunkArray(data, w, h).map(processLevel).map(postProcess);
-    const graph = createMapGraph(w / ROOM_SIZE_TILES[0], h / ROOM_SIZE_TILES[1]);
+    const graph = createMapGraph(w / ROOM_SIZE_TILES.x, h / ROOM_SIZE_TILES.y);
     errs.forEach(e => console.error(e));
 
     return {
@@ -67,8 +67,8 @@ async function getLevelData() {
         "numLevels": levels.length,
         "worldLevelLocations": levels.map(
             l => Vector({
-                x: l.x * ROOM_SIZE_TILES[0] * TILE_SIZE,
-                y: l.y * ROOM_SIZE_TILES[1] * TILE_SIZE
+                x: l.x * ROOM_SIZE_TILES.x * TILE_SIZE,
+                y: l.y * ROOM_SIZE_TILES.y * TILE_SIZE
             })
         )
     }
@@ -80,16 +80,16 @@ function toHex(x) {
 
 function chunkArray(arr, w, h) {
     const levels = [];
-    for (let yl = 0; yl < h / ROOM_SIZE_TILES[1]; ++yl) {
-        for (let xl = 0; xl < w / ROOM_SIZE_TILES[0]; ++xl) {
+    for (let yl = 0; yl < h / ROOM_SIZE_TILES.y; ++yl) {
+        for (let xl = 0; xl < w / ROOM_SIZE_TILES.x; ++xl) {
             const level = {
                 data: [],
                 x: xl,
                 y: yl
             }
-            for (let y = 0; y < ROOM_SIZE_TILES[1]; ++y) {
-                const startInd = ((yl * ROOM_SIZE_TILES[1] + y) * w + xl * ROOM_SIZE_TILES[0]) * 4;
-                const endInd   = ((yl * ROOM_SIZE_TILES[1] + y) * w + xl * ROOM_SIZE_TILES[0] + ROOM_SIZE_TILES[0]) * 4;
+            for (let y = 0; y < ROOM_SIZE_TILES.y; ++y) {
+                const startInd = ((yl * ROOM_SIZE_TILES.y + y) * w + xl * ROOM_SIZE_TILES.x) * 4;
+                const endInd   = ((yl * ROOM_SIZE_TILES.y + y) * w + xl * ROOM_SIZE_TILES.x + ROOM_SIZE_TILES.x) * 4;
                 level.data.push(arr.slice(startInd, endInd));
             }
             levels.push(level);
@@ -105,9 +105,9 @@ function processLevel(level) {
 
     const ret = [];
 
-    for (let y = 0; y < ROOM_SIZE_TILES[1]; ++y) {
+    for (let y = 0; y < ROOM_SIZE_TILES.y; ++y) {
         const row = [];
-        for (let x = 0; x < ROOM_SIZE_TILES[0]; ++x) {
+        for (let x = 0; x < ROOM_SIZE_TILES.x; ++x) {
             let r = lData[y][x * 4];
             let g = lData[y][x * 4 + 1];
             let b = lData[y][x * 4 + 2];
@@ -168,6 +168,18 @@ function createMapGraph(wl, hl) {
 function navigateMap(graph, curLevelInd, direction) {
     return graph[curLevelInd][direction];
 }
+
+function saveFile(levels) {
+    var data = new Blob(JSON.stringify(levels), {type: 'application/json'});
+
+    // If we are replacing a previously generated file we need to
+    // manually revoke the object URL to avoid memory leaks.
+
+    textFile = window.URL.createObjectURL(data);
+
+    // returns a URL you can use as a href
+    return textFile;
+  };
 
 export {
     getLevelData,

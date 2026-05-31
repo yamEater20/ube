@@ -124,13 +124,13 @@ class CollisionHandlerDebugDecorator {
 		this.reactions = this._businessHandler.reactions;
 	}
 
-	getAdjectives() {
-		return debugOptions.noClip ? [] : this._businessHandler.getAdjectives();
+	getTags() {
+		return debugOptions.noClip ? [] : this._businessHandler.getAdjecgetTagstives();
 	}
 
-	containsAdjective(adjective) {
+	containsTag(tag) {
 		if (debugOptions.noClip) return false;
-		return this._businessHandler.containsAdjective(adjective);
+		return this._businessHandler.containsTag(tag);
 	}
 
 	onCollide(physObj, other, direction) {
@@ -232,7 +232,7 @@ export function make(parent, position, inputProvider, groundedProvider, collidab
 	ret[POOL_TYPES.UPDATEABLE] = [drawableEntity, physObj];
 	ret[POOL_TYPES.RESETTABLE] = [physObj, new ResetAtSpawn(hitbox, position)];
 	ret[POOL_TYPES.COLLIDABLE] = [physObj];
-	ret[POOL_TYPES.DRAWABLE_DEBUG] = [physObj];
+	ret[POOL_TYPES.DRAWABLE_DEBUG] = [hitbox];
 	ret[POOL_TYPES.CAMERA_FOLLOW] = [hitbox];
 
 	return ret;

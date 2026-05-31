@@ -20,6 +20,8 @@ import {toggleDebugAll, debugOptions} from "./engine/debug.js";
 import { getLevelData } from './levelEditor/levelEditor.js';
 import { postProcessWalls } from './levelEditor/postProcess.js';
 import { TILE_SIZE } from './engine/graphics.js';
+import { CACHED_LEVELS } from './levelEditor/cache.js';
+import { makeRoomCollider } from './entities/roomCollider.js';
 
 class RegistrarWithRooms {
 	constructor(registrar) {
@@ -47,12 +49,22 @@ class GlobalCollidableProvider {
 	getRoomsPool() {return this._roomsPool;}
 
 	getAllRiding(physObj) {
+		if (debugOptions.showAll) {
+			return this._roomsPool.get().map(r => r.getLocalCollidableProvider().getAllColliding(physObj, offset)).reduce((a, b) => a.concat(b))
+				.concat(this._persistentCollidableProvider.getAllColliding(physObj, offset));
+		}
+		
 		return this
 			._roomsPool.getCurrentRoom().getLocalCollidableProvider().getAllRiding(physObj)
 			.concat(this._persistentCollidableProvider.getAllRiding(physObj));
 	}
 
 	getAllColliding(physObj, offset) {
+		if (debugOptions.showAll) {
+			return this._roomsPool.get().map(r => r.getLocalCollidableProvider().getAllColliding(physObj, offset)).reduce((a, b) => a.concat(b))
+				.concat(this._persistentCollidableProvider.getAllColliding(physObj, offset));
+		}
+		
 		return this
 			._roomsPool.getCurrentRoom().getLocalCollidableProvider().getAllColliding(physObj, offset)
 			.concat(this._persistentCollidableProvider.getAllColliding(physObj, offset))
@@ -70,6 +82,9 @@ class RoomsPool extends Pool {
 	}
 
 	getPool(poolType) {
+		if (debugOptions.showAll && (poolType === POOL_TYPES.DRAWABLE || poolType === POOL_TYPES.DRAWABLE_DEBUG)) {
+			return this.get().map(r => r.getPool(poolType)).reduce((a, b) => a.concat(b));
+		}
 		return this.getCurrentRoom().getPool(poolType);
 	}
 
@@ -109,6 +124,7 @@ class Root {
 		if (input.noClipPressed) debugOptions.noClip = !debugOptions.noClip;
 		if (input.debugHitboxesPressed) debugOptions.showHitboxes = !debugOptions.showHitboxes;
 		if (input.nextRoomPressed) this._registrar.getRoomsPool().nextRoom();
+		if (input.showAllPressed) debugOptions.showAll = !debugOptions.showAll;
 		
 		if (!this._trueTime.getPaused())
 		{
@@ -128,7 +144,12 @@ let mainLoopDiagnostics = new Diagnostics(mainLoop);
 
 async function setup() {
 	Setup.setup();
-	let levelData = await timeIt("Read level data", getLevelData);
+	// let levelData = await timeIt("Read level data", getLevelData);
+	// const json = JSON.stringify(levelData);
+	// console.log(json);
+	let levelData = CACHED_LEVELS;
+   
+
 	levelData.levels = levelData.levels.map(postProcessWalls);
 	
 	const inputProvider = new InputProvider();
@@ -160,18 +181,20 @@ async function setup() {
 	);
 	
 	persistentRegistrar.registerEntity(player);
-
 	persistentRegistrar.registerItem(POOL_TYPES.UPDATEABLE, camera);
 
 	const roomsPool = new RoomsPool(levelData.levels.map(data => 
 		new Room(
 			root,
-			Vector({x: data.x * ROOM_SIZE_TILES[0] * TILE_SIZE, y: data.y * ROOM_SIZE_TILES[1] * TILE_SIZE}),
+			ROOM_SIZE_TILES.scalar(TILE_SIZE).multElementWise(data),
 			data,
 			globalCollidableProvider
 		)
 	));
 
+	roomsPool.foreach(room =>
+		persistentRegistrar.registerEntity(makeRoomCollider(room, ROOM_SIZE_TILES.scalar(TILE_SIZE)))
+	);
 	globalRegistrar.setRoomsPool(roomsPool);
 	globalCollidableProvider.setRoomsPool(roomsPool);
 	

@@ -10,7 +10,7 @@ export function makeWall(parent, relativePosition, sprite) {
 	const physObj = new PhysObj(
 		hitbox,
 		new DummyUpdateHandler(),
-		new CollisionHandlers.AdjectiveOnly(
+		new CollisionHandlers.TagOnly(
 			[new CollisionHandlers.Wall(), new CollisionHandlers.Ground()]
 		),
 		new DummyCollidableProvider(),
@@ -19,7 +19,7 @@ export function makeWall(parent, relativePosition, sprite) {
 	const drawableEntity = new DrawableEntity(hitbox, sprite);
 	const ret = {};
 	ret[POOL_TYPES.COLLIDABLE] = [physObj];
-	ret[POOL_TYPES.DRAWABLE_DEBUG] = [physObj];
+	ret[POOL_TYPES.DRAWABLE_DEBUG] = [hitbox];
 	ret[POOL_TYPES.DRAWABLE] = [drawableEntity];
 
 	return ret;

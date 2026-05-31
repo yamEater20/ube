@@ -9,10 +9,12 @@ const GRAVITY_GOING_UP = 4.4 / 10000;
 const GRAVITY_COMING_DOWN = 8 / 10000;
 
 class RectHitbox extends Entity {
-    constructor(parent, relativePosition, width, height) {
+    constructor(parent, relativePosition, width, height, color) {
 		super(parent, relativePosition);
 		this.width = width;
 		this.height = height;
+
+		this._color = color ?? "#ff000030";
     }
 
 	toStr() {
@@ -21,6 +23,25 @@ class RectHitbox extends Entity {
 
 	cloneOffset(v) {
 		return new RectHitbox(this.parent, this.relativePosition.addPoint(v), this.width, this.height);
+	}
+
+	draw(camera) {
+		const pos = this.globalPosition().trunc();
+		camera.drawRect(
+			pos.x,
+			pos.y,
+			this.width,
+			this.height,
+			this._color
+		);
+
+		camera.drawRectOutline(
+			pos.x+0.5,
+			pos.y+0.5,
+			this.width-1,
+			this.height-1,
+			this._color
+		)
 	}
 }
 
@@ -177,17 +198,6 @@ class PhysObj extends Entity {
 		}
 
 		return didCollide;
-	}
-
-	draw(camera) {
-		const pos = this.globalPosition().trunc();
-		camera.drawRect(
-			pos.x,
-			pos.y,
-			this.parent.width,
-			this.parent.height,
-			"#ff000060"
-		);
 	}
 
 	reset() {

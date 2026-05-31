@@ -1,4 +1,4 @@
-import { AdjectiveIds } from "./collisionHandlers.js";
+import { TAG_IDS } from "./collisionHandlers.js";
 import { VectorDown } from "./engine/math.js";
 
 export class Pool {
@@ -29,7 +29,7 @@ export class CollidableProvider {
 			p =>
 				p != physObj &&
 				p.isOverlap(physObj, VectorDown) &&
-				p.collisionHandler.containsAdjective(AdjectiveIds.RIDABLE)
+				p.collisionHandler.containsTag(TAG_IDS.RIDABLE)
 			);
 	}
 

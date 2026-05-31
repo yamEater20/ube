@@ -14,11 +14,11 @@ const Vector = ({x, y}) => ({
 		return Vector({x: this.x - p.x, y: this.y - p.y});
 	},
 	scalarX(scalar) {
-		return (Vector({x: this.x * scalar, y: this.y}));
+		return Vector({x: this.x * scalar, y: this.y});
 	},
 	// scalarY(scalar) {return(Vector({x: this.x, y:this.y*scalar}));},
 	scalar(s) {
-		return (Vector({x: this.x * s, y: this.y * s}));
+		return Vector({x: this.x * s, y: this.y * s});
 	},
 	magnitude() {
 		return Math.sqrt(this.x ** 2 + this.y ** 2);
@@ -28,6 +28,9 @@ const Vector = ({x, y}) => ({
 	},
 	sign() {
 		return Vector({x: Math.sign(this.x), y: Math.sign(this.y)});
+	},
+	multElementWise(v) {
+		return Vector({x: this.x * v.x, y: this.y * v.y});
 	}
 });
 

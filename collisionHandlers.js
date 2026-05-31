@@ -1,37 +1,38 @@
-export const AdjectiveIds = Object.freeze({
+export const TAG_IDS = Object.freeze({
     GROUND: 0,
     WALL: 1,
     RIDABLE: 2,
     PUSHABLE_BOX: 3,
+    ROOM: 4
 });
 
-function adjectiveListIntoDictionary(adjectives) {
+function tagListIntoDictionary(tags) {
     const ret = {};
-    adjectives.forEach(a => {
+    tags.forEach(a => {
         const id = a.id();
         if (ret[id]) {
-            throw new Error(`Duplicate Adjective Ids for ${adjectiveName(id)}: current ${ret[id]}, new ${a}.\nI can't imagine why you'd want this.`);
+            throw new Error(`Duplicate Tag Ids for ${tagName(id)}: current ${ret[id]}, new ${a}.\nI can't imagine why you'd want this.`);
         }
         ret[id] = a;
     });
     return ret;
 }
 
-export function adjectiveName(id) {
-    Object.keys(AdjectiveIds).find(k => AdjectiveIds[k] === id);
+export function tagName(id) {
+    Object.keys(TAG_IDS).find(k => TAG_IDS[k] === id);
 }
 
-export class AdjectiveOnly {
-    constructor(adjectives) {
-        this._adjectives = adjectiveListIntoDictionary(adjectives);
+export class TagOnly {
+    constructor(tags) {
+        this._tags = tagListIntoDictionary(tags);
     }
 
-    getAdjectives() {
-        return this._adjectives;
+    getTags() {
+        return this._tags;
     }
 
-    containsAdjective(adjective) {
-        return this._adjectives[adjective] != undefined;
+    containsTag(tag) {
+        return this._tags[tag] != undefined;
     }
 
     onCollide() {
@@ -39,20 +40,20 @@ export class AdjectiveOnly {
     }
 }
 
-export class Composite extends AdjectiveOnly {
-    constructor (adjectives, reactions) {
-        super(adjectives);
+export class Composite extends TagOnly {
+    constructor (tags, reactions) {
+        super(tags);
         this.reactions = reactions;
     }
     
     onCollide(physObj, other, direction) {
-		const otherAdjectives = other.collisionHandler.getAdjectives();
+		const otherTags = other.collisionHandler.getTags();
         const myReactions = physObj.collisionHandler.reactions;
 
         return myReactions.some(reaction => {
-            const adjective = otherAdjectives[reaction.id()];
-            if (adjective) {
-                return reaction.react(physObj, other, adjective, direction);
+            const tag = otherTags[reaction.id()];
+            if (tag) {
+                return reaction.react(physObj, other, tag, direction);
             }
             return false;
         });
@@ -64,7 +65,7 @@ export class GroundReaction {
         this._groundedProvider = groundedProvider;
     }
     
-    id() {return AdjectiveIds.GROUND;}
+    id() {return TAG_IDS.GROUND;}
 
     react(physObj, other, ground, direction) {
         const canCollide = direction.y !== 0 && ground.isGround(physObj, direction);
@@ -84,7 +85,7 @@ export class GroundReaction {
 }
 
 export class Ground {
-    id() {return AdjectiveIds.GROUND;}
+    id() {return TAG_IDS.GROUND;}
 
     isGround(physObj, direction) {
         return true;
@@ -92,7 +93,7 @@ export class Ground {
 }
 
 export class WallReaction {
-    id() {return AdjectiveIds.WALL;}
+    id() {return TAG_IDS.WALL;}
 
     react(physObj, other, wall, direction) {
         return direction.x !== 0;
@@ -100,15 +101,15 @@ export class WallReaction {
 }
 
 export class Wall {
-    id() {return AdjectiveIds.WALL;}
+    id() {return TAG_IDS.WALL;}
 }
 
 export class Ridable {
-    id() {return AdjectiveIds.RIDABLE;}
+    id() {return TAG_IDS.RIDABLE;}
 }
 
 export class PushableBoxReaction {
-    id() {return AdjectiveIds.PUSHABLE_BOX;}
+    id() {return TAG_IDS.PUSHABLE_BOX;}
     react(physObj, other, pushable, direction) {
         if (direction.x !== 0) {
             return other.moveDirection(direction.x, direction);
@@ -118,5 +119,9 @@ export class PushableBoxReaction {
 }
 
 export class PushableBox {
-    id () {return AdjectiveIds.PUSHABLE_BOX;}
+    id () {return TAG_IDS.PUSHABLE_BOX;}
+}
+
+export class RoomCollider {
+    id() {return TAG_IDS.ROOM;}
 }

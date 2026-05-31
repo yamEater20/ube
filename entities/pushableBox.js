@@ -38,7 +38,7 @@ export function makePushableBox(hitbox, updateHandler, collidableProvider, groun
 	const ret = {};
 	ret[POOL_TYPES.COLLIDABLE] = [physObj];
 	ret[POOL_TYPES.UPDATEABLE] = [physObj];
-	ret[POOL_TYPES.DRAWABLE_DEBUG] = [physObj];
+	ret[POOL_TYPES.DRAWABLE_DEBUG] = [hitbox];
 	ret[POOL_TYPES.DRAWABLE] = [drawableEntity];
 	ret[POOL_TYPES.RESETTABLE] = [physObj, new ResetAtSpawn(hitbox, position)];
 	return ret;
