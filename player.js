@@ -233,6 +233,7 @@ export function make(parent, position, inputProvider, groundedProvider, collidab
 	ret[POOL_TYPES.RESETTABLE] = [physObj, new ResetAtSpawn(hitbox, position)];
 	ret[POOL_TYPES.COLLIDABLE] = [physObj];
 	ret[POOL_TYPES.DRAWABLE_DEBUG] = [physObj];
+	ret[POOL_TYPES.CAMERA_FOLLOW] = [hitbox];
 
 	return ret;
 }

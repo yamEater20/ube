@@ -4,6 +4,9 @@ const Vector = ({x, y}) => ({
 		this.x += p.x;
 		this.y += p.y;
 	},
+	add(x, y) {
+		return Vector({x: this.x + x, y: this.y + y})
+	},
 	addPoint(p) {
 		return Vector({x: this.x + p.x, y: this.y + p.y});
 	},

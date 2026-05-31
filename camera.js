@@ -16,18 +16,19 @@ const SCREEN_SHAKES = [
 ];
 
 class Camera {
-    constructor() {
+    constructor(followPool) {
         this._position = Vector({x: 0, y: 0});
-        this._targetPosition = Vector({x: 0, y: 0});
         this.screenShakePos = Vector({x: 0, y: 0});
         this.screenshakeTime = 0;
 
         this.strength = 0;
         this.shakeTimer = new Timer(1000);
+
+        this._followPool = followPool;
     }
 
     getPosition() {
-        return this._position.addPoint(this.screenShakePos).trunc();
+        return this._position.addPoint(this.screenShakePos).trunc().scalar(-1);
     }
 
     shakeScreen(strength = 1, duration = 250) {
@@ -50,7 +51,7 @@ class Camera {
             canvas.style.backgroundPosition = `top ${this.screenShakePos.x * 3}px left ${this.screenShakePos.y * 2}px`;
         }
 
-        this._moveToTarget();
+        this._moveToTarget(time, this._followPool.get()[0].globalPosition().add(-256/2, -144/2)); //TODO: change this pool to a queue for cinematics
     }
 
     drawRect(x, y, w, h, color) {
@@ -111,29 +112,24 @@ class Camera {
         }
     }
 
-    moveToPosition(pos) {
-        this._targetPosition = pos;
-    }
-
-    _moveToTarget() {
-		var v = this._targetPosition.addPoint(this._position.scalar(-1));
+    _moveToTarget(time, targetPosition) {
+		var v = targetPosition.addPoint(this._position.scalar(-1));
 		const mag = v.magnitude();
         if (mag < 0.01) {
-            this._position = this._targetPosition;
+            this._position = targetPosition;
 			return;
 		}
 
 		const speed = Math.min(6, mag / 4);
-		v = v.scalar(speed / mag * TrueTime.delta / 16.6);
+		v = v.scalar(speed / mag * time.delta / 16.6);
 		this._position = this._position.addPoint(v);
     }
 }
 
-const camera = new Camera();
 // camera._position = Vector({x: 5, y: 20});
 const staticCamera = new Camera();
 
 export {
-    camera,
+    Camera,
     staticCamera
 }

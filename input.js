@@ -43,8 +43,10 @@ export class InputProvider {
             "jump",
             "pause",
             "reset",
+            
             "debug",
             "debugHitboxes",
+            "noClip",
             "nextRoom"
         ];
 
@@ -80,6 +82,7 @@ export class InputProvider {
             "reset": this._keyCodes.KeyR,
 
             "debug": this._keyCodes.KeyO,
+            "noClip": this._keyCodes.KeyJ,
             "nextRoom": this._keyCodes.KeyI,
             "debugHitboxes": this._keyCodes.KeyH
         };

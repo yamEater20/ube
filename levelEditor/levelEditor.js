@@ -1,43 +1,47 @@
 import {
     ROOM_SIZE_TILES
-} from "./world.js";
-import { Vector } from "./engine/math.js";
+} from "../world.js";
+import { Vector } from "../engine/math.js";
 
-import { timeIt } from "./diagnostics.js";
-import { TILE_SIZE } from "./engine/graphics.js";
+import { timeIt } from "../diagnostics.js";
+import { TILE_SIZE } from "../engine/graphics.js";
 
-const TILES_IN_LEVEL = ROOM_SIZE_TILES[0] * ROOM_SIZE_TILES[1];
+//Invert dictionary
+// const entityColorCodes = Object.fromEntries(
+//     Object.entries(ENTITY_NAMES)
+//         .map(arr => [arr[1], arr[0]])
+// );
 
-const CODES = {
-    "#000000": "00",
-    "#5F574F": "01",
-    "#CB5082": "64",
-    "#493826": "73",
-    "#2C6829": "75",
-    "#40F60D": "72",
-    "#CC92C1": "20",
-    "#E3B5DB": "21",
-    "#F0D3EA": "22",
-    "#FFE7FA": "23",
-    "#E31C1C": "52",
-    "#EC9233": "57",
-    "#F6F260": "80",
-    "#8953DF": "84",
-    "#BE4AA8": "85",
-    "#A53DB9": "86",
-    "#676BE8": "61",
-    "#3B3FDA": "62",
-    "#83EBFF": "63",
-    "#C1F5FF": "60",
-    "#C1FFC8": "68",
-    "#9FFFA9": "69",
-    "#C9FFC4": "70",
-    "#FFA76D": "80",
-    "#621BB5": "81",
-    "#6A23BA": "82",
-    "#FFBD92": "80",
-    "#652DBA": "83"
-}
+// const CODES = {
+//     "#000000": "empty",
+//     "#5F574F": "wall",
+//     "#CB5082": "64",
+//     "#493826": "73",
+//     "#2C6829": "75",
+//     "#40F60D": "72",
+//     "#CC92C1": "20",
+//     "#E3B5DB": "21",
+//     "#F0D3EA": "22",
+//     "#FFE7FA": "23",
+//     "#E31C1C": "52",
+//     "#EC9233": "57",
+//     "#F6F260": "80",
+//     "#8953DF": "84",
+//     "#BE4AA8": "85",
+//     "#A53DB9": "86",
+//     "#676BE8": "61",
+//     "#3B3FDA": "62",
+//     "#83EBFF": "63",
+//     "#C1F5FF": "60",
+//     "#C1FFC8": "68",
+//     "#9FFFA9": "69",
+//     "#C9FFC4": "70",
+//     "#FFA76D": "80",
+//     "#621BB5": "81",
+//     "#6A23BA": "82",
+//     "#FFBD92": "80",
+//     "#652DBA": "83"
+// }
 
 const LEVEL_PATH = "Levels.png";
 const errs = [];
@@ -53,7 +57,7 @@ async function getLevelData() {
     const w = data.width;
     const h = data.height;
     data = data.data;
-    const levels = chunkArray(data, w, h).map(processLevel);
+    const levels = chunkArray(data, w, h).map(processLevel).map(postProcess);
     const graph = createMapGraph(w / ROOM_SIZE_TILES[0], h / ROOM_SIZE_TILES[1]);
     errs.forEach(e => console.error(e));
 
@@ -110,11 +114,7 @@ function processLevel(level) {
             let a = lData[y][x * 4 + 3];
             let hex = "#" + toHex(r) + toHex(g) + toHex(b);
             hex = hex.toUpperCase();
-            if (hex in CODES) {
-                row.push(CODES[hex]);
-            } else {
-                errs.push(`ERROR: unkown ${hex} at Level [${lx}, ${ly}], coordinate (${x}, ${y})`);
-            }
+            row.push(hex);
         }
         ret.push(row);
     }
@@ -124,6 +124,20 @@ function processLevel(level) {
         x: lx,
         y: ly
     };
+}
+
+function postProcess(level) {
+    const data = level.data;
+    for (let y = 0; y < data.length; ++y) {
+        for (let x = 0; x < data[y].length; ++x) {
+            data[y][x] = {
+                "entityType": data[y][x],
+                relativeX: x * TILE_SIZE,
+                relativeY: y * TILE_SIZE
+            }
+        }
+    }
+    return level;
 }
 
 function createMapGraph(wl, hl) {
@@ -157,5 +171,4 @@ function navigateMap(graph, curLevelInd, direction) {
 
 export {
     getLevelData,
-    TILES_IN_LEVEL
 }

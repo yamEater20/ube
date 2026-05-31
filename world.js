@@ -5,53 +5,53 @@ import {
 } from './engine/math.js';
 import * as Sprites from "./engine/sprites.js";
 import { PoolTypesFactory, POOL_TYPES, Registrar, CollidableProvider } from './pools.js';
-import {camera} from './camera.js';
 import * as UpdateHandlers from './physUpdateHandlers.js';
 import { makeWall } from './entities/wall.js';
 import {Entity} from "./engine/entity.js";
 import { makePushableBox } from './entities/pushableBox.js';
 import { RectHitbox } from './engine/physics.js';
 import { debugOptions } from './engine/debug.js';
+import {ENTITY_NAMES} from "./entities/entityCodes.js";
+import { TILE_SIZE } from './engine/graphics.js';
 
 export const ROOM_SIZE_TILES = [16, 16];
 
 export class Room extends Entity {
-	constructor(parent, relativePosition, globalCollidableProvider) {
+	constructor(parent, relativePosition, levelData, globalCollidableProvider) {
 		super(parent, relativePosition);
 
 		//Control freak anti-pattern? Maybe, but very close to composition root.
 		this._registrar = new Registrar(PoolTypesFactory());
 
-		const groundedProvider = new UpdateHandlers.GroundedProvider(globalCollidableProvider);
-		const fallUpdateHandler = new UpdateHandlers.FallUpdateHandler(groundedProvider);
-
-		for (let i = 0; i < 16; ++i) {
-			this._registrar.registerEntity(makeWall(
-				this,
-				Vector({x: i*8, y: 100}),
-				new Sprites.TileSprite(Sprites.SPRITES.WALL_TILESHEET, i === 0 ? VectorZero : i === 19 ? VectorRight.scalar(2) : VectorRight),
-				this._registrar
-			));
-		}
-
-		for (let i = 5; i < 16; ++i) {
-			this._registrar.registerEntity(makeWall(
-				this,
-				Vector({x: i*8, y: 80}),
-				new Sprites.TileSprite(Sprites.SPRITES.WALL_TILESHEET, i === 0 ? VectorZero : i === 19 ? VectorRight.scalar(2) : VectorRight),
-				this._registrar
-			));
-		}
-
-		this._registrar.registerEntity(makePushableBox(
-			new RectHitbox(this, VectorRight.scalar(12), 8, 8),
-			new UpdateHandlers.Composite([fallUpdateHandler, new UpdateHandlers.MovingGuy()]),
-			globalCollidableProvider,
-			groundedProvider,
-			this._registrar
-		));
+		this.processLevelData(this._registrar, levelData);
 
 		this._collidableProvider = new CollidableProvider(this.getPool(POOL_TYPES.COLLIDABLE));
+	}
+
+	processLevelData(registrar, levelData) {
+		levelData = levelData.data;
+		for (let y = 0; y < levelData.length; ++y) {
+			for (let x = 0; x < levelData[y].length; ++x) {
+				const entityData = levelData[y][x];
+				const entityType = entityData.entityType;
+				const relativeX = entityData.relativeX;
+				const relativeY = entityData.relativeY;
+
+				if (entityType === ENTITY_NAMES.EMPTY) {
+
+				} else if(entityType === ENTITY_NAMES.WALL) {
+					let spriteSheet = entityData.outer ? Sprites.SPRITES.WALL_TILESHEET_OUTER : Sprites.SPRITES.WALL_TILESHEET;
+					spriteSheet = entityData.isCorner ? Sprites.SPRITES.WALL_TILESHEET_CORNER : spriteSheet;
+					registrar.registerEntity(
+						makeWall(
+							this,
+							Vector({x: relativeX, y: relativeY}),
+							new Sprites.TileSprite(spriteSheet, entityData.tileVec)
+						)
+					);
+				}
+			}
+		}
 	}
 
 	getPool(poolType) {return this._registrar.getPool(poolType);}

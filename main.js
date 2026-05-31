@@ -10,14 +10,16 @@ import {
 import { Time } from './time.js';
 import { Diagnostics, timeIt } from './diagnostics.js';
 import { CollidableProvider, POOL_TYPES, Registrar, PoolTypesFactory, Pool } from './pools.js';
-import {camera} from './camera.js';
+import {Camera} from './camera.js';
 import {InputProvider, TASInputProvider} from './input.js';
 import * as UpdateHandlers from './physUpdateHandlers.js';
 import * as Player from './player.js';
-import { Room } from './world.js';
+import { Room, ROOM_SIZE_TILES } from './world.js';
 import * as Setup from './engine/setup.js';
 import {toggleDebugAll, debugOptions} from "./engine/debug.js";
-import { getLevelData } from './levelEditor.js';
+import { getLevelData } from './levelEditor/levelEditor.js';
+import { postProcessWalls } from './levelEditor/postProcess.js';
+import { TILE_SIZE } from './engine/graphics.js';
 
 class RegistrarWithRooms {
 	constructor(registrar) {
@@ -77,8 +79,9 @@ class RoomsPool extends Pool {
 }
 
 class Root {
-	constructor(trueTime, inputProvider, registrar) {
+	constructor(trueTime, camera, inputProvider, registrar) {
 		this._trueTime = trueTime;
+		this._camera = camera;
 		this._inputProvider = inputProvider;
 		this._registrar = registrar;
 	}
@@ -88,8 +91,8 @@ class Root {
 	}
 
 	draw() {
-		this._registrar.getPool(POOL_TYPES.DRAWABLE).foreach(item => item.draw(camera));
-		if (debugOptions.showHitboxes) this._registrar.getPool(POOL_TYPES.DRAWABLE_DEBUG).foreach(item => item.draw(camera));
+		this._registrar.getPool(POOL_TYPES.DRAWABLE).foreach(item => item.draw(this._camera));
+		if (debugOptions.showHitboxes) this._registrar.getPool(POOL_TYPES.DRAWABLE_DEBUG).foreach(item => item.draw(this._camera));
 	}
 
 	update() {
@@ -100,7 +103,10 @@ class Root {
 
 		if (input.pausePressed) this._trueTime.togglePause();
 		if (input.resetPressed) this._registrar.getPool(POOL_TYPES.RESETTABLE).foreach(r => r.reset());
+
+		//Debug only
 		if (input.debugPressed) toggleDebugAll();
+		if (input.noClipPressed) debugOptions.noClip = !debugOptions.noClip;
 		if (input.debugHitboxesPressed) debugOptions.showHitboxes = !debugOptions.showHitboxes;
 		if (input.nextRoomPressed) this._registrar.getRoomsPool().nextRoom();
 		
@@ -122,42 +128,52 @@ let mainLoopDiagnostics = new Diagnostics(mainLoop);
 
 async function setup() {
 	Setup.setup();
-
+	let levelData = await timeIt("Read level data", getLevelData);
+	levelData.levels = levelData.levels.map(postProcessWalls);
+	
 	const inputProvider = new InputProvider();
 
-	const persistentRegistrar = new Registrar(PoolTypesFactory());
+	const poolDict = PoolTypesFactory();
+	poolDict[POOL_TYPES.CAMERA_FOLLOW] = new Pool();
+	const persistentRegistrar = new Registrar(poolDict);
 	const orphanedCollidableProvider = new CollidableProvider(persistentRegistrar.getPool(POOL_TYPES.COLLIDABLE));
 	const globalRegistrar = new RegistrarWithRooms(persistentRegistrar);
 	const globalCollidableProvider = new GlobalCollidableProvider(orphanedCollidableProvider);
 	const groundedProvider = new UpdateHandlers.GroundedProvider(globalCollidableProvider);
 
-	persistentRegistrar.registerItem(POOL_TYPES.UPDATEABLE, camera);
+	const camera = new Camera(persistentRegistrar.getPool(POOL_TYPES.CAMERA_FOLLOW));
 
 	root = new Root(
 		new Time(),
+		camera,
 		inputProvider,
 		globalRegistrar
 	);
 
-	persistentRegistrar.registerEntity(Player.make(
+	const player = Player.make(
 		root,
-		Vector({x: 12, y: 20}),
+		Vector({x: 32, y: 98}),
 		inputProvider,
 		groundedProvider,
 		globalCollidableProvider,
 		globalRegistrar
-	));
+	);
+	
+	persistentRegistrar.registerEntity(player);
 
-	const roomsPool = new RoomsPool([
-		new Room(root, VectorZero, globalCollidableProvider),
-		new Room(root, VectorRight.scalar(128), globalCollidableProvider)
-	]);
+	persistentRegistrar.registerItem(POOL_TYPES.UPDATEABLE, camera);
+
+	const roomsPool = new RoomsPool(levelData.levels.map(data => 
+		new Room(
+			root,
+			Vector({x: data.x * ROOM_SIZE_TILES[0] * TILE_SIZE, y: data.y * ROOM_SIZE_TILES[1] * TILE_SIZE}),
+			data,
+			globalCollidableProvider
+		)
+	));
 
 	globalRegistrar.setRoomsPool(roomsPool);
 	globalCollidableProvider.setRoomsPool(roomsPool);
-	
-	let levelData = await timeIt("Read level data", getLevelData);
-	console.log(levelData);
 	
 	// timeIt("Build levels", () => game.buildLevels(levelData));
 

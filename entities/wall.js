@@ -21,5 +21,6 @@ export function makeWall(parent, relativePosition, sprite) {
 	ret[POOL_TYPES.COLLIDABLE] = [physObj];
 	ret[POOL_TYPES.DRAWABLE_DEBUG] = [physObj];
 	ret[POOL_TYPES.DRAWABLE] = [drawableEntity];
+
 	return ret;
 }

@@ -49,7 +49,8 @@ export const POOL_TYPES = Object.freeze({
 	UPDATEABLE: 2,
 	RESETTABLE: 3,
 	DRAWABLE_DEBUG: 4,
-	ROOM: 5
+	ROOM: 5,
+	CAMERA_FOLLOW: 6
 });
 
 //Pool of pools
