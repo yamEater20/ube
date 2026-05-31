@@ -1,5 +1,5 @@
 import { ENTITY_NAMES } from "./entityCodes.js";
-import { Vector } from "../engine/math.js";
+import { Vector, VectorRight, VectorZero } from "../engine/math.js";
 
 const VEC_TILES = Object.freeze([
 	Vector({x: 0, y: 0}),
@@ -13,11 +13,24 @@ const VEC_TILES = Object.freeze([
 	Vector({x: 2, y: 2}),
 ]);
 
+const VEC_TILES_OUTER = Object.freeze([
+	Vector({x: 0, y: 0}),
+	Vector({x: 1, y: 0}),
+	Vector({x: 2, y: 0}),
+	Vector({x: 0, y: 1}),
+	Vector({x: 1, y: 1}),
+	Vector({x: 2, y: 1}),
+	null,
+	Vector({x: 1, y: 2}),
+	null
+]);
+
 const VEC_TILES_CORNER = Object.freeze([
 	Vector({x: 0, y: 0}),
 	Vector({x: 1, y: 0}),
 	Vector({x: 0, y: 1}),
 	Vector({x: 1, y: 1}),
+    Vector({x: 2, y: 2}),
 ]);
 
 function postProcessArr(data, func) {
@@ -28,13 +41,23 @@ function postProcessArr(data, func) {
     }
 }
 
+export function postProcessSemisolids(levelData) {
+    postProcessArr(levelData.data, (arr, entityData, x, y) => {
+        if (entityData.entityType === ENTITY_NAMES.SEMISOLID) {
+            const wallLeft = x - 1 < 0                  || arr[y][x-1].entityType === ENTITY_NAMES.WALL;
+            const wallRight =  x + 2 > arr[y].length    || arr[y][x+1].entityType === ENTITY_NAMES.WALL;
+
+            if (wallLeft) entityData.tileVec = VectorZero;
+            else if (wallRight) entityData.tileVec = VectorRight.scalar(2);
+            else entityData.tileVec = VectorRight;
+        }
+    });
+
+    return levelData;
+}
+
 export function postProcessWalls(levelData) {
     const data = levelData.data;
-
-    // const filterVec = filterFunc =>
-    //     vecInds.filter(
-    //         value => filterFunc(value)
-    //     );
 
     postProcessArr(data,
         (arr, entityData, x, y) => {
@@ -73,10 +96,16 @@ export function postProcessWalls(levelData) {
 					outer = true;
 				}
                 
-                vecInds = vecInds.filter(x => x % 3 === col);
-                vecInds = vecInds.filter(x => x >= row && x < (row + 1) * 3);
-                const vecInd = vecInds[vecInds.length - 1];
-                const vec = VEC_TILES[vecInd];
+                vecInds = vecInds
+                    .filter(x => x % 3 === col)
+                    .filter(x => x >= row && x < (row + 1) * 3);
+
+                let vecInd = vecInds[vecInds.length - 1];
+                if (outer && isWallLeft && isWallRight) vecInd = 0;
+                else if (outer && !isWallLeft && !isWallTop && !isWallRight && !isWallBottom) vecInd = 2;
+                
+                const vec = outer ? VEC_TILES_OUTER[vecInd] : VEC_TILES[vecInd];
+                
                 entityData.tileVec = vec;
                 entityData.outer = outer;
                 entityData.tileVecInd = vecInd;
@@ -88,10 +117,10 @@ export function postProcessWalls(levelData) {
         (arr, entityData, x, y) => {
             const entityType = entityData.entityType;
             if (entityType === ENTITY_NAMES.WALL && entityData.tileVecInd === 4) {
-                const left      = x - 1 < 0             ? -1 : arr[y][x-1].tileVecInd;
-                const right     = x + 2 > arr[y].length ? -1 : arr[y][x+1].tileVecInd;
-                const top       = y - 1 < 0             ? -1 : arr[y-1][x].tileVecInd;
-                const bottom    = y + 2 > arr[y].length ? -1 : arr[y+1][x].tileVecInd;
+                const left      = x - 1 < 0              || arr[y][x-1].isCorner ? -1 : arr[y][x-1].tileVecInd;
+                const right     = x + 2 > arr[y].length  || arr[y][x+1].isCorner ? -1 : arr[y][x+1].tileVecInd;
+                const top       = y - 1 < 0              || arr[y-1][x].isCorner ? -1 : arr[y-1][x].tileVecInd;
+                const bottom    = y + 2 > arr[y].length  || arr[y+1][x].isCorner ? -1 : arr[y+1][x].tileVecInd;
                 let isCorner = true;
                 let tileVecInd = 0;
 
@@ -172,24 +201,4 @@ function convertWallTiles(arr) {
             arr[curInd] = last;
 		}
 	}
-
-	// curInd = 0;
-	// const arrCopy = [...arr]
-	// for (let y = 0; y < TILE_MAP_SIZE[1]; y++) {
-	// 	for (let x = 0; x < TILE_MAP_SIZE[0]; x++) {
-	// 		const tileCode = arrCopy[curInd];
-	// 		if (tileCode === 5) {
-	// 			const left = x - 1 < 0 ? 5 : parseInt(arrCopy[xyToTileInd(x - 1, y)]);
-	// 			const right = x + 2 > TILE_MAP_SIZE[0] ? 5 : parseInt(arrCopy[xyToTileInd(x + 1, y)]);
-	// 			const top = y - 1 < 0 ? 5 : parseInt(arrCopy[xyToTileInd(x, y - 1)]);
-	// 			const bottom = y + 2 > TILE_MAP_SIZE[1] ? 5 : parseInt(arrCopy[xyToTileInd(x, y + 1)]);
-	// 			if ((top === 6 || top === 3) && (right === 2 || right === 3)) arr[curInd] = 77;
-	// 			if ((top === 4 || top === 1) && ((left === 2 || left === 1))) arr[curInd] = 76;
-	// 			if ((bottom === 4 || bottom === 7) && ((left === 8 || left === 7))) arr[curInd] = 78;
-	// 			if ((bottom === 6 || bottom === 9) && ((right === 8 || right === 9))) arr[curInd] = 79;
-
-	// 		}
-	// 		curInd++;
-	// 	}
-	// }
 }

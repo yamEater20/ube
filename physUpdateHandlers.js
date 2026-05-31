@@ -20,7 +20,10 @@ export class GroundedProvider {
 	onGround(p) {
 		const onTopOf = this._collidableProvider
 			.getAllColliding(p, VectorDown)
-			.filter(physObj => physObj.collisionHandler.containsTag(TAG_IDS.GROUND));
+			.filter(physObj => {
+				const ground = physObj.collisionHandler.getTag(TAG_IDS.GROUND);
+				return ground && ground.isGround(p, physObj, VectorDown);
+			});
 		return onTopOf.length > 0;
 	}
 }

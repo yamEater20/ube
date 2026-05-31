@@ -32,8 +32,13 @@ export class TagOnly {
     }
 
     containsTag(tag) {
-        return this._tags[tag] != undefined;
+        return this.getTag(tag) != undefined;
     }
+
+    getTag(tag) {
+        return this._tags[tag];
+    }
+
 
     onCollide() {
         throw new Error("You are calling onCollide from something that's not supposed to be moving.");
@@ -70,7 +75,7 @@ export class GroundReaction {
     id() {return TAG_IDS.GROUND;}
 
     react(physObj, other, ground, direction) {
-        const canCollide = direction.y !== 0 && ground.isGround(physObj, direction);
+        const canCollide = direction.y !== 0 && ground.isGround(physObj, other, direction);
         if (!canCollide) return false;
 
         if (direction.y < 0) {
@@ -89,7 +94,7 @@ export class GroundReaction {
 export class Ground {
     id() {return TAG_IDS.GROUND;}
 
-    isGround(physObj, direction) {
+    isGround(semisolidPhysObj, otherPhysObj, direction) {
         return true;
     }
 }

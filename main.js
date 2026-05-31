@@ -18,7 +18,7 @@ import { Room, ROOM_SIZE_TILES } from './world.js';
 import * as Setup from './engine/setup.js';
 import {toggleDebugAll, debugOptions} from "./engine/debug.js";
 import { getLevelData } from './levelEditor/levelEditor.js';
-import { postProcessWalls } from './levelEditor/postProcess.js';
+import { postProcessSemisolids, postProcessWalls } from './levelEditor/postProcess.js';
 import { TILE_SIZE } from './engine/graphics.js';
 import { CACHED_LEVELS } from './levelEditor/cache.js';
 import { makeRoomCollider } from './entities/roomCollider.js';
@@ -158,7 +158,7 @@ async function setup() {
 	let levelData = CACHED_LEVELS;
    
 
-	levelData.levels = levelData.levels.map(postProcessWalls);
+	levelData.levels = levelData.levels.map(postProcessWalls).map(postProcessSemisolids);
 	
 	const inputProvider = new InputProvider();
 

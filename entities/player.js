@@ -137,6 +137,10 @@ class CollisionHandlerDebugDecorator {
 		return this._businessHandler.containsTag(tag);
 	}
 
+	getTag(tag) {
+		throw new Error("Not implemented");
+	}
+
 	onCollide(physObj, other, direction) {
 		return this._businessHandler.onCollide(physObj, other, direction);
 	}
