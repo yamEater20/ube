@@ -187,6 +187,8 @@ class PhysObj extends Entity {
 			});
 			if (shouldBreak) {
 				didCollide = true;
+				if (direction.x !== 0) this.subpixels.x = 0;
+				if (direction.y !== 0) this.subpixels.y = 0;
 				break;
 			}
 

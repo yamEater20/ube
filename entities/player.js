@@ -70,6 +70,10 @@ export class DoubleJumpHandler {
 			this._canDoubleJump = false;
 		}
 	}
+
+	refresh() {
+		this._canDoubleJump = true;
+	}
 }
 
 class HorizontalUpdateHandler {
@@ -187,10 +191,23 @@ class NonRidableCollidableProvider {
     }
 }
 
+class SpringReaction extends CollisionHandlers.SpringReaction {
+	constructor(doubleJumpHandler) {
+		super();
+		this._doubleJumpHandler = doubleJumpHandler;
+	}
+	
+	react(physObj, other, spring, direction) {
+        this._doubleJumpHandler.refresh();
+		return super.react(physObj, other, spring, direction);
+    }
+}
+
 export function make(parent, position, inputProvider, groundedProvider, collidableProvider, onRoomCollide) {
 	const hitbox = new RectHitbox(parent, position, 6, 6);
 
 	const roomColliderReaction = new CollisionHandlers.RoomColliderReaction(onRoomCollide);
+	const doubleJumpHandler = new DoubleJumpHandler();
 	const physObj = new PhysObj(
 		hitbox,
 		new UpdateHandler(
@@ -199,7 +216,7 @@ export function make(parent, position, inputProvider, groundedProvider, collidab
 			[
 				new FallUpdateHandler(new GeneralUpdateHandlers.FallUpdateHandler(groundedProvider)),
 				new JumpUpdateHandler(),
-				new DoubleJumpHandler(),
+				doubleJumpHandler,
 				new HorizontalUpdateHandler()
 			]
 		),
@@ -214,6 +231,7 @@ export function make(parent, position, inputProvider, groundedProvider, collidab
 					new CollisionHandlers.PushableBoxReaction(),
 					new CollisionHandlers.WallReaction(),
 					new CollisionHandlers.GroundReaction(groundedProvider),
+					new SpringReaction(doubleJumpHandler),
 					roomColliderReaction
 				]
 			),
@@ -243,7 +261,7 @@ export function make(parent, position, inputProvider, groundedProvider, collidab
 	ret[POOL_TYPES.RESETTABLE] = [physObj, new ResetAtSpawn(hitbox, position)];
 	ret[POOL_TYPES.COLLIDABLE] = [physObj];
 	ret[POOL_TYPES.DRAWABLE_DEBUG] = [hitbox];
-	ret[POOL_TYPES.DRAWABLE] = [hitbox];
+	// ret[POOL_TYPES.DRAWABLE] = [hitbox];
 	// ret[POOL_TYPES.CAMERA_FOLLOW] = [hitbox];
 
 	return ret;

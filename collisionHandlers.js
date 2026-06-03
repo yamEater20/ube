@@ -3,7 +3,8 @@ export const TAG_IDS = Object.freeze({
     WALL: 1,
     RIDABLE: 2,
     PUSHABLE_BOX: 3,
-    ROOM: 4
+    ROOM: 4,
+    SPRING: 5
 });
 
 function tagListIntoDictionary(tags) {
@@ -144,5 +145,20 @@ export class RoomColliderReaction {
     react(physObj, other, room, direction) {
         this._handler(room);
         return false;
+    }
+}
+
+export class Spring {
+    constructor(bounceVelocity) {
+        this.bounceVelocity = bounceVelocity;
+    }
+    id() {return TAG_IDS.SPRING;}
+}
+
+export class SpringReaction {
+    id() {return TAG_IDS.SPRING;}
+    react(physObj, other, spring, direction) {
+        physObj.setYVelocity(spring.bounceVelocity);
+        return direction.y > 0;
     }
 }

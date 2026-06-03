@@ -11,6 +11,7 @@ import { debugOptions } from './engine/debug.js';
 import {ENTITY_NAMES} from "./levelEditor/entityCodes.js";
 import { TILE_SIZE } from './engine/graphics.js';
 import { makeSemiSolid } from './entities/semisolid.js';
+import { makeSpring } from './entities/spring.js';
 
 export const ROOM_SIZE_TILES = Vector({x: 16, y: 16});
 
@@ -54,6 +55,13 @@ export class Room extends Entity {
 							new Sprites.TileSprite(Sprites.SPRITES.SEMISOLID_TILESHEET, entityData.tileVec)
 						)
 					);
+				} else if (entityType === ENTITY_NAMES.SPRING) {
+					registrar.registerEntity(
+						makeSpring(
+							this,
+							relativePosition
+						)
+					)
 				}
 			}
 		}
