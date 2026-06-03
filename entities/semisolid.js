@@ -2,6 +2,7 @@ import { RectHitbox, PhysObj, DummyCollidableProvider, DummyUpdateHandler } from
 import { DrawableEntity } from "../engine/drawableEntity.js";
 import * as CollisionHandlers from "../collisionHandlers.js";
 import { POOL_TYPES } from "../pools.js";
+import * as Sprites from "../engine/sprites.js";
 
 class SemisolidCollisionTag extends CollisionHandlers.Ground {
     isGround(otherPhysObj, semisolidPhysObj, direction) {
@@ -9,7 +10,7 @@ class SemisolidCollisionTag extends CollisionHandlers.Ground {
     }
 }
 
-export function makeSemiSolid(parent, relativePosition, sprite) {
+export function makeSemiSolid(parent, relativePosition, entityData) {
 	const hitbox = new RectHitbox(parent, relativePosition, 8, 2);
 	const physObj = new PhysObj(
 		hitbox,
@@ -20,7 +21,10 @@ export function makeSemiSolid(parent, relativePosition, sprite) {
 		new DummyCollidableProvider(),
 	);
 
-	const drawableEntity = new DrawableEntity(hitbox, sprite);
+	const drawableEntity = new DrawableEntity(
+		hitbox,
+		new Sprites.TileSprite(Sprites.SPRITES.SEMISOLID_TILESHEET, entityData.tileVec)
+	);
 	const ret = {};
 	ret[POOL_TYPES.COLLIDABLE] = [physObj];
 	ret[POOL_TYPES.DRAWABLE_DEBUG] = [hitbox];

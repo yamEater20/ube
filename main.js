@@ -23,6 +23,8 @@ import { TILE_SIZE } from './engine/graphics.js';
 import { CACHED_LEVELS } from './levelEditor/cache.js';
 import { makeRoomCollider } from './entities/roomCollider.js';
 
+const LEVEL_PATH = "Levels.png";
+
 class RegistrarWithRooms {
 	constructor(registrar) {
 		this._registrar = registrar;
@@ -152,13 +154,13 @@ let mainLoopDiagnostics = new Diagnostics(mainLoop);
 
 async function setup() {
 	Setup.setup();
-	// let levelData = await timeIt("Read level data", getLevelData);
+	// let levelData = await timeIt("Read level data", () => getLevelData(LEVEL_PATH));
+	// levelData.levels = levelData.levels.map(postProcessWalls).map(postProcessSemisolids);
 	// const json = JSON.stringify(levelData);
 	// console.log(json);
 	let levelData = CACHED_LEVELS;
    
 
-	levelData.levels = levelData.levels.map(postProcessWalls).map(postProcessSemisolids);
 	
 	const inputProvider = new InputProvider();
 

@@ -1,4 +1,4 @@
-import { ENTITY_NAMES } from "./entityCodes.js";
+import { ENTITY_TYPE } from "./hexParsing.js";
 import { Vector, VectorRight, VectorZero } from "../engine/math.js";
 
 const VEC_TILES = Object.freeze([
@@ -43,9 +43,9 @@ function postProcessArr(data, func) {
 
 export function postProcessSemisolids(levelData) {
     postProcessArr(levelData.data, (arr, entityData, x, y) => {
-        if (entityData.entityType === ENTITY_NAMES.SEMISOLID) {
-            const wallLeft = x - 1 < 0                  || arr[y][x-1].entityType === ENTITY_NAMES.WALL;
-            const wallRight =  x + 2 > arr[y].length    || arr[y][x+1].entityType === ENTITY_NAMES.WALL;
+        if (entityData.entityType === ENTITY_TYPE.SEMISOLID) {
+            const wallLeft = x - 1 < 0                  || arr[y][x-1].entityType === ENTITY_TYPE.WALL;
+            const wallRight =  x + 2 > arr[y].length    || arr[y][x+1].entityType === ENTITY_TYPE.WALL;
 
             if (wallLeft) entityData.tileVec = VectorZero;
             else if (wallRight) entityData.tileVec = VectorRight.scalar(2);
@@ -62,7 +62,7 @@ export function postProcessWalls(levelData) {
     postProcessArr(data,
         (arr, entityData, x, y) => {
             const entityType = entityData.entityType;
-            if (entityType === ENTITY_NAMES.WALL) {
+            if (entityType === ENTITY_TYPE.WALL) {
                 let v = 0;
                 let vecInds = Array(VEC_TILES.length).fill().map(() => v++);
 
@@ -116,7 +116,7 @@ export function postProcessWalls(levelData) {
     postProcessArr(data,
         (arr, entityData, x, y) => {
             const entityType = entityData.entityType;
-            if (entityType === ENTITY_NAMES.WALL && entityData.tileVecInd === 4) {
+            if (entityType === ENTITY_TYPE.WALL && entityData.tileVecInd === 4) {
                 const left      = x - 1 < 0              || arr[y][x-1].isCorner ? -1 : arr[y][x-1].tileVecInd;
                 const right     = x + 2 > arr[y].length  || arr[y][x+1].isCorner ? -1 : arr[y][x+1].tileVecInd;
                 const top       = y - 1 < 0              || arr[y-1][x].isCorner ? -1 : arr[y-1][x].tileVecInd;
@@ -143,7 +143,7 @@ export function postProcessWalls(levelData) {
 }
 
 function entityIsWall(entityData) {
-    return entityData.entityType === ENTITY_NAMES.WALL;
+    return entityData.entityType === ENTITY_TYPE.WALL;
 }
 
 function convertWallTiles(arr) {

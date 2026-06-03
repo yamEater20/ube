@@ -12,7 +12,7 @@ export function makeSpring(parent, relativePosition) {
 		hitbox,
 		new DummyUpdateHandler(),
 		new CollisionHandlers.TagOnly(
-			[new CollisionHandlers.Spring(-0.25)]
+			[new CollisionHandlers.Spring(-0.22)]
 		),
 		new DummyCollidableProvider(),
 	);

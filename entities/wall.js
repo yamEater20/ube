@@ -2,9 +2,9 @@ import { RectHitbox, PhysObj, DummyCollidableProvider, DummyUpdateHandler } from
 import { DrawableEntity } from "../engine/drawableEntity.js";
 import * as CollisionHandlers from "../collisionHandlers.js";
 import { POOL_TYPES } from "../pools.js";
+import * as Sprites from "../engine/sprites.js";
 
-//Control freak? No, this is a composition root function.
-export function makeWall(parent, relativePosition, sprite) {
+export function makeWall(parent, relativePosition, entityData) {
 	const hitbox = new RectHitbox(parent, relativePosition, 8, 8);
 
 	const physObj = new PhysObj(
@@ -16,7 +16,13 @@ export function makeWall(parent, relativePosition, sprite) {
 		new DummyCollidableProvider(),
 	);
 
-	const drawableEntity = new DrawableEntity(hitbox, sprite);
+	let spriteSheet = entityData.outer ? Sprites.SPRITES.WALL_TILESHEET_OUTER : Sprites.SPRITES.WALL_TILESHEET;
+	spriteSheet = entityData.isCorner ? Sprites.SPRITES.WALL_TILESHEET_CORNER : spriteSheet;
+
+	const drawableEntity = new DrawableEntity(
+		hitbox,
+		new Sprites.TileSprite(spriteSheet, entityData.tileVec)
+	);
 	const ret = {};
 	ret[POOL_TYPES.COLLIDABLE] = [physObj];
 	ret[POOL_TYPES.DRAWABLE_DEBUG] = [hitbox];
