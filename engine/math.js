@@ -40,7 +40,7 @@ const VectorDown = Vector({x: 0, y: 1});
 const VectorLeft = Vector({x: -1, y: 0});
 const VectorZero = Vector({x: 0, y: 0});
 
-function vToRad(v) {
+function vectorToRadians(v) {
 	switch (v) {
 		case VectorUp:
 			return 0;
@@ -55,16 +55,12 @@ function vToRad(v) {
 	}
 }
 
-function numToVec(num) {
+function directionToVector(num) {
 	switch (num) {
-		case 0:
-			return VectorUp;
-		case 1:
-			return VectorRight;
-		case 2:
-			return VectorDown;
-		case 3:
-			return VectorLeft;
+		case Direction.NORTH:	return VectorUp;
+		case Direction.EAST:	return VectorRight;
+		case Direction.SOUTH:	return VectorDown;
+		case Direction.WEST:	return VectorLeft;
 	}
 	return null;
 }
@@ -104,13 +100,13 @@ function getMethods(obj)
 
 export {
     Vector, 
-    vToRad,
+    vectorToRadians,
     VectorUp,
     VectorRight,
     VectorDown,
     VectorLeft,
     VectorZero,
-	numToVec,
+	directionToVector,
 	Direction,
 	framesToMs,
 	shuffle,

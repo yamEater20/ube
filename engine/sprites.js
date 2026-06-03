@@ -5,7 +5,7 @@ import {
 
 import {
 	Vector,
-	vToRad,
+	vectorToRadians,
 	VectorUp,
     VectorRight,
     VectorDown,
@@ -43,7 +43,7 @@ class Sprite {
 	draw(x, y, camera) {
 		const cameraPos = camera.getPosition();
 		if (this.direction) {
-			const rad = vToRad(this.direction);
+			const rad = vectorToRadians(this.direction);
 			CTX.save();
 			CTX.translate(x + cameraPos.x, y + cameraPos.y);
 			CTX.rotate(rad);
