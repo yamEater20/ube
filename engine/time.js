@@ -55,7 +55,6 @@ class Time {
 
     togglePause() {
         this._paused = !this._paused;
-        if (!this._paused) this._lastTime = window.performance.now();
     }
 
     newTimer(_durationMs) {

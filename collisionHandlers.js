@@ -1,10 +1,13 @@
+import { directionToVector } from "./engine/math.js";
+
 export const TAG_IDS = Object.freeze({
     GROUND: 0,
     WALL: 1,
     RIDABLE: 2,
     PUSHABLE_BOX: 3,
     ROOM: 4,
-    SPRING: 5
+    SPRING: 5,
+    SPIKE: 6
 });
 
 function tagListIntoDictionary(tags) {
@@ -161,4 +164,19 @@ export class SpringReaction {
         physObj.setYVelocity(spring.bounceVelocity);
         return direction.y > 0;
     }
+}
+
+export class Spike {
+    constructor(direction) {
+        this.directionVector = directionToVector(direction);
+    }
+    id() {return TAG_IDS.Spike;}
+    movingInto(otherVelocity) {
+        const dot = this.directionVector.x * otherVelocity.x + this.directionVector.y * otherVelocity.y;
+        return dot <= 0;
+    }
+}
+
+export class SpikeReaction {
+    id() {return TAG_IDS.Spike;}
 }

@@ -1,6 +1,6 @@
-import { Timer } from "../time.js";
-import { GRAVITY_COMING_DOWN, GRAVITY_GOING_UP, PhysObj, RectHitbox } from "../engine/physics.js";
-import { framesToMs } from "../engine/math.js";
+import { Timer } from "../engine/time.js";
+import { GRAVITY_COMING_DOWN, GRAVITY_GOING_UP, HitboxDrawableEntity, PhysObj, RectHitbox } from "../engine/physics.js";
+import { framesToMs, VectorZero } from "../engine/math.js";
 import * as CollisionHandlers from "../collisionHandlers.js";
 import * as Sprites from "../engine/sprites.js";
 import { UpdatableDrawableEntity } from "../engine/drawableEntity.js";
@@ -203,12 +203,27 @@ class SpringReaction extends CollisionHandlers.SpringReaction {
     }
 }
 
-export function make(parent, position, inputProvider, groundedProvider, collidableProvider, onRoomCollide) {
-	const hitbox = new RectHitbox(parent, position, 6, 6);
+export class SpikeReaction extends CollisionHandlers.SpikeReaction {
+    constructor(onSpikeCollide) {
+        super();
+		this._onSpikeCollide = onSpikeCollide;
+    }
+	react(physObj, otherPhysObj, spike, direction) {
+        if (spike.movingInto(physObj.velocity)) {
+			this._onSpikeCollide("hjello");
+		}
+		return false;
+    }
+}
+
+export function make(parent, position, inputProvider, groundedProvider, collidableProvider, onRoomCollide, killPlayer) {
+	const hitbox = new RectHitbox(VectorZero, 6, 6);
 
 	const roomColliderReaction = new CollisionHandlers.RoomColliderReaction(onRoomCollide);
 	const doubleJumpHandler = new DoubleJumpHandler();
 	const physObj = new PhysObj(
+		parent,
+		position,
 		hitbox,
 		new UpdateHandler(
 			inputProvider,
@@ -232,6 +247,7 @@ export function make(parent, position, inputProvider, groundedProvider, collidab
 					new CollisionHandlers.WallReaction(),
 					new CollisionHandlers.GroundReaction(groundedProvider),
 					new SpringReaction(doubleJumpHandler),
+					new SpikeReaction(killPlayer),
 					roomColliderReaction
 				]
 			),
@@ -241,7 +257,7 @@ export function make(parent, position, inputProvider, groundedProvider, collidab
 	);
 
 	const drawableEntity = new UpdatableDrawableEntity(
-		hitbox,
+		physObj,
 		new Sprites.AnimatedSprite(
 			Sprites.SPRITES.MAIN_CHARA_SPRITESHEET,
 			[
@@ -258,9 +274,9 @@ export function make(parent, position, inputProvider, groundedProvider, collidab
 
 	ret[POOL_TYPES.DRAWABLE] = [drawableEntity];
 	ret[POOL_TYPES.UPDATEABLE] = [drawableEntity, physObj];
-	ret[POOL_TYPES.RESETTABLE] = [physObj, new ResetAtSpawn(hitbox, position)];
+	ret[POOL_TYPES.RESETTABLE] = [physObj, new ResetAtSpawn(physObj, position)];
 	ret[POOL_TYPES.COLLIDABLE] = [physObj];
-	ret[POOL_TYPES.DRAWABLE_DEBUG] = [hitbox];
+	ret[POOL_TYPES.DRAWABLE_DEBUG] = [new HitboxDrawableEntity(physObj, hitbox, "#00ff0060")];
 	// ret[POOL_TYPES.DRAWABLE] = [hitbox];
 	// ret[POOL_TYPES.CAMERA_FOLLOW] = [hitbox];
 

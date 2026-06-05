@@ -1,7 +1,7 @@
 import {framesToMs, Vector} from './math.js';
 import {CTX, PIXEL_GAME_SIZE} from './graphics.js';
 import * as Text from '../text.js';
-import {msToFrames, Timer} from '../time.js';
+import {msToFrames, Timer} from './time.js';
 
 const SCREEN_SHAKES = [
 	Vector({x: 0, y: 0}),
@@ -25,6 +25,7 @@ class Camera {
         this.shakeTimer = new Timer(1000);
 
         this._getFollowingFunc = getFollowingFunc;
+        this.isMoving = false;
     }
 
     getPosition() {
@@ -120,8 +121,11 @@ class Camera {
 		const mag = v.magnitude();
         if (mag < 1) {
             this._position = targetPosition;
+            this.isMoving = false;
 			return;
 		}
+
+        this.isMoving = true;
 
 		const speed = Math.min(6, mag / 3) * 0.05;
 		v = v.scalar(speed / mag * time.delta);

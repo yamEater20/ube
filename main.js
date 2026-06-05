@@ -7,7 +7,7 @@ import {
     VectorRight,
     VectorZero
 } from './engine/math.js';
-import { Time } from './time.js';
+import { Time } from './engine/time.js';
 import { Diagnostics, timeIt } from './diagnostics.js';
 import { CollidableProvider, POOL_TYPES, Registrar, PoolTypesFactory, Pool } from './pools.js';
 import {Camera} from './engine/camera.js';
@@ -120,12 +120,10 @@ class Root {
 	update() {
 		this._trueTime.tick();
 		this._worldTime.tick();
+
 		this._inputProvider.update();
 
 		const input = this._inputProvider.getInput();
-
-		if (input.pausePressed) this._worldTime.togglePause();
-		if (input.resetPressed) this._registrar.getPool(POOL_TYPES.RESETTABLE).foreach(r => r.reset());
 
 		//Debug only
 		if (input.debugPressed) toggleDebugAll();
@@ -135,10 +133,17 @@ class Root {
 		if (input.showAllPressed) debugOptions.showAll = !debugOptions.showAll;
 		
 		this._camera.update(this._trueTime);
+		if (this._camera.isMoving) {
+			//Do not update world time
+			
+		} else {
+			if (input.pausePressed) this._worldTime.togglePause();
 
-		if (!this._worldTime.getPaused())
-		{
-			this._registrar.getPool(POOL_TYPES.UPDATEABLE).foreach(item => item.update(this._worldTime));
+			if (!this._worldTime.getPaused())
+			{
+				if (input.resetPressed) this._registrar.getPool(POOL_TYPES.RESETTABLE).foreach(r => r.reset());
+				this._registrar.getPool(POOL_TYPES.UPDATEABLE).foreach(item => item.update(this._worldTime));
+			}
 		}
 	}
 }
@@ -159,8 +164,6 @@ async function setup() {
 	// const json = JSON.stringify(levelData);
 	// console.log(json);
 	let levelData = CACHED_LEVELS;
-   
-
 	
 	const inputProvider = new InputProvider();
 
@@ -200,7 +203,8 @@ async function setup() {
 		inputProvider,
 		groundedProvider,
 		globalCollidableProvider,
-		roomCollider => roomsPool.roomIndex = roomCollider.roomIndex
+		roomCollider => roomsPool.roomIndex = roomCollider.roomIndex,
+		() => globalRegistrar.getPool(POOL_TYPES.RESETTABLE).foreach(r => r.reset())
 	);
 	
 	persistentRegistrar.registerEntity(player);

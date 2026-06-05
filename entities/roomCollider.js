@@ -1,11 +1,13 @@
 import { RoomCollider, TAG_IDS, TagOnly } from "../collisionHandlers.js";
 import { VectorZero } from "../engine/math.js";
-import { DummyCollidableProvider, DummyUpdateHandler, PhysObj, RectHitbox } from "../engine/physics.js";
+import { DummyCollidableProvider, DummyUpdateHandler, HitboxDrawableEntity, PhysObj, RectHitbox } from "../engine/physics.js";
 import { POOL_TYPES } from "../pools.js";
 
 export function makeRoomCollider(room, roomIndex, colliderSize) {
-    const hitbox = new RectHitbox(room, VectorZero, colliderSize.x, colliderSize.x, "#558fc930")
+    const hitbox = new RectHitbox(VectorZero, colliderSize.x, colliderSize.x)
     const physObj = new PhysObj(
+        room,
+        VectorZero,
         hitbox,
         new DummyUpdateHandler(),
         new TagOnly([new RoomCollider(roomIndex)]),
@@ -13,7 +15,7 @@ export function makeRoomCollider(room, roomIndex, colliderSize) {
     );
 
     const ret = {};
-    ret[POOL_TYPES.DRAWABLE_DEBUG] = [hitbox];
+    ret[POOL_TYPES.DRAWABLE_DEBUG] = [new HitboxDrawableEntity(room, hitbox, "#558fc930")];
     ret[POOL_TYPES.COLLIDABLE] = [physObj];
 
     return ret;
