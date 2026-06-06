@@ -22,6 +22,7 @@ import { postProcessSemisolids, postProcessWalls } from './levelEditor/postProce
 import { clearCanvas, createCanvas, setMaxSize, TILE_SIZE } from './engine/graphics.js';
 import { CACHED_LEVELS } from './levelEditor/cache.js';
 import { makeRoomCollider } from './entities/roomCollider.js';
+import { Entity } from './engine/entity.js';
 
 const LEVEL_PATH = "Levels.png";
 
@@ -71,6 +72,20 @@ class GlobalCollidableProvider {
 			._roomsPool.getCurrentRoom().getLocalCollidableProvider().getAllColliding(physObj, offset)
 			.concat(this._persistentCollidableProvider.getAllColliding(physObj, offset))
     }
+}
+
+class CameraFollowPool extends Pool {
+	constructor(centerPos, items) {
+		super(items);
+		this._centerPos = centerPos;
+	}
+	
+	get() {
+		if (this.viewMap) {
+			return [this._centerPos];
+		}
+		return super.get();
+	}
 }
 
 class RoomsPool extends Pool {
@@ -135,6 +150,13 @@ class Root {
 		if (input.showAllPressed) debugOptions.showAll = !debugOptions.showAll;
 		
 		this._camera.update(this._trueTime.delta);
+		if (input.mapHeld) {
+			this._camera.scale = Math.max(this._camera.scale - 0.03, 0.2);
+			this._registrar._registrar.getPool(POOL_TYPES.CAMERA_FOLLOW).viewMap = true;
+		} else {
+			this._camera.scale = Math.min(this._camera.scale + 0.05, 1);
+			this._registrar._registrar.getPool(POOL_TYPES.CAMERA_FOLLOW).viewMap = false;
+		}
 
 		if (this._camera.isMoving) {
 			//Do not update world time on room Transition
@@ -143,6 +165,7 @@ class Root {
 
 			if (!this._worldPaused)
 			{
+				
 				if (input.resetPressed) this._registrar.getPool(POOL_TYPES.RESETTABLE).foreach(r => r.reset());
 				this._registrar.getPool(POOL_TYPES.UPDATEABLE).foreach(item => item.update(this._worldTime.delta));
 			}
@@ -178,7 +201,7 @@ async function setup() {
 	const inputProvider = new InputProvider();
 
 	const poolDict = PoolTypesFactory();
-	poolDict[POOL_TYPES.CAMERA_FOLLOW] = new Pool();
+	poolDict[POOL_TYPES.CAMERA_FOLLOW] = new CameraFollowPool();
 	const persistentRegistrar = new Registrar(poolDict);
 	const orphanedCollidableProvider = new CollidableProvider(persistentRegistrar.getPool(POOL_TYPES.COLLIDABLE));
 	const globalRegistrar = new RegistrarWithRooms(persistentRegistrar);
@@ -198,6 +221,8 @@ async function setup() {
 		inputProvider,
 		globalRegistrar
 	);
+
+	persistentRegistrar.getPool(POOL_TYPES.CAMERA_FOLLOW)._centerPos = new Entity(root, Vector({x: 128*5/2, y: 128*4/2}));
 
 	const roomsPool = new RoomsPool(levelData.levels.map(data => 
 		new Room(

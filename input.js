@@ -81,6 +81,7 @@ export class InputProvider {
 
             "pause": this._keyCodes.KeyV,
             "reset": this._keyCodes.KeyR,
+            "mapHeld": this._keyCodes.KeyC,
 
             "debug": this._keyCodes.KeyO,
             "noClip": this._keyCodes.KeyJ,

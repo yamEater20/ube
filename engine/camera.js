@@ -52,10 +52,10 @@ class Camera {
         }
 
         //TODO: change this pool to a queue for cinematics, remove hardcoded logic
-        this._moveToTarget(timeDelta, this._getFollowingFunc().globalPosition().add(-PIXEL_GAME_SIZE.x/2, -PIXEL_GAME_SIZE.y/2));
+        this._moveToTarget(timeDelta, this._getFollowingFunc().globalPosition().add(-PIXEL_GAME_SIZE.x/2/this.scale, -PIXEL_GAME_SIZE.y/2/this.scale));
 
         const myPosition = this.getPosition();
-        this._ctx.setTransform(1, 0, 0, 1, myPosition.x * this.scale, myPosition.y * this.scale);
+        this._ctx.setTransform(1, 0, 0, 1, myPosition.x, myPosition.y);
         this._ctx.scale(this.scale, this.scale);
     }
 
@@ -154,7 +154,7 @@ class Camera {
 
         this.isMoving = true;
 
-		const speed = Math.min(6, mag / 3) * 0.05;
+		const speed = Math.min(15, mag / 2) * 0.05;
 		v = v.scalar(speed / mag * timeDelta);
 		this._position = this._position.addPoint(v);
     }
