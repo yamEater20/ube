@@ -30,32 +30,18 @@ class Time {
         this.delta = 0;
         
         this._lastTime = 0;
-        this.time = window.performance.now();
+        // this.time = window.performance.now();
 
         this._paused = false;
         this.timers = [];
     }
 
     tick() {
-        if (this._paused) {
-            this.delta = 0;
-            return;
-        }
 		const now = window.performance.now() + 1;
 		this.delta = (now - this._lastTime) * this.scale;
 		this._lastTime = now;
-        this.time += this.delta;
+        // this.time += this.delta;
 	}
-
-    framesSinceTime(time) {
-        return Math.floor((this.time - time) * 0.06 * this.scale);
-    }
-
-    getPaused() {return this._paused;}
-
-    togglePause() {
-        this._paused = !this._paused;
-    }
 
     newTimer(_durationMs) {
         const ret = new Timer(_durationMs);

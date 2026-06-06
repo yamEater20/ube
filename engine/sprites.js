@@ -1,5 +1,4 @@
 import {
-	CTX,
 	TILE_SIZE,
 } from "./graphics.js";
 
@@ -12,28 +11,12 @@ import {
     VectorLeft,
     VectorZero,
 } from "./math.js";
+import { msToFrames } from "./time.js";
 
 class Sprite {
 	constructor(img, direction) {
 		this.img = img;
 		this.direction = direction;
-		this.flip = false;
-	}
-
-	drawSelf(x, y) {
-		const d = () => {
-			CTX.drawImage(this.img, x, y);
-		};
-		if (this.flip) {
-			CTX.save();
-			CTX.translate(x + TILE_SIZE, 0);
-			CTX.scale(-1, 1);
-			CTX.translate(-x, 0);
-			d();
-			CTX.restore();
-		} else {
-			d();
-		}
 	}
 
 	getImage() {
@@ -41,10 +24,14 @@ class Sprite {
 	}
 
 	draw(x, y, camera) {
-		const cameraPos = camera.getPosition();
+		//sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight, options
+		camera._ctx.drawImage(this.img, x, y);
+		return;
+
 		if (this.direction) {
 			const rad = vectorToRadians(this.direction);
 			CTX.save();
+			const cameraPos = camera.getPosition();
 			CTX.translate(x + cameraPos.x, y + cameraPos.y);
 			CTX.rotate(rad);
 			let uberOffset = Vector({x: 0, y: 0});
@@ -65,10 +52,10 @@ class Sprite {
 			}
 
 			CTX.translate(-x + uberOffset.x, -y + uberOffset.y);
-			this.drawSelf(x, y);
+			this.drawSelf(x, y, camera);
 			CTX.restore();
 		} else {
-			this.drawSelf(x + cameraPos.x, y + cameraPos.y);
+			this.drawSelf(x, y, camera);
 		}
 	}
 
@@ -84,67 +71,69 @@ class AnimatedSprite extends Sprite {
 		this.w = w ? w : TILE_SIZE;
 		this.h = h ? h : TILE_SIZE;
 		this.playing = false;
-		this.startTime = 0;
+		this.duration = 0;
 
 		for (let i = 0; i < animationData.length; ++i) {
 			if (i === 0) animationData[i].cumulativeFrames = 0;
 			else animationData[i].cumulativeFrames = animationData[i - 1].cumulativeFrames + animationData[i - 1].frames;
 		}
+
+		this.options = {
+			// sx: xOffset,
+			sy: 0,
+			sWidth: this.w,
+			sHeight: this.h,
+		}
 	}
 
 	draw(x, y, camera) {
 		const realColumn = this.curCol + this.getCumulativeFrames();
-		const cameraPos = camera.getPosition();
 		const xOffset = realColumn * this.w;
-		const d = () => {
-			CTX.drawImage(super.getImage(), xOffset, 0, this.w, this.h, x + cameraPos.x, y + cameraPos.y, this.w, this.h);
-		};
-		if (this.flip) {
-			CTX.save();
-			CTX.translate(x + TILE_SIZE, 0);
-			CTX.scale(-1, 1);
-			CTX.translate(-x, 0);
-			d();
-			CTX.restore();
-		} else {
-			d();
-		}
+		this.options.sx = xOffset;
+
+		camera.drawImage(
+			super.getImage(),
+			x, y,
+			this.options
+		);
 	}
 
-	setRow(r, time) {
+	setRow(r) {
 		if (r === 0) {
 			this.playing = false;
 		} else {
-			if (!this.playing) this.startTime = time.time;
 			this.playing = true;
+			this.duration = 0;
 		}
 
 		this.curCol = 0;
 		this.row = r;
 	}
 
-	update(time) {
+	update(timeDelta) {
 		if (this.playing) {
 			const data = this.animationData[this.row];
 			const maxFrames = data.frames;
 
-			let framesSinceStart = time.framesSinceTime(this.startTime);
-			framesSinceStart = Math.floor(framesSinceStart / data.nth);
-			const onComplete = data.onComplete;
-			const lastFrame = framesSinceStart >= maxFrames;
+			this.duration += timeDelta;
 
-			if (lastFrame) {
+			const framesSinceStart = msToFrames(this.duration);
+			const animationFramesSinceStart = Math.floor(framesSinceStart / data.nth);
+			const onComplete = data.onComplete;
+			const isLastFrame = animationFramesSinceStart >= maxFrames;
+
+			if (isLastFrame) {
 				if (onComplete === "stop") {
 					this.setRow(0);
 				} else if (onComplete === "stay") {
 					this.playing = false;
 				} else if (onComplete === "loop") {
-					this.curCol = framesSinceStart % maxFrames;
+					this.curCol = animationFramesSinceStart % maxFrames;
 				} else {
 					console.error("unrecognized onComplete " + onComplete);
 				}
 			} else {
-				this.curCol = framesSinceStart % maxFrames;
+				this.curCol = animationFramesSinceStart % maxFrames;
 			}
 		}
 	}
@@ -159,24 +148,24 @@ class AnimatedSprite extends Sprite {
 }
 
 class TileSprite extends Sprite {
-	constructor(tiles, v, replaceColor, fillColor) {
+	constructor(tiles, v) {
 		super(tiles, null);
 		this.v = v;
-		this.replaceColor = replaceColor;
-		this.fillColor = fillColor;
+		this._options = {
+			sx: this.v.x * TILE_SIZE,
+			sy: this.v.y * TILE_SIZE,
+			sWidth: TILE_SIZE,
+			sHeight: TILE_SIZE,
+			flip: this.flip,
+		}
 	}
 
-	drawSelf(x, y) {
-		/** TODO: change this to not replace pixels every frame; just have two spritesheets (1 red+1 blue)
-		 *  see https://stackoverflow.com/questions/5623838/rgb-to-hex-and-hex-to-rgb
-		 *  Try putting the image back and then referencing it
-		 */
-		CTX.save();
-		CTX.drawImage(this.img, this.v.x * TILE_SIZE, this.v.y * TILE_SIZE, TILE_SIZE, TILE_SIZE, x, y, TILE_SIZE, TILE_SIZE);
-		if (this.replaceColor) {
-			recolorImage(x, y, this.replaceColor, this.fillColor);
-		}
-		CTX.restore();
+	draw(x, y, camera) {
+		camera.drawImage(
+			super.getImage(),
+			x, y,
+			this._options
+		);
 	}
 }
 

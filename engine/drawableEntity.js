@@ -22,7 +22,7 @@ class UpdatableDrawableEntity extends DrawableEntity {
 		this._updateHandler = updateHandler;
 	}
 
-	update(time) {this._updateHandler.update(time, this);}
+	update(timeDelta) {this._updateHandler.update(timeDelta, this);}
 }
 
 export {

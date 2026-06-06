@@ -145,13 +145,9 @@ class PhysObj extends Entity {
 		this.velocity.y = v.y;
 	}
 
-	update(time) {
-		this.updateHandler.update(this, time);
-		this.move(this.velocity.scalar(time.delta));
-	}
-
-	move(x, y) {
-		throw new Error("implement move in subclass PhysObj");
+	update(timeDelta) {
+		this.updateHandler.update(this, timeDelta);
+		this.move(this.velocity.scalar(timeDelta));
 	}
 
 	isOverlap(physObj, offset) {
@@ -241,7 +237,7 @@ class DummyCollidableProvider {
 }
 
 class DummyUpdateHandler {
-	update(physObj, time) {}
+	update(physObj, timeDelta) {}
 }
 
 function getFallV(vy, timeDelta, gravity) {

@@ -7,8 +7,8 @@ export class Composite {
 		this._handlers = handlers;
 	}
 
-	update(physObj, time) {
-		this._handlers.forEach(u => u.update(physObj, time));
+	update(physObj, timeDelta) {
+		this._handlers.forEach(u => u.update(physObj, timeDelta));
 	}
 }
 
@@ -33,15 +33,15 @@ export class FallUpdateHandler {
 		this._groundedProvider = groundedProvider;
 	}
 
-	update(physObj, time, gravity) {
+	update(physObj, timeDelta, gravity) {
 		const yv = physObj.getYVelocity();
 		if (!this._groundedProvider.onGround(physObj))
-			physObj.setYVelocity(getFallV(yv, time.delta, gravity));
+			physObj.setYVelocity(getFallV(yv, timeDelta, gravity));
 	}
 }
 
 export class MovingGuy {
-	update(physObj, time) {
+	update(physObj, timeDelta) {
 		physObj.setXVelocity(0.01);
 	}
 }

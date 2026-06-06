@@ -1,5 +1,3 @@
-import {CTX} from './engine/graphics.js';
-
 function getWidthOfText(txt, size) {
 	let ret = 0;
 	const letters = txt.split("");
@@ -15,7 +13,7 @@ function getWidthOfText(txt, size) {
 	return Math.round(ret);
 }
 
-function writeText(txt, size, pos, color, spacing) {
+function writeText(camera, txt, size, pos, color, spacing) {
 	let needed = [];
 	txt = txt.toUpperCase(); // because I only did uppercase letters
 	for (let i = 0; i < txt.length; i++) {
@@ -25,7 +23,6 @@ function writeText(txt, size, pos, color, spacing) {
 		}
 	}
 	spacing = spacing ? spacing : 0;
-	CTX.fillStyle = color ? color : 'black';
 	let currX = pos.x;
 	for (let i = 0; i < needed.length; i++) {
 		const letter = needed[i];
@@ -35,7 +32,7 @@ function writeText(txt, size, pos, color, spacing) {
 			let row = letter[y];
 			for (let x = 0; x < row.length; x++) {
 				if (row[x]) {
-					CTX.fillRect(currX + x * size, currY, size, size);
+					camera.fillRect(currX + x * size, currY, size, size, color);
 				}
 			}
 			addX = Math.max(addX, row.length * size);

@@ -4,21 +4,26 @@ import { Vector } from "./math.js";
 const PIXEL_GAME_SIZE = Vector({x: 128, y: 128});
 const TILE_SIZE = 8;
 
-const canvas = document.createElement("canvas");
-const CTX = canvas.getContext("2d");
-canvas.width = PIXEL_GAME_SIZE.x;
-canvas.height = PIXEL_GAME_SIZE.y;
-document.body.insertBefore(canvas, document.body.childNodes[0]);
-function setupCanvas() {
-    canvas.style.backgroundImage = 'url("images/Background.png")';
+function createCanvas() {
+    const canvas = document.createElement("canvas");
+	const CTX = canvas.getContext("2d");
+	canvas.width = PIXEL_GAME_SIZE.x;
+	canvas.height = PIXEL_GAME_SIZE.y;
+	document.body.insertBefore(canvas, document.body.childNodes[0]);
 	CTX.imageSmoothingEnabled = false;
+
+	canvas.style.backgroundImage = 'url("images/Background.png")';
     canvas.ondblclick = () => {
         toggleFullscreen();
     };
-	setMaxSize();
+	setMaxSize(canvas);
+	return {
+		ctx: CTX,
+		canvas: canvas
+	};
 }
 
-function setMaxSize() {
+function setMaxSize(canvas) {
 	const screenHeight = document.body.scrollHeight;
 	const screenWidth = document.body.scrollWidth;
 	let canvasHeight = Math.floor(screenHeight / PIXEL_GAME_SIZE.y);
@@ -33,7 +38,7 @@ function setMaxSize() {
 	canvas.style.backgroundSize = canvasHeight + "px";
 }
 
-function clearCanvas() {
+function clearCanvas(canvas) {
 	canvas.width = canvas.width;
 }
 
@@ -47,9 +52,8 @@ const toggleFullscreen = (event) => {
 };
 
 export {
-    CTX,
     clearCanvas,
-    setupCanvas,
+    createCanvas,
     setMaxSize,
     PIXEL_GAME_SIZE,
     TILE_SIZE

@@ -19,7 +19,7 @@ import * as Setup from './engine/setup.js';
 import {toggleDebugAll, debugOptions} from "./engine/debug.js";
 import { getLevelData } from './levelEditor/levelEditor.js';
 import { postProcessSemisolids, postProcessWalls } from './levelEditor/postProcess.js';
-import { TILE_SIZE } from './engine/graphics.js';
+import { clearCanvas, createCanvas, setMaxSize, TILE_SIZE } from './engine/graphics.js';
 import { CACHED_LEVELS } from './levelEditor/cache.js';
 import { makeRoomCollider } from './entities/roomCollider.js';
 
@@ -106,6 +106,8 @@ class Root {
 		this._camera = camera;
 		this._inputProvider = inputProvider;
 		this._registrar = registrar;
+
+		this._worldPaused = false;
 	}
 
 	globalPosition() {
@@ -132,25 +134,28 @@ class Root {
 		if (input.nextRoomPressed) this._registrar.getRoomsPool().nextRoom();
 		if (input.showAllPressed) debugOptions.showAll = !debugOptions.showAll;
 		
-		this._camera.update(this._trueTime);
-		if (this._camera.isMoving) {
-			//Do not update world time
-			
-		} else {
-			if (input.pausePressed) this._worldTime.togglePause();
+		this._camera.update(this._trueTime.delta);
 
-			if (!this._worldTime.getPaused())
+		if (this._camera.isMoving) {
+			//Do not update world time on room Transition
+		} else {
+			if (input.pausePressed) this._worldPaused = !this._worldPaused;
+
+			if (!this._worldPaused)
 			{
 				if (input.resetPressed) this._registrar.getPool(POOL_TYPES.RESETTABLE).foreach(r => r.reset());
-				this._registrar.getPool(POOL_TYPES.UPDATEABLE).foreach(item => item.update(this._worldTime));
+				this._registrar.getPool(POOL_TYPES.UPDATEABLE).foreach(item => item.update(this._worldTime.delta));
 			}
 		}
 	}
 }
 
 let root;
+let canvas;
 
 function mainLoop() {
+	setMaxSize(canvas);
+	clearCanvas(canvas);
 	root.update();
 	root.draw();
 }
@@ -158,11 +163,16 @@ function mainLoop() {
 let mainLoopDiagnostics = new Diagnostics(mainLoop);
 
 async function setup() {
-	Setup.setup();
+	// Setup.setup();
 	// let levelData = await timeIt("Read level data", () => getLevelData(LEVEL_PATH));
 	// levelData.levels = levelData.levels.map(postProcessWalls).map(postProcessSemisolids);
 	// const json = JSON.stringify(levelData);
 	// console.log(json);
+
+	const info = createCanvas();
+	canvas = info.canvas;
+	const ctx = info.ctx;
+
 	let levelData = CACHED_LEVELS;
 	
 	const inputProvider = new InputProvider();
@@ -176,6 +186,7 @@ async function setup() {
 	const groundedProvider = new UpdateHandlers.GroundedProvider(globalCollidableProvider);
 
 	const camera = new Camera(
+		ctx,
 		Vector({x: 128*2, y: 128*2}),
 		() => globalRegistrar.getPool(POOL_TYPES.CAMERA_FOLLOW).get()[0]
 	);

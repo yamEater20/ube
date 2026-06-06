@@ -1,11 +1,4 @@
-import * as Graphics from "./graphics.js";
-
 let customLoop;
-
-//Always call this!!!!
-export function setup() {
-    Graphics.setupCanvas();
-}
 
 //Only call this once!!!
 export function beginGameLoop(loop) {
@@ -20,7 +13,5 @@ function main() {
 }
 
 function mainLoop() {
-	Graphics.setMaxSize();
-	Graphics.clearCanvas();
     customLoop();
 }

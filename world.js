@@ -43,9 +43,8 @@ export class Room extends Entity {
 		if (debugOptions.showHitboxes) this.getPool(POOL_TYPES.DRAWABLE_DEBUG).foreach(item => item.draw(camera));
 	}
 
-	update(time) {
-		if (!time.getPaused())
-			this.getPool(POOL_TYPES.UPDATEABLE).foreach(item => item.update(time));
+	update(timeDelta) {
+		this.getPool(POOL_TYPES.UPDATEABLE).foreach(item => item.update(timeDelta));
 	}
 
 	getLocalCollidableProvider() {
