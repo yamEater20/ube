@@ -3,10 +3,11 @@ import { DrawableEntity } from "../engine/drawableEntity.js";
 import * as CollisionHandlers from "../collisionHandlers.js";
 import { POOL_TYPES } from "../pools.js";
 import * as Sprites from "../engine/sprites.js";
-import { directionToVector, Vector, VectorZero } from "../engine/math.js";
+import { Direction, directionToRad, Vector, VectorZero } from "../engine/math.js";
+import { TILE_SIZE } from "../engine/graphics.js";
 
 export function makeSpike(parent, relativePosition, entityData) {
-	const hitbox = new RectHitbox(Vector({x: 0, y: 6}), 8, 2);
+	let hitbox = getSpikeHitbox(entityData.direction);
 
 	const physObj = new PhysObj(
 		parent,
@@ -21,7 +22,7 @@ export function makeSpike(parent, relativePosition, entityData) {
 
 	const drawableEntity = new DrawableEntity(
 		physObj,
-		new Sprites.Sprite(Sprites.SPRITES.SPIKES_IMG, directionToVector(entityData.direction))
+		new Sprites.RotatedSprite(Sprites.SPRITES.SPIKES_IMG, directionToRad(entityData.direction))
 	);
 	const ret = {};
 	ret[POOL_TYPES.COLLIDABLE] = [physObj];
@@ -29,4 +30,13 @@ export function makeSpike(parent, relativePosition, entityData) {
 	ret[POOL_TYPES.DRAWABLE] = [drawableEntity];
 
 	return ret;
+}
+
+function getSpikeHitbox(direction) {
+	switch (direction) {
+		case Direction.WEST: return new RectHitbox(Vector({x: 0, y: 0}), 2, TILE_SIZE);
+		case Direction.NORTH: return new RectHitbox(Vector({x: 0, y: 6}), TILE_SIZE, 2);
+		case Direction.EAST: return new RectHitbox(Vector({x: 6, y: 0}), 2, TILE_SIZE);
+		case Direction.SOUTH: return new RectHitbox(Vector({x: 0, y: 0}), TILE_SIZE, 2);
+	}
 }

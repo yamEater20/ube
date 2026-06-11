@@ -58,9 +58,19 @@ function vectorToRadians(v) {
 function directionToVector(num) {
 	switch (num) {
 		case Direction.NORTH:	return VectorUp;
-		case Direction.EAST:	return VectorRight;
+		case Direction.EAST:	return VectorLeft;
 		case Direction.SOUTH:	return VectorDown;
-		case Direction.WEST:	return VectorLeft;
+		case Direction.WEST:	return VectorRight;
+	}
+	return null;
+}
+
+function directionToRad(num) {
+	switch (num) {
+		case Direction.NORTH:	return 0;
+		case Direction.EAST:	return Math.PI * 1.5;
+		case Direction.SOUTH:	return Math.PI;
+		case Direction.WEST:	return Math.PI / 2;
 	}
 	return null;
 }
@@ -107,6 +117,7 @@ export {
     VectorLeft,
     VectorZero,
 	directionToVector,
+	directionToRad,
 	Direction,
 	framesToMs,
 	shuffle,

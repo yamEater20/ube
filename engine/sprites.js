@@ -2,21 +2,11 @@ import {
 	TILE_SIZE,
 } from "./graphics.js";
 
-import {
-	Vector,
-	vectorToRadians,
-	VectorUp,
-    VectorRight,
-    VectorDown,
-    VectorLeft,
-    VectorZero,
-} from "./math.js";
 import { msToFrames } from "./time.js";
 
 class Sprite {
-	constructor(img, direction) {
+	constructor(img) {
 		this.img = img;
-		this.direction = direction;
 	}
 
 	getImage() {
@@ -24,42 +14,21 @@ class Sprite {
 	}
 
 	draw(x, y, camera) {
-		//sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight, options
-		camera._ctx.drawImage(this.img, x, y);
-		return;
-
-		if (this.direction) {
-			const rad = vectorToRadians(this.direction);
-			CTX.save();
-			const cameraPos = camera.getPosition();
-			CTX.translate(x + cameraPos.x, y + cameraPos.y);
-			CTX.rotate(rad);
-			let uberOffset = Vector({x: 0, y: 0});
-			switch (this.direction) {
-				case VectorUp:
-					break;
-				case VectorLeft:
-					uberOffset.x = -TILE_SIZE;
-					break;
-				case VectorRight:
-					uberOffset.y = -TILE_SIZE;
-					break;
-				case VectorDown:
-					uberOffset.x = -TILE_SIZE;
-					uberOffset.y = -TILE_SIZE;
-				default:
-					break;
-			}
-
-			CTX.translate(-x + uberOffset.x, -y + uberOffset.y);
-			this.drawSelf(x, y, camera);
-			CTX.restore();
-		} else {
-			this.drawSelf(x, y, camera);
-		}
+		camera.drawImage(this.img, x, y);
 	}
 
 	update() {}
+}
+
+class RotatedSprite extends Sprite {
+	constructor(img, rotationRadians) {
+		super(img);
+		this._options = {rotation: rotationRadians};
+	}
+
+	draw(x, y, camera) {
+		camera.drawImage(this.img, x, y, this._options);
+	}
 }
 
 class AnimatedSprite extends Sprite {
@@ -233,5 +202,6 @@ export {
 	Sprite,
 	AnimatedSprite,
 	TileSprite,
+	RotatedSprite,
 	SPRITES
 }

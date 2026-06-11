@@ -6,8 +6,14 @@ import * as Sprites from "../engine/sprites.js";
 import { VectorZero } from "../engine/math.js";
 
 class SemisolidCollisionTag extends CollisionHandlers.Ground {
-    isGround(otherPhysObj, semisolidPhysObj, direction) {
-        return otherPhysObj.isOnTopOf(semisolidPhysObj);
+	isGround(movingPhysObj, tagPhysObj, direction) {
+		const above = movingPhysObj.isOnTopOf(tagPhysObj);
+		console.log(above, movingPhysObj.globalPosition().y, tagPhysObj.globalPosition().x, tagPhysObj.globalPosition().y);
+		return direction.y > 0 && above;
+    }
+	
+	shouldStopMoving(tagPhysObj, movingPhysObj, direction) {
+		return this.isGround(movingPhysObj, tagPhysObj, direction);
     }
 }
 

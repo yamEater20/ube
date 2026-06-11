@@ -210,7 +210,7 @@ export class SpikeReaction extends CollisionHandlers.SpikeReaction {
     }
 	react(physObj, otherPhysObj, spike, direction) {
         if (spike.movingInto(physObj.velocity)) {
-			this._onSpikeCollide("hjello");
+			this._onSpikeCollide();
 		}
 		return false;
     }
@@ -243,7 +243,6 @@ export function make(parent, position, inputProvider, groundedProvider, collidab
 					new CollisionHandlers.Ridable()
 				],
 				[
-					new CollisionHandlers.PushableBoxReaction(),
 					new CollisionHandlers.WallReaction(),
 					new CollisionHandlers.GroundReaction(groundedProvider),
 					new SpringReaction(doubleJumpHandler),

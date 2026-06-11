@@ -4,7 +4,7 @@ export const TAG_IDS = Object.freeze({
     GROUND: 0,
     WALL: 1,
     RIDABLE: 2,
-    PUSHABLE_BOX: 3,
+    // PUSHABLE_BOX: 3,
     ROOM: 4,
     SPRING: 5,
     SPIKE: 6
@@ -50,41 +50,56 @@ export class TagOnly {
 }
 
 export class Composite extends TagOnly {
-    constructor (tags, reactions) {
+    constructor(tags, reactions) {
         super(tags);
         this._reactions = reactions;
     }
 
-    getReactions() {return this._reactions;}
-    
-    onCollide(physObj, other, direction) {
-		const otherTags = other.collisionHandler.getTags();
-        const myReactions = physObj.collisionHandler.getReactions();
+    getReactions() { return this._reactions; }
 
-        return myReactions.some(reaction => {
-            const tag = otherTags[reaction.id()];
-            if (tag) {
-                return reaction.react(physObj, other, tag, direction);
-            }
-            return false;
+    onCollide(physObj, others, direction) {
+        const myReactions = physObj.collisionHandler.getReactions();
+        
+        let allColliding = [];
+        let stoppedAgainst = [];
+
+        others.forEach(other => {
+            const otherTags = other.collisionHandler.getTags();
+            const myAllColliding = myReactions
+                .map(reaction => {
+                    return { tag: otherTags[reaction.id()], "reaction": reaction, other: other };
+                })
+                .filter(pair => pair.tag);
+
+            allColliding = allColliding.concat(myAllColliding);
+            
+            stoppedAgainst = stoppedAgainst.concat(
+                myAllColliding.filter(pair => pair.tag.shouldStopMoving(other, physObj, direction))
+            );
         });
-	}
+
+        if (stoppedAgainst.length === 0) {
+            allColliding.forEach(pair => pair.reaction.react(physObj, pair.other, pair.tag, direction));
+            return false;
+        } else {
+            stoppedAgainst.forEach(pair => pair.reaction.react(physObj, pair.other, pair.tag, direction));
+            return true;
+        }
+    }
 }
 
 export class GroundReaction {
     constructor(groundedProvider) {
         this._groundedProvider = groundedProvider;
     }
-    
-    id() {return TAG_IDS.GROUND;}
+
+    id() { return TAG_IDS.GROUND; }
 
     react(physObj, other, ground, direction) {
-        const canCollide = direction.y !== 0 && ground.isGround(physObj, other, direction);
-        if (!canCollide) return false;
-
+        if (!ground.isGround(other, physObj, direction)) return;
         if (direction.y < 0) {
             if (this._groundedProvider.onGround(physObj)) {
-                physObj.setYVelocity(0);                
+                physObj.setYVelocity(0);
             } else {
                 physObj.setYVelocity(Math.max(physObj.getYVelocity(), -0.05));
             }
@@ -96,58 +111,63 @@ export class GroundReaction {
 }
 
 export class Ground {
-    id() {return TAG_IDS.GROUND;}
+    id() { return TAG_IDS.GROUND; }
 
-    isGround(semisolidPhysObj, otherPhysObj, direction) {
+    shouldStopMoving(tagPhysObj, movingPhysObj, direction) {
+        return direction.y !== 0 && this.isGround(tagPhysObj, movingPhysObj, direction);
+    }
+
+    isGround(groundPhysObj, otherPhysObj, direction) {
         return true;
     }
 }
 
 export class WallReaction {
-    id() {return TAG_IDS.WALL;}
+    id() { return TAG_IDS.WALL; }
 
-    react(physObj, other, wall, direction) {
+    react(physObj, other, wall, direction) { }
+}
+
+export class Wall {
+    id() { return TAG_IDS.WALL; }
+    shouldStopMoving(tagPhysObj, movingPhysObj, direction) {
         return direction.x !== 0;
     }
 }
 
-export class Wall {
-    id() {return TAG_IDS.WALL;}
-}
-
 export class Ridable {
-    id() {return TAG_IDS.RIDABLE;}
+    id() { return TAG_IDS.RIDABLE; }
 }
 
-export class PushableBoxReaction {
-    id() {return TAG_IDS.PUSHABLE_BOX;}
-    react(physObj, other, pushable, direction) {
-        if (direction.x !== 0) {
-            return other.moveDirection(direction.x, direction);
-        }
-        return false;
-    }
-}
+// export class PushableBoxReaction {
+//     id() {return TAG_IDS.PUSHABLE_BOX;}
 
-export class PushableBox {
-    id () {return TAG_IDS.PUSHABLE_BOX;}
-}
+//     react(physObj, other, pushable, direction) {
+//         if (direction.x !== 0) {
+//             return other.moveDirection(direction.x, direction);
+//         }
+//     }
+// }
+
+// export class PushableBox {
+//     id () {return TAG_IDS.PUSHABLE_BOX;}
+// }
 
 export class RoomCollider {
     constructor(roomIndex) {
         this.roomIndex = roomIndex;
     }
-    id() {return TAG_IDS.ROOM;}
+    id() { return TAG_IDS.ROOM; }
+    shouldStopMoving() { return false; }
 }
 
 export class RoomColliderReaction {
     constructor(func) {
         this._handler = func;
     }
-    id() {return TAG_IDS.ROOM;}
+    id() { return TAG_IDS.ROOM; }
     react(physObj, other, room, direction) {
         this._handler(room);
-        return false;
     }
 }
 
@@ -155,14 +175,14 @@ export class Spring {
     constructor(bounceVelocity) {
         this.bounceVelocity = bounceVelocity;
     }
-    id() {return TAG_IDS.SPRING;}
+    id() { return TAG_IDS.SPRING; }
+    shouldStopMoving(tagPhysObj, movingPhysObj, direction) { return direction.y > 0; }
 }
 
 export class SpringReaction {
-    id() {return TAG_IDS.SPRING;}
+    id() { return TAG_IDS.SPRING; }
     react(physObj, other, spring, direction) {
         physObj.setYVelocity(spring.bounceVelocity);
-        return direction.y > 0;
     }
 }
 
@@ -170,13 +190,14 @@ export class Spike {
     constructor(direction) {
         this.directionVector = directionToVector(direction);
     }
-    id() {return TAG_IDS.Spike;}
+    id() { return TAG_IDS.Spike; }
     movingInto(otherVelocity) {
         const dot = this.directionVector.x * otherVelocity.x + this.directionVector.y * otherVelocity.y;
         return dot <= 0;
     }
+    shouldStopMoving() { return false; }
 }
 
 export class SpikeReaction {
-    id() {return TAG_IDS.Spike;}
+    id() { return TAG_IDS.Spike; }
 }

@@ -14,9 +14,9 @@ const ENTITY_MAP = Object.freeze({
     "#493826": ENTITY_TYPE.SEMISOLID,
     "#E31C1C": ENTITY_TYPE.SPRING,
     "#CC92C1": {entityType: ENTITY_TYPE.SPIKE, direction: Direction.NORTH},
-    // "#CC92C1": spike("sdsd"),
-    // "#CC92C1": spike("sdsd"),
-    // "#CC92C1": spike("sdsd"),
+    "#E3B5DB": {entityType: ENTITY_TYPE.SPIKE, direction: Direction.WEST},
+    "#F0D3EA": {entityType: ENTITY_TYPE.SPIKE, direction: Direction.SOUTH},
+    "#FFE7FA": {entityType: ENTITY_TYPE.SPIKE, direction: Direction.EAST},
 });
 
 export function hexToEntityData(hex) {

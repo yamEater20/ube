@@ -192,15 +192,10 @@ class PhysObj extends Entity {
 		while (amount !== 0) {
 			const allRiding = this._collidableProvider.getAllRiding(this);
 			const allColliding = this._collidableProvider.getAllColliding(this, direction).filter(p => !allRiding.includes(p));
-			let shouldBreak = false;
-			allColliding.some(c => {
-				if (this.collisionHandler.onCollide(this, c, direction)) {
-					shouldBreak = true;
-					return true;
-				}
-			});
-			if (shouldBreak) {
-				didCollide = true;
+			
+			didCollide = this.collisionHandler.onCollide(this, allColliding, direction);
+
+			if (didCollide) {
 				if (direction.x !== 0) this.subpixels.x = 0;
 				if (direction.y !== 0) this.subpixels.y = 0;
 				break;

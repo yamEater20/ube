@@ -99,6 +99,31 @@ class Camera {
                 this._ctx.scale(-1, 1);
                 this._ctx.translate(-dx, 0);
             }
+
+            if (options.rotation) {
+                this._ctx.translate(dx+4, dy+4);
+                this._ctx.rotate(options.rotation);
+                this._ctx.translate(-dx-4, -dy-4);
+                
+                // let uberOffset = Vector({x: 0, y: 0});
+                // switch (this.direction) {
+                //     case VectorUp:
+                //         break;
+                //     case VectorLeft:
+                //         uberOffset.x = -TILE_SIZE;
+                //         break;
+                //     case VectorRight:
+                //         uberOffset.y = -TILE_SIZE;
+                //         break;
+                //     case VectorDown:
+                //         uberOffset.x = -TILE_SIZE;
+                //         uberOffset.y = -TILE_SIZE;
+                //     default:
+                //         break;
+                // }
+
+                // CTX.translate(-x + uberOffset.x, -y + uberOffset.y);
+            }
     
             if (options.sWidth) {
                 this._ctx.drawImage(
@@ -108,6 +133,8 @@ class Camera {
                     dx, dy,
                     options.dWidth, options.dHeight
                 );
+            } else {
+                this._ctx.drawImage(image, dx, dy);
             }
 
             this._ctx.restore();
