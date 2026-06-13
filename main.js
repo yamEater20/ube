@@ -117,6 +117,8 @@ class Root {
 		this._registrar = registrar;
 
 		this._worldPaused = false;
+
+		this._shouldReset = false;
 	}
 
 	globalPosition() {
@@ -152,10 +154,19 @@ class Root {
 
 			if (!this._worldPaused)
 			{
-				if (input.resetPressed) this._registrar.getPool(POOL_TYPES.RESETTABLE).foreach(r => r.reset());
+				if (input.resetPressed) this.queueReset();
 				this._registrar.getPool(POOL_TYPES.UPDATEABLE).foreach(item => item.update(this._worldTime.delta));
 			}
 		}
+
+		if (this._shouldReset) {
+			this._registrar.getPool(POOL_TYPES.RESETTABLE).foreach(r => r.reset());
+			this._shouldReset = false;
+		}
+	}
+
+	queueReset() {
+		this._shouldReset = true;
 	}
 }
 
@@ -225,7 +236,7 @@ async function setup() {
 		globalCollidableProvider,
 		new SpawnPositionProvider(roomsPool),
 		roomCollider => roomsPool.roomIndex = roomCollider.roomIndex,
-		() => globalRegistrar.getPool(POOL_TYPES.RESETTABLE).foreach(r => r.reset())
+		() => root.queueReset()
 	);
 	
 	persistentRegistrar.registerEntity(player);
