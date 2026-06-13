@@ -8,7 +8,6 @@ import { VectorZero } from "../engine/math.js";
 class SemisolidCollisionTag extends CollisionHandlers.Ground {
 	isGround(movingPhysObj, tagPhysObj, direction) {
 		const above = movingPhysObj.isOnTopOf(tagPhysObj);
-		console.log(above, movingPhysObj.globalPosition().y, tagPhysObj.globalPosition().x, tagPhysObj.globalPosition().y);
 		return direction.y > 0 && above;
     }
 	

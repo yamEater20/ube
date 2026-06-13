@@ -17,12 +17,13 @@ class DrawableEntity extends Entity {
 }
 
 class UpdatableDrawableEntity extends DrawableEntity {
-	constructor(parent, drawable, updateHandler, relativePosition) {
+	constructor(parent, drawable, relativePosition) {
 		super(parent, drawable, relativePosition);
-		this._updateHandler = updateHandler;
 	}
 
-	update(timeDelta) {this._updateHandler.update(timeDelta, this);}
+	update(timeDelta) {
+		this.drawable.update(timeDelta);
+	}
 }
 
 export {

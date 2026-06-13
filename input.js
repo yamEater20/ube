@@ -41,6 +41,7 @@ export class InputProvider {
 
         this._pressCodes = [
             "jump",
+            "slide",
             "pause",
             "reset",
             
@@ -78,6 +79,7 @@ export class InputProvider {
             "moveDown": this._keyCodes.ArrowDown || this._keyCodes.KeyS,
 
             "jump": this._keyCodes.KeyZ || this._keyCodes.KeyW || this._keyCodes.Space,
+            "slide": this._keyCodes.KeyX || this._keyCodes.KeyS,
 
             "pause": this._keyCodes.KeyV,
             "reset": this._keyCodes.KeyR,

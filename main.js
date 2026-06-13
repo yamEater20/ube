@@ -4,7 +4,6 @@
 
 import {
 	Vector,
-    VectorRight,
     VectorZero
 } from './engine/math.js';
 import { Time } from './engine/time.js';
