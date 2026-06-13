@@ -50,7 +50,8 @@ export const POOL_TYPES = Object.freeze({
 	RESETTABLE: 3,
 	DRAWABLE_DEBUG: 4,
 	ROOM: 5,
-	CAMERA_FOLLOW: 6
+	CAMERA_FOLLOW: 6,
+	SPAWN: 7
 });
 
 //Pool of pools

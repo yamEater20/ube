@@ -1,11 +1,11 @@
 export class ResetAtSpawn {
-	constructor(entity, relativeSpawnPosition) {
+	constructor(entity, spawnPositionProvider) {
 		this._entity = entity;
-		this._relativeSpawnPosition = relativeSpawnPosition;
+		this._spawnPositionProvider = spawnPositionProvider;
 	}
 
 	reset() {
-		this._entity.relativePosition = this._relativeSpawnPosition;
+		this._entity.relativePosition = this._spawnPositionProvider.getSpawnPosition();
 	}
 }
 

@@ -2,12 +2,12 @@ import {
 	Vector,
     VectorRight,
     VectorZero
-} from './engine/math.js';
-import { PoolTypesFactory, POOL_TYPES, Registrar, CollidableProvider } from './pools.js';
-import {Entity} from "./engine/entity.js";
-import { debugOptions } from './engine/debug.js';
-import { TILE_SIZE } from './engine/graphics.js';
-import { entityDataToEntity } from './entities/parseEntityData.js';
+} from '../engine/math.js';
+import { PoolTypesFactory, POOL_TYPES, Registrar, CollidableProvider, Pool } from '../pools.js';
+import {Entity} from "../engine/entity.js";
+import { debugOptions } from '../engine/debug.js';
+import { TILE_SIZE } from '../engine/graphics.js';
+import { entityDataToEntity } from './parseEntityData.js';
 
 export const ROOM_SIZE_TILES = Vector({x: 16, y: 16});
 
@@ -16,11 +16,13 @@ export class Room extends Entity {
 		super(parent, relativePosition);
 
 		//Control freak anti-pattern? Maybe, but very close to composition root.
-		this._registrar = new Registrar(PoolTypesFactory());
+		const poolTypes = PoolTypesFactory();
+		poolTypes[POOL_TYPES.SPAWN] = new Pool();
+		this._registrar = new Registrar(poolTypes);
 
 		this.processLevelData(this._registrar, levelData);
 
-		this._collidableProvider = new CollidableProvider(this.getPool(POOL_TYPES.COLLIDABLE));
+		this._localCollidableProvider = new CollidableProvider(this.getPool(POOL_TYPES.COLLIDABLE));
 	}
 
 	processLevelData(registrar, levelData) {
@@ -48,6 +50,6 @@ export class Room extends Entity {
 	}
 
 	getLocalCollidableProvider() {
-		return this._collidableProvider;
+		return this._localCollidableProvider;
 	}
 }

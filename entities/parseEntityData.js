@@ -4,6 +4,7 @@ import { makeSpring } from "./spring.js";
 import { Vector } from "../engine/math.js";
 import { ENTITY_TYPE } from "../levelEditor/hexParsing.js";
 import { makeSpike } from "./spike.js";
+import { makeSpawn } from "./spawn.js";
 
 const a = {};
 a[ENTITY_TYPE.EMPTY] = () => {};
@@ -11,6 +12,7 @@ a[ENTITY_TYPE.WALL] = makeWall;
 a[ENTITY_TYPE.SEMISOLID] = makeSemiSolid;
 a[ENTITY_TYPE.SPRING] = makeSpring;
 a[ENTITY_TYPE.SPIKE] = makeSpike;
+a[ENTITY_TYPE.SPAWN] = makeSpawn;
 
 export function entityDataToEntity(parent, entityData) {
     const relativePosition = Vector({x: entityData.relativeX, y: entityData.relativeY});

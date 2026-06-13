@@ -13,7 +13,7 @@ import {Camera} from './engine/camera.js';
 import {InputProvider, TASInputProvider} from './input.js';
 import * as UpdateHandlers from './physUpdateHandlers.js';
 import * as Player from './entities/player.js';
-import { Room, ROOM_SIZE_TILES } from './world.js';
+import { Room, ROOM_SIZE_TILES } from './entities/room.js';
 import * as Setup from './engine/setup.js';
 import {toggleDebugAll, debugOptions} from "./engine/debug.js";
 import { getLevelData } from './levelEditor/levelEditor.js';
@@ -69,6 +69,16 @@ class GlobalCollidableProvider {
 		return this
 			._roomsPool.getCurrentRoom().getLocalCollidableProvider().getAllColliding(physObj, offset)
 			.concat(this._persistentCollidableProvider.getAllColliding(physObj, offset))
+    }
+}
+
+class SpawnPositionProvider {
+    constructor(roomsPool) {
+        this._roomsPool = roomsPool;
+    }
+
+    getSpawnPosition() {
+        return this._roomsPool.getPool(POOL_TYPES.SPAWN).get()[0].globalPosition();
     }
 }
 
@@ -163,8 +173,8 @@ let mainLoopDiagnostics = new Diagnostics(mainLoop);
 
 async function setup() {
 	// Setup.setup();
-	// let levelData = await timeIt("Read level data", () => getLevelData(LEVEL_PATH));
-	// levelData.levels = levelData.levels.map(postProcessWalls).map(postProcessSemisolids);
+	let levelData = await timeIt("Read level data", () => getLevelData(LEVEL_PATH));
+	levelData.levels = levelData.levels.map(postProcessWalls).map(postProcessSemisolids);
 	// const json = JSON.stringify(levelData);
 	// console.log(json);
 
@@ -172,7 +182,7 @@ async function setup() {
 	canvas = info.canvas;
 	const ctx = info.ctx;
 
-	let levelData = CACHED_LEVELS;
+	// let levelData = CACHED_LEVELS;
 	
 	const inputProvider = new InputProvider();
 
@@ -213,6 +223,7 @@ async function setup() {
 		inputProvider,
 		groundedProvider,
 		globalCollidableProvider,
+		new SpawnPositionProvider(roomsPool),
 		roomCollider => roomsPool.roomIndex = roomCollider.roomIndex,
 		() => globalRegistrar.getPool(POOL_TYPES.RESETTABLE).foreach(r => r.reset())
 	);
@@ -224,6 +235,7 @@ async function setup() {
 		const roomSizeWorldSpace = ROOM_SIZE_TILES.scalar(TILE_SIZE);
 		persistentRegistrar.registerEntity(makeRoomCollider(room, index, roomSizeWorldSpace));
 	});
+
 	globalRegistrar.setRoomsPool(roomsPool);
 	globalCollidableProvider.setRoomsPool(roomsPool);
 	

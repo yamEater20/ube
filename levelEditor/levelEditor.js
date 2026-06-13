@@ -1,6 +1,6 @@
 import {
     ROOM_SIZE_TILES
-} from "../world.js";
+} from "../entities/room.js";
 import { Vector } from "../engine/math.js";
 
 import { timeIt } from "../diagnostics.js";

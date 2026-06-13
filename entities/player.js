@@ -346,7 +346,7 @@ export class SpikeReaction extends CollisionHandlers.SpikeReaction {
     }
 }
 
-export function make(parent, position, inputProvider, groundedProvider, collidableProvider, onRoomCollide, killPlayer) {
+export function make(parent, position, inputProvider, groundedProvider, collidableProvider, spawnPositionProvider, onRoomCollide, killPlayer) {
 	const hitbox = new RectHitbox(VectorZero, 6, 6);
 
 	const roomColliderReaction = new CollisionHandlers.RoomColliderReaction(onRoomCollide);
@@ -413,7 +413,7 @@ export function make(parent, position, inputProvider, groundedProvider, collidab
 
 	ret[POOL_TYPES.DRAWABLE] = [drawableEntity];
 	ret[POOL_TYPES.UPDATEABLE] = [drawableEntity, physObj];
-	ret[POOL_TYPES.RESETTABLE] = [physObj, new ResetAtSpawn(physObj, position), updateHandler];
+	ret[POOL_TYPES.RESETTABLE] = [physObj, new ResetAtSpawn(physObj, spawnPositionProvider), updateHandler];
 	ret[POOL_TYPES.COLLIDABLE] = [physObj];
 	ret[POOL_TYPES.DRAWABLE_DEBUG] = [new HitboxDrawableEntity(physObj, hitbox, "#00ff0060")];
 	// ret[POOL_TYPES.DRAWABLE] = [hitbox];
