@@ -12,7 +12,7 @@ import { Registrar, Pool } from './engine/pools.js';
 import { POOL_TYPES, PoolTypesFactory } from './entities/poolTypes.js';
 import { CollidableProvider } from './services/collidableProvider.js';
 import {Camera} from './engine/camera.js';
-import {InputProvider, TASInputProvider} from './input.js';
+import {InputProvider, TASInputProvider} from './services/input.js';
 import * as UpdateHandlers from './entities/physUpdateHandlers.js';
 import * as Player from './entities/player.js';
 import { Room, ROOM_SIZE_TILES } from './entities/room.js';

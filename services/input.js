@@ -1,5 +1,8 @@
-export class InputProvider {
+import { IInputProvider } from "../engine/iInputProvider.js";
+
+export class InputProvider extends IInputProvider {
     constructor() {
+        super();
         this._keyCodes = {
             "ArrowRight": false,
             "ArrowLeft": false,
@@ -68,7 +71,7 @@ export class InputProvider {
         }
     }
 
-    update() {
+    update(timeDelta) {
         this._prevInput = this._input;
 
         this._input = {
@@ -105,9 +108,14 @@ function setPressed(input, prevInput, name) {
     input[name + "Pressed"] = input[name] && !prevInput[name];
 }
 
-export class TASInputProvider {
-    constructor() {this.frame = 0;}
-    update() {
+export class TASInputProvider extends IInputProvider {
+    constructor() {
+        super();
+        this.frame = 0;
+    }
+
+    update(timeDelta) {
+        throw new Error("Not implemented. Needs work");
         this.frame = (this.frame+1) % 30;
         console.log(this.frame);
     }
