@@ -8,11 +8,12 @@ import {
 } from './engine/math.js';
 import { Time } from './engine/time.js';
 import { Diagnostics, timeIt } from './engine/diagnostics.js';
-import { POOL_TYPES, Registrar, PoolTypesFactory, Pool } from './pools.js';
-import { CollidableProvider } from './collidableProvider.js';
+import { Registrar, Pool } from './engine/pools.js';
+import { POOL_TYPES, PoolTypesFactory } from './entities/poolTypes.js';
+import { CollidableProvider } from './services/collidableProvider.js';
 import {Camera} from './engine/camera.js';
 import {InputProvider, TASInputProvider} from './input.js';
-import * as UpdateHandlers from './physUpdateHandlers.js';
+import * as UpdateHandlers from './entities/physUpdateHandlers.js';
 import * as Player from './entities/player.js';
 import { Room, ROOM_SIZE_TILES } from './entities/room.js';
 import * as Setup from './engine/setup.js';

@@ -4,7 +4,7 @@ import { makeSpring } from "./spring.js";
 import { makeSpike } from "./spike.js";
 import { makeSpawn } from "./spawn.js";
 import { Direction } from "../engine/math.js";
-import { makeBackLayerDecor } from "./backLayerDecor.js";
+import { makeFrontLayerDecor } from "./frontLayerDecor.js";
 
 import * as Sprites from "../engine/sprites.js";
 import { makeTorch } from "./torch.js";
@@ -45,7 +45,7 @@ entityTypeToEntity[ENTITY_TYPES.SEMISOLID] = makeSemiSolid;
 entityTypeToEntity[ENTITY_TYPES.SPRING] = makeSpring;
 entityTypeToEntity[ENTITY_TYPES.SPIKE] = makeSpike;
 entityTypeToEntity[ENTITY_TYPES.SPAWN] = makeSpawn;
-entityTypeToEntity[ENTITY_TYPES.BACK_LAYER_DECOR] = makeBackLayerDecor;
+entityTypeToEntity[ENTITY_TYPES.BACK_LAYER_DECOR] = makeFrontLayerDecor;
 entityTypeToEntity[ENTITY_TYPES.TORCH] = makeTorch;
 
 export const ENTITY_TYPE_TO_ENTITY = Object.freeze(entityTypeToEntity);

@@ -1,5 +1,5 @@
-import { TAG_IDS } from "./customCollisionHandlers.js";
-import { VectorDown } from "./engine/math.js";
+import { TAG_IDS } from "../entities/customCollisionHandlers.js";
+import { VectorDown } from "../engine/math.js";
 
 export class CollidableProvider {
 	constructor (pool) {

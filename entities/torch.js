@@ -1,5 +1,5 @@
 import { DrawableEntity, UpdatableDrawableEntity } from "../engine/drawableEntity.js";
-import { POOL_TYPES } from "../pools.js";
+import { POOL_TYPES } from "./poolTypes.js";
 import * as Sprites from "../engine/sprites.js";
 import { Entity } from "../engine/entity.js";
 import { Vector, VectorRight, VectorZero } from "../engine/math.js";

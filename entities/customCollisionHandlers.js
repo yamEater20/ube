@@ -1,5 +1,5 @@
-import { IReaction } from "./engine/collisionHandlers.js";
-import { directionToVector } from "./engine/math.js";
+import { IReaction } from "../engine/collisionHandlers.js";
+import { directionToVector } from "../engine/math.js";
 
 export const TAG_IDS = Object.freeze({
     GROUND: 0,

@@ -1,5 +1,5 @@
-import { getFallV } from "./engine/physics.js";
-import { VectorDown } from "./engine/math.js";
+import { getFallV } from "../engine/physics.js";
+import { VectorDown } from "../engine/math.js";
 import { TAG_IDS } from "./customCollisionHandlers.js";
 
 export class Composite {

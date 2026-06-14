@@ -1,8 +1,8 @@
 import { DrawableEntity } from "../engine/drawableEntity.js";
-import { POOL_TYPES } from "../pools.js";
+import { POOL_TYPES } from "./poolTypes.js";
 import * as Sprites from "../engine/sprites.js";
 
-export function makeBackLayerDecor(parent, relativePosition, entityData) {
+export function makeFrontLayerDecor(parent, relativePosition, entityData) {
 	const spriteArray = entityData.spriteArray;
     const ind = Math.floor(Math.random()*spriteArray.length);
     const drawableEntity = new DrawableEntity(

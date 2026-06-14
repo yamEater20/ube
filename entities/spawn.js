@@ -1,5 +1,5 @@
 import { Entity } from "../engine/entity.js";
-import { POOL_TYPES } from "../pools.js";
+import { POOL_TYPES } from "./poolTypes.js";
 
 export function makeSpawn(parent, relativePosition, entityData) {
     const ret = {};

@@ -1,8 +1,8 @@
-import { RoomCollider } from "../customCollisionHandlers.js";
+import { RoomCollider } from "./customCollisionHandlers.js";
 import {TagOnly} from "../engine/collisionHandlers.js";
 import { VectorZero } from "../engine/math.js";
 import { DummyCollidableProvider, DummyUpdateHandler, HitboxDrawableEntity, PhysObj, RectHitbox } from "../engine/physics.js";
-import { POOL_TYPES } from "../pools.js";
+import { POOL_TYPES } from "./poolTypes.js";
 
 export function makeRoomCollider(room, roomIndex, colliderSize) {
     const hitbox = new RectHitbox(VectorZero, colliderSize.x, colliderSize.x)
