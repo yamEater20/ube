@@ -173,6 +173,12 @@ class Root {
 	}
 }
 
+class ParticleCreator {
+	createSpringParticles(position) {
+		console.log(position.x, position.y);
+	}
+}
+
 let root;
 let canvas;
 
@@ -197,8 +203,13 @@ async function setup() {
 	levelData = postProcessor.execute(levelData);
 	const json = JSON.stringify(levelData);
 	console.log(json);
+
+	// let levelData = CACHED_LEVELS;
+
+	const particleCreator = new ParticleCreator();
 	
 	const entityConstructionPostProcessor = new LevelDataPostProcessor([
+		new CustomPostProcess.SpringCallbackPostProcess(particleCreator.createSpringParticles),
 		new EntityDataToEntityFactoryPostProcess(ENTITY_TYPE_TO_ENTITY)
 	]);
 
@@ -207,8 +218,6 @@ async function setup() {
 	const info = createCanvas();
 	canvas = info.canvas;
 	const ctx = info.ctx;
-
-	// let levelData = CACHED_LEVELS;
 	
 	const inputProvider = new InputProvider();
 

@@ -177,12 +177,14 @@ export class Spring {
     }
     id() { return TAG_IDS.SPRING; }
     shouldStopMoving(tagPhysObj, movingPhysObj, direction) { return direction.y > 0; }
+    onBounce() {}
 }
 
 export class SpringReaction {
     id() { return TAG_IDS.SPRING; }
     react(physObj, other, spring, direction) {
         physObj.setYVelocity(spring.bounceVelocity);
+        spring.onBounce();
     }
 }
 

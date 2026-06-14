@@ -133,6 +133,20 @@ export class WallCornersPostProcess extends ITileArrayPostProcessor {
     }
 }
 
+export class SpringCallbackPostProcess extends ITileArrayPostProcessor {
+    constructor(onBounce) {
+        super();
+        this._onBounce = onBounce;
+    }
+    
+    postProcessTile(arr, entityData, x, y) {
+        if (entityData.entityType === ENTITY_TYPES.SPRING) {
+            entityData.onBounce = this._onBounce;
+        }
+        return entityData;
+    }
+}
+
 function entityIsWall(entityData) {
     return entityData.entityType === ENTITY_TYPES.WALL;
 }
