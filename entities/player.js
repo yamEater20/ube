@@ -1,7 +1,7 @@
 import { Timer } from "../engine/time.js";
 import { GRAVITY_COMING_DOWN, GRAVITY_GOING_UP, HitboxDrawableEntity, PhysObj, RectHitbox } from "../engine/physics.js";
 import { framesToMs, VectorZero } from "../engine/math.js";
-import * as CollisionHandlers from "../collisionHandlers.js";
+import * as CustomCollisionHandlers from "../customCollisionHandlers.js";
 import * as Sprites from "../engine/sprites.js";
 import { UpdatableDrawableEntity } from "../engine/drawableEntity.js";
 import { Vector } from "../engine/math.js";
@@ -9,6 +9,7 @@ import { ResetAtSpawn } from "../reset.js";
 import * as GeneralUpdateHandlers from "../physUpdateHandlers.js";
 import { debugOptions } from "../engine/debug.js";
 import {POOL_TYPES} from "../pools.js";
+import { Composite } from "../engine/collisionHandlers.js";
 
 //TODO: provide constants for magic numbers
 
@@ -305,7 +306,7 @@ class NonRidableCollidableProvider {
     }
 }
 
-class WallReaction extends CollisionHandlers.WallReaction {
+class WallReaction extends CustomCollisionHandlers.WallReaction {
 	constructor(slideHandler, slideBumpHandler) {
 		super();
 		this._slideHandler = slideHandler;
@@ -320,7 +321,7 @@ class WallReaction extends CollisionHandlers.WallReaction {
 	}
 }
 
-class SpringReaction extends CollisionHandlers.SpringReaction {
+class SpringReaction extends CustomCollisionHandlers.SpringReaction {
 	constructor(doubleJumpHandler) {
 		super();
 		this._doubleJumpHandler = doubleJumpHandler;
@@ -332,7 +333,7 @@ class SpringReaction extends CollisionHandlers.SpringReaction {
     }
 }
 
-export class SpikeReaction extends CollisionHandlers.SpikeReaction {
+export class SpikeReaction extends CustomCollisionHandlers.SpikeReaction {
     constructor(onSpikeCollide, slideHandler) {
         super();
 		this._onSpikeCollide = onSpikeCollide;
@@ -349,7 +350,7 @@ export class SpikeReaction extends CollisionHandlers.SpikeReaction {
 export function make(parent, position, inputProvider, groundedProvider, collidableProvider, spawnPositionProvider, onRoomCollide, killPlayer) {
 	const hitbox = new RectHitbox(VectorZero, 6, 6);
 
-	const roomColliderReaction = new CollisionHandlers.RoomColliderReaction(onRoomCollide);
+	const roomColliderReaction = new CustomCollisionHandlers.RoomColliderReaction(onRoomCollide);
 	const doubleJumpHandler = new DoubleJumpHandler();
 	const slideHandler = new SlideHandler();
 	const slideBumpHandler = new SlideBumpHandler();
@@ -384,15 +385,15 @@ export function make(parent, position, inputProvider, groundedProvider, collidab
 		hitbox,
 		updateHandler,
 		new CollisionHandlerDebugDecorator(
-			new CollisionHandlers.Composite(
+			new Composite(
 				[
-					new CollisionHandlers.Wall(),
-					new CollisionHandlers.Ground(),
-					new CollisionHandlers.Ridable()
+					new CustomCollisionHandlers.Wall(),
+					new CustomCollisionHandlers.Ground(),
+					new CustomCollisionHandlers.Ridable()
 				],
 				[
 					new WallReaction(slideHandler, slideBumpHandler),
-					new CollisionHandlers.GroundReaction(groundedProvider),
+					new CustomCollisionHandlers.GroundReaction(groundedProvider),
 					new SpringReaction(doubleJumpHandler),
 					new SpikeReaction(killPlayer, slideHandler),
 					roomColliderReaction

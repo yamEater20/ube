@@ -1,4 +1,4 @@
-import * as CollisionHandlers from "../collisionHandlers.js";
+import * as CustomCollisionHandlers from "../customCollisionHandlers.js";
 import { Vector } from "../engine/math.js";
 import { PhysObj } from "../engine/physics.js";
 import { DrawableEntity } from "../engine/drawableEntity.js";

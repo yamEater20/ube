@@ -1,3 +1,4 @@
+import { IReaction } from "./engine/collisionHandlers.js";
 import { directionToVector } from "./engine/math.js";
 
 export const TAG_IDS = Object.freeze({
@@ -10,86 +11,9 @@ export const TAG_IDS = Object.freeze({
     SPIKE: 6
 });
 
-function tagListIntoDictionary(tags) {
-    const ret = {};
-    tags.forEach(a => {
-        const id = a.id();
-        if (ret[id]) {
-            throw new Error(`Duplicate Tag Ids for ${tagName(id)}: current ${ret[id]}, new ${a}.\nI can't imagine why you'd want this.`);
-        }
-        ret[id] = a;
-    });
-    return ret;
-}
-
-export function tagName(id) {
-    Object.keys(TAG_IDS).find(k => TAG_IDS[k] === id);
-}
-
-export class TagOnly {
-    constructor(tags) {
-        this._tags = tagListIntoDictionary(tags);
-    }
-
-    getTags() {
-        return this._tags;
-    }
-
-    containsTag(tag) {
-        return this.getTag(tag) != undefined;
-    }
-
-    getTag(tag) {
-        return this._tags[tag];
-    }
-
-
-    onCollide() {
-        throw new Error("You are calling onCollide from something that's not supposed to be moving.");
-    }
-}
-
-export class Composite extends TagOnly {
-    constructor(tags, reactions) {
-        super(tags);
-        this._reactions = reactions;
-    }
-
-    getReactions() { return this._reactions; }
-
-    onCollide(physObj, others, direction) {
-        const myReactions = physObj.collisionHandler.getReactions();
-        
-        let allColliding = [];
-        let stoppedAgainst = [];
-
-        others.forEach(other => {
-            const otherTags = other.collisionHandler.getTags();
-            const myAllColliding = myReactions
-                .map(reaction => {
-                    return { tag: otherTags[reaction.id()], "reaction": reaction, other: other };
-                })
-                .filter(pair => pair.tag);
-
-            allColliding = allColliding.concat(myAllColliding);
-            
-            stoppedAgainst = stoppedAgainst.concat(
-                myAllColliding.filter(pair => pair.tag.shouldStopMoving(other, physObj, direction))
-            );
-        });
-
-        if (stoppedAgainst.length === 0) {
-            allColliding.forEach(pair => pair.reaction.react(physObj, pair.other, pair.tag, direction));
-            return false;
-        } else {
-            stoppedAgainst.forEach(pair => pair.reaction.react(physObj, pair.other, pair.tag, direction));
-            return true;
-        }
-    }
-}
-
-export class GroundReaction {
+export class GroundReaction extends IReaction {
     constructor(groundedProvider) {
+        super();
         this._groundedProvider = groundedProvider;
     }
 
@@ -122,7 +46,7 @@ export class Ground {
     }
 }
 
-export class WallReaction {
+export class WallReaction extends IReaction {
     id() { return TAG_IDS.WALL; }
 
     react(physObj, other, wall, direction) { }
@@ -161,8 +85,9 @@ export class RoomCollider {
     shouldStopMoving() { return false; }
 }
 
-export class RoomColliderReaction {
+export class RoomColliderReaction extends IReaction {
     constructor(func) {
+        super();
         this._handler = func;
     }
     id() { return TAG_IDS.ROOM; }
@@ -180,7 +105,7 @@ export class Spring {
     onBounce() {}
 }
 
-export class SpringReaction {
+export class SpringReaction extends IReaction {
     id() { return TAG_IDS.SPRING; }
     react(physObj, other, spring, direction) {
         physObj.setYVelocity(spring.bounceVelocity);
@@ -200,6 +125,6 @@ export class Spike {
     shouldStopMoving() { return false; }
 }
 
-export class SpikeReaction {
+export class SpikeReaction extends IReaction {
     id() { return TAG_IDS.Spike; }
 }

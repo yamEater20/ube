@@ -1,9 +1,10 @@
 import { RectHitbox, PhysObj, DummyCollidableProvider, DummyUpdateHandler, HitboxDrawableEntity } from "../engine/physics.js";
 import { DrawableEntity } from "../engine/drawableEntity.js";
-import * as CollisionHandlers from "../collisionHandlers.js";
+import * as CustomCollisionHandlers from "../customCollisionHandlers.js";
 import { POOL_TYPES } from "../pools.js";
 import * as Sprites from "../engine/sprites.js";
 import { VectorZero } from "../engine/math.js";
+import { TagOnly } from "../engine/collisionHandlers.js";
 
 export function makeWall(parent, relativePosition, entityData) {
 	const hitbox = new RectHitbox(VectorZero, 8, 8);
@@ -12,8 +13,8 @@ export function makeWall(parent, relativePosition, entityData) {
 		relativePosition,
 		hitbox,
 		new DummyUpdateHandler(),
-		new CollisionHandlers.TagOnly(
-			[new CollisionHandlers.Wall(), new CollisionHandlers.Ground()]
+		new TagOnly(
+			[new CustomCollisionHandlers.Wall(), new CustomCollisionHandlers.Ground()]
 		),
 		new DummyCollidableProvider(),
 	);

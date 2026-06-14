@@ -1,11 +1,12 @@
 import { RectHitbox, PhysObj, DummyCollidableProvider, DummyUpdateHandler, HitboxDrawableEntity } from "../engine/physics.js";
 import { DrawableEntity, UpdatableDrawableEntity } from "../engine/drawableEntity.js";
-import * as CollisionHandlers from "../collisionHandlers.js";
+import * as CustomCollisionHandlers from "../customCollisionHandlers.js";
 import { POOL_TYPES } from "../pools.js";
 import { AnimatedSprite, SPRITE_LK } from "../engine/sprites.js";
 import { Vector } from "../engine/math.js";
+import { TagOnly } from "../engine/collisionHandlers.js";
 
-class SpringTagAnimated extends CollisionHandlers.Spring{
+class SpringTagAnimated extends CustomCollisionHandlers.Spring{
 	constructor(bounceV, animatedSprite, onBounceCallback) {
 		super(bounceV);
 		this._animatedSprite = animatedSprite;
@@ -34,7 +35,7 @@ export function makeSpring(parent, relativePosition, entityData) {
 		relativePosition,
 		hitbox,
 		new DummyUpdateHandler(),
-		new CollisionHandlers.TagOnly(
+		new TagOnly(
 			[new SpringTagAnimated(
 				-0.26,
 				sprite,

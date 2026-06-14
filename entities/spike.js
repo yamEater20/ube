@@ -1,10 +1,11 @@
 import { RectHitbox, PhysObj, DummyCollidableProvider, DummyUpdateHandler, HitboxDrawableEntity } from "../engine/physics.js";
 import { DrawableEntity } from "../engine/drawableEntity.js";
-import * as CollisionHandlers from "../collisionHandlers.js";
+import * as CustomCollisionHandlers from "../customCollisionHandlers.js";
 import { POOL_TYPES } from "../pools.js";
 import * as Sprites from "../engine/sprites.js";
 import { Direction, directionToRad, Vector, VectorZero } from "../engine/math.js";
 import { TILE_SIZE } from "../engine/graphics.js";
+import { TagOnly } from "../engine/collisionHandlers.js";
 
 export function makeSpike(parent, relativePosition, entityData) {
 	let hitbox = getSpikeHitbox(entityData.direction);
@@ -14,8 +15,8 @@ export function makeSpike(parent, relativePosition, entityData) {
 		relativePosition,
 		hitbox,
 		new DummyUpdateHandler(),
-		new CollisionHandlers.TagOnly(
-			[new CollisionHandlers.Spike(entityData.direction)]
+		new TagOnly(
+			[new CustomCollisionHandlers.Spike(entityData.direction)]
 		),
 		new DummyCollidableProvider(),
 	);

@@ -7,8 +7,9 @@ import {
     VectorZero
 } from './engine/math.js';
 import { Time } from './engine/time.js';
-import { Diagnostics, timeIt } from './diagnostics.js';
-import { CollidableProvider, POOL_TYPES, Registrar, PoolTypesFactory, Pool } from './pools.js';
+import { Diagnostics, timeIt } from './engine/diagnostics.js';
+import { POOL_TYPES, Registrar, PoolTypesFactory, Pool } from './pools.js';
+import { CollidableProvider } from './collidableProvider.js';
 import {Camera} from './engine/camera.js';
 import {InputProvider, TASInputProvider} from './input.js';
 import * as UpdateHandlers from './physUpdateHandlers.js';

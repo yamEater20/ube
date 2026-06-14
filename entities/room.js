@@ -3,10 +3,11 @@ import {
     VectorRight,
     VectorZero
 } from '../engine/math.js';
-import { PoolTypesFactory, POOL_TYPES, Registrar, CollidableProvider, Pool } from '../pools.js';
+import { PoolTypesFactory, POOL_TYPES, Registrar, Pool } from '../pools.js';
 import {Entity} from "../engine/entity.js";
 import { debugOptions } from '../engine/debug.js';
 import { TILE_SIZE } from '../engine/graphics.js';
+import { CollidableProvider } from '../collidableProvider.js';
 
 export const ROOM_SIZE_TILES = Vector({x: 16, y: 16});
 

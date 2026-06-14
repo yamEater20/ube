@@ -3,7 +3,7 @@ import {
 } from "../entities/room.js";
 import { Vector } from "../engine/math.js";
 
-import { timeIt } from "../diagnostics.js";
+import { timeIt } from "../engine/diagnostics.js";
 import { TILE_SIZE } from "../engine/graphics.js";
 
 //Invert dictionary

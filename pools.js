@@ -1,6 +1,3 @@
-import { TAG_IDS } from "./collisionHandlers.js";
-import { VectorDown } from "./engine/math.js";
-
 export class Pool {
     constructor(items) {
         this._items = items ?? [];
@@ -17,29 +14,6 @@ export class Pool {
     get() {return this._items}
 
 	foreach(func) {this._items.forEach((item, index) => func(item, index));}
-}
-
-export class CollidableProvider {
-	constructor (pool) {
-		this._pool = pool;
-	}
-
-    getAllRiding(physObj) {
-		return this._pool.get().filter(
-			p =>
-				p != physObj &&
-				p.isOverlap(physObj, VectorDown) &&
-				p.collisionHandler.containsTag(TAG_IDS.RIDABLE)
-			);
-	}
-
-	getAllColliding(physObj, offset) {
-        return this._pool.get().filter(p => physObj.isOverlap(p, offset));
-    }
-
-	concat(otherPool) {
-		return new CollidableProvider(this.get().concat(otherPool.get()));
-	}
 }
 
 // TODO: can this be changed to a Dict<type, pool>
