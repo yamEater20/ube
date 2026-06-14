@@ -26,92 +26,11 @@ import { makeRoomCollider } from './entities/roomCollider.js';
 import { EntityDataToEntityFactoryPostProcess as EntityDataToEntityFactoryPostProcess, GeneralPostProcess, LevelDataPostProcessor } from './levelEditor/postProcess.js';
 import * as CustomPostProcess from './entities/customPostProcessTileArrays.js';
 import { ENTITY_MAP, ENTITY_TYPE_TO_ENTITY } from './entities/parseEntityData.js';
+import { RegistrarWithRooms, GlobalCollidableProvider } from './services/roomPools.js';
+import { SpawnPositionProvider } from './services/spawnPositionProvider.js';
+import { RoomsPool } from './services/roomPools.js';
 
 const LEVEL_PATH = "Levels.png";
-
-class RegistrarWithRooms {
-	constructor(registrar) {
-		this._registrar = registrar;
-	}
-
-	setRoomsPool(r) {this._roomsPool = r;}
-	getRoomsPool() {return this._roomsPool;}
-
-	getPool(poolType) {
-		return this._registrar.getPool(poolType).concat(this._roomsPool.getPool(poolType));
-	}
-
-	registerItem(poolType, object) {
-		this._registrar.registerItem(poolType, object);
-	}
-}
-
-class GlobalCollidableProvider {
-	constructor(persistentCollidableProvider) {
-		this._persistentCollidableProvider = persistentCollidableProvider;
-	}
-
-	setRoomsPool(r) {this._roomsPool = r;}
-	getRoomsPool() {return this._roomsPool;}
-
-	getAllRiding(physObj) {
-		if (debugOptions.showAll) {
-			return this._roomsPool.get().map(r => r.getLocalCollidableProvider().getAllColliding(physObj, offset)).reduce((a, b) => a.concat(b))
-				.concat(this._persistentCollidableProvider.getAllColliding(physObj, offset));
-		}
-		
-		return this
-			._roomsPool.getCurrentRoom().getLocalCollidableProvider().getAllRiding(physObj)
-			.concat(this._persistentCollidableProvider.getAllRiding(physObj));
-	}
-
-	getAllColliding(physObj, offset) {
-		if (debugOptions.showAll) {
-			return this._roomsPool.get().map(r => r.getLocalCollidableProvider().getAllColliding(physObj, offset)).reduce((a, b) => a.concat(b))
-				.concat(this._persistentCollidableProvider.getAllColliding(physObj, offset));
-		}
-		
-		return this
-			._roomsPool.getCurrentRoom().getLocalCollidableProvider().getAllColliding(physObj, offset)
-			.concat(this._persistentCollidableProvider.getAllColliding(physObj, offset))
-    }
-}
-
-class SpawnPositionProvider {
-    constructor(roomsPool) {
-        this._roomsPool = roomsPool;
-    }
-
-    getSpawnPosition() {
-        return this._roomsPool.getPool(POOL_TYPES.SPAWN).get()[0].globalPosition();
-    }
-}
-
-class RoomsPool extends Pool {
-	constructor(items) {
-		super(items);
-		this.roomIndex = 12;
-	}
-
-	getCurrentRoom() {
-		return this.get()[this.roomIndex];
-	}
-
-	getPool(poolType) {
-		// if (debugOptions.showAll && (poolType === POOL_TYPES.DRAWABLE || poolType === POOL_TYPES.DRAWABLE_DEBUG)) {
-		// 	return this.get().map(r => r.getPool(poolType)).reduce((a, b) => a.concat(b));
-		// }
-		if ((poolType === POOL_TYPES.DRAWABLE || poolType === POOL_TYPES.DRAWABLE_DEBUG)) {
-			return this.get().map(r => r.getPool(poolType)).reduce((a, b) => a.concat(b));
-		}
-		return this.getCurrentRoom().getPool(poolType);
-		// return this.get().map(r => r.getPool(poolType)).reduce((a, b) => a.concat(b));
-	}
-
-	nextRoom() {
-		this.roomIndex = (this.roomIndex + 1) % this._items.length;
-	}
-}
 
 class Root {
 	constructor(trueTime, worldTime, camera, inputProvider, registrar) {
