@@ -5,7 +5,7 @@ export class SpawnPositionProvider {
         this._roomsPool = roomsPool;
     }
 
-    getSpawnPosition() 3{
+    getSpawnPosition() {
         return this._roomsPool.getPool(POOL_TYPES.SPAWN).get()[0].globalPosition();
     }
 }

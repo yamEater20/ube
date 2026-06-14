@@ -29,70 +29,9 @@ import { ENTITY_MAP, ENTITY_TYPE_TO_ENTITY } from './entities/parseEntityData.js
 import { RegistrarWithRooms, GlobalCollidableProvider } from './services/roomPools.js';
 import { SpawnPositionProvider } from './services/spawnPositionProvider.js';
 import { RoomsPool } from './services/roomPools.js';
+import { Root } from './entities/root.js';
 
 const LEVEL_PATH = "Levels.png";
-
-class Root {
-	constructor(trueTime, worldTime, camera, inputProvider, registrar) {
-		this._trueTime = trueTime;
-		this._worldTime = worldTime;
-		this._camera = camera;
-		this._inputProvider = inputProvider;
-		this._registrar = registrar;
-
-		this._worldPaused = false;
-
-		this._shouldReset = false;
-	}
-
-	globalPosition() {
-		return VectorZero;
-	}
-
-	draw() {
-		this._registrar.getPool(POOL_TYPES.DRAWABLE).foreach(item => item.draw(this._camera));
-		if (debugOptions.showHitboxes) this._registrar.getPool(POOL_TYPES.DRAWABLE_DEBUG).foreach(item => item.draw(this._camera));
-	}
-
-	update() {
-		this._trueTime.tick();
-		this._worldTime.tick();
-
-		this._inputProvider.update();
-
-		const input = this._inputProvider.getInput();
-
-		//Debug only
-		if (input.debugPressed) toggleDebugAll();
-		if (input.noClipPressed) debugOptions.noClip = !debugOptions.noClip;
-		if (input.debugHitboxesPressed) debugOptions.showHitboxes = !debugOptions.showHitboxes;
-		if (input.nextRoomPressed) this._registrar.getRoomsPool().nextRoom();
-		if (input.showAllPressed) debugOptions.showAll = !debugOptions.showAll;
-		
-		this._camera.update(this._trueTime.delta);
-
-		if (this._camera.isMoving) {
-			//Do not update world time on room Transition
-		} else {
-			if (input.pausePressed) this._worldPaused = !this._worldPaused;
-
-			if (!this._worldPaused)
-			{
-				if (input.resetPressed) this.queueReset();
-				this._registrar.getPool(POOL_TYPES.UPDATEABLE).foreach(item => item.update(this._worldTime.delta));
-			}
-		}
-
-		if (this._shouldReset) {
-			this._registrar.getPool(POOL_TYPES.RESETTABLE).foreach(r => r.reset());
-			this._shouldReset = false;
-		}
-	}
-
-	queueReset() {
-		this._shouldReset = true;
-	}
-}
 
 class ParticleCreator {
 	createSpringParticles(position) {
