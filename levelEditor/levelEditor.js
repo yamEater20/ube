@@ -5,7 +5,6 @@ import { Vector } from "../engine/math.js";
 
 import { timeIt } from "../diagnostics.js";
 import { TILE_SIZE } from "../engine/graphics.js";
-import { hexToEntityData } from "./hexParsing.js";
 
 //Invert dictionary
 // const entityColorCodes = Object.fromEntries(
@@ -49,13 +48,14 @@ async function getImageData(levelPath) {
     return img.bitmap;
 }
 
-async function getLevelData(levelPath) {
+async function getLevelData(levelPath, entityMap) {
     let data = await timeIt("Get image data", () => getImageData(levelPath));
 
     const w = data.width;
     const h = data.height;
     data = data.data;
-    const levels = chunkArray(data, w, h).map(processLevel).map(postProcess);
+
+    const levels = chunkArray(data, w, h).map(processLevel);
     const graph = createMapGraph(w / ROOM_SIZE_TILES.x, h / ROOM_SIZE_TILES.y);
 
     return {
@@ -117,24 +117,10 @@ function processLevel(level) {
     }
 
     return {
-        data: ret,
+        tileArray: ret,
         x: lx,
         y: ly
     };
-}
-
-function postProcess(level) {
-    const data = level.data;
-    for (let y = 0; y < data.length; ++y) {
-        for (let x = 0; x < data[y].length; ++x) {
-            const entityData = hexToEntityData(data[y][x]);
-            entityData.relativeX = x * TILE_SIZE;
-            entityData.relativeY = y * TILE_SIZE;
-            // if (entityData.message) {console.warn(entityData.message);}
-            data[y][x] = entityData;
-        }
-    }
-    return level;
 }
 
 function createMapGraph(wl, hl) {

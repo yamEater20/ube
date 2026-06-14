@@ -16,11 +16,14 @@ import * as Player from './entities/player.js';
 import { Room, ROOM_SIZE_TILES } from './entities/room.js';
 import * as Setup from './engine/setup.js';
 import {toggleDebugAll, debugOptions} from "./engine/debug.js";
+import {HexToEntityData} from "./levelEditor/hexParsing.js";
 import { getLevelData } from './levelEditor/levelEditor.js';
-import { postProcessSemisolids, postProcessWalls } from './levelEditor/postProcess.js';
 import { clearCanvas, createCanvas, setMaxSize, TILE_SIZE } from './engine/graphics.js';
 import { CACHED_LEVELS } from './levelEditor/cache.js';
 import { makeRoomCollider } from './entities/roomCollider.js';
+import { EntityDataToEntityFactoryPostProcess as EntityDataToEntityFactoryPostProcess, GeneralPostProcess, LevelDataPostProcessor } from './levelEditor/postProcess.js';
+import * as CustomPostProcess from './entities/customPostProcessTileArrays.js';
+import { ENTITY_MAP, ENTITY_TYPE_TO_ENTITY } from './entities/parseEntityData.js';
 
 const LEVEL_PATH = "Levels.png";
 
@@ -185,7 +188,16 @@ let mainLoopDiagnostics = new Diagnostics(mainLoop);
 async function setup() {
 	// Setup.setup();
 	let levelData = await timeIt("Read level data", () => getLevelData(LEVEL_PATH));
-	levelData.levels = levelData.levels.map(postProcessWalls).map(postProcessSemisolids);
+	const postProcessor = new LevelDataPostProcessor([
+		new GeneralPostProcess(new HexToEntityData(ENTITY_MAP)),
+		new CustomPostProcess.SemiSolidPostProcess(),
+		new CustomPostProcess.WallMainPostProcess(),
+		new CustomPostProcess.WallCornersPostProcess(),
+		new EntityDataToEntityFactoryPostProcess(ENTITY_TYPE_TO_ENTITY)
+	]);
+	levelData = postProcessor.execute(levelData);
+	console.log(levelData);
+	// levelData.levels = levelData.levels.map(postProcessWalls).map(postProcessSemisolids);
 	// const json = JSON.stringify(levelData);
 	// console.log(json);
 
@@ -252,6 +264,7 @@ async function setup() {
 	
 	// timeIt("Build levels", () => game.buildLevels(levelData));
 
+	root.queueReset();
 	Setup.beginGameLoop(mainLoopDiagnostics.call);
 }
 

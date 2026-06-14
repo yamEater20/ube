@@ -7,7 +7,6 @@ import { PoolTypesFactory, POOL_TYPES, Registrar, CollidableProvider, Pool } fro
 import {Entity} from "../engine/entity.js";
 import { debugOptions } from '../engine/debug.js';
 import { TILE_SIZE } from '../engine/graphics.js';
-import { entityDataToEntity } from './parseEntityData.js';
 
 export const ROOM_SIZE_TILES = Vector({x: 16, y: 16});
 
@@ -26,10 +25,10 @@ export class Room extends Entity {
 	}
 
 	processLevelData(registrar, levelData) {
-		levelData = levelData.data;
+		levelData = levelData.tileArray;
 		for (let y = 0; y < levelData.length; ++y) {
 			for (let x = 0; x < levelData[y].length; ++x) {
-				const entity = entityDataToEntity(this, levelData[y][x]);
+				const entity = levelData[y][x](this);
 				if (entity) registrar.registerEntity(entity);
 			}
 		}
