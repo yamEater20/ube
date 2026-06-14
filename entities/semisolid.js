@@ -31,7 +31,7 @@ export function makeSemiSolid(parent, relativePosition, entityData) {
 
 	const drawableEntity = new DrawableEntity(
 		physObj,
-		new Sprites.TileSprite(Sprites.SPRITES.SEMISOLID_TILESHEET, entityData.tileVec)
+		new Sprites.TileSprite(Sprites.SPRITE_LK.SEMISOLID_TILESHEET, entityData.tileVec)
 	);
 	const ret = {};
 	ret[POOL_TYPES.COLLIDABLE] = [physObj];

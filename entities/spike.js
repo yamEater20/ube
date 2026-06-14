@@ -22,7 +22,7 @@ export function makeSpike(parent, relativePosition, entityData) {
 
 	const drawableEntity = new DrawableEntity(
 		physObj,
-		new Sprites.RotatedSprite(Sprites.SPRITES.SPIKES_IMG, directionToRad(entityData.direction))
+		new Sprites.RotatedSprite(Sprites.SPRITE_LK.SPIKES_IMG, directionToRad(entityData.direction))
 	);
 	const ret = {};
 	ret[POOL_TYPES.COLLIDABLE] = [physObj];

@@ -18,8 +18,8 @@ export function makeWall(parent, relativePosition, entityData) {
 		new DummyCollidableProvider(),
 	);
 
-	let spriteSheet = entityData.outer ? Sprites.SPRITES.WALL_TILESHEET_OUTER : Sprites.SPRITES.WALL_TILESHEET;
-	spriteSheet = entityData.isCorner ? Sprites.SPRITES.WALL_TILESHEET_CORNER : spriteSheet;
+	let spriteSheet = entityData.outer ? Sprites.SPRITE_LK.WALL_TILESHEET_OUTER : Sprites.SPRITE_LK.WALL_TILESHEET;
+	spriteSheet = entityData.isCorner ? Sprites.SPRITE_LK.WALL_TILESHEET_CORNER : spriteSheet;
 
 	const drawableEntity = new DrawableEntity(
 		physObj,

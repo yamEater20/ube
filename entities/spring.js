@@ -2,7 +2,7 @@ import { RectHitbox, PhysObj, DummyCollidableProvider, DummyUpdateHandler, Hitbo
 import { DrawableEntity } from "../engine/drawableEntity.js";
 import * as CollisionHandlers from "../collisionHandlers.js";
 import { POOL_TYPES } from "../pools.js";
-import { AnimatedSprite, SPRITES } from "../engine/sprites.js";
+import { AnimatedSprite, SPRITE_LK } from "../engine/sprites.js";
 import { Vector } from "../engine/math.js";
 
 export function makeSpring(parent, relativePosition) {
@@ -22,7 +22,7 @@ export function makeSpring(parent, relativePosition) {
 	const drawableEntity = new DrawableEntity(
         physObj,
         new AnimatedSprite(
-            SPRITES.SPRING_SPRITESHEET,
+            SPRITE_LK.SPRING_SPRITESHEET,
             [
                 {frames: 1, onComplete: "stop"},
                 // {frames: 6, onComplete: "loop", nth: 10},

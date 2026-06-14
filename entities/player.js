@@ -355,7 +355,7 @@ export function make(parent, position, inputProvider, groundedProvider, collidab
 	const slideBumpHandler = new SlideBumpHandler();
 
 	const drawable = new Sprites.AnimatedSprite(
-		Sprites.SPRITES.MAIN_CHARA_SPRITESHEET,
+		Sprites.SPRITE_LK.MAIN_CHARA_SPRITESHEET,
 		[
 			{frames: 1, onComplete: "stop"},
 			{frames: 6, onComplete: "loop", nth: 10},

@@ -30,7 +30,7 @@ export function makePushableBox(hitbox, updateHandler, collidableProvider, groun
 	const drawableEntity = new DrawableEntity(
         physObj,
         new Sprites.AnimatedSprite(
-            Sprites.SPRITES.BUTTON,
+            Sprites.SPRITE_LK.BUTTON,
             [{"frames": 0, onComplete: "stop"}, {"frames": 6, onComplete: "stop", nth: 10}]
         )
     );

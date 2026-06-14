@@ -193,13 +193,16 @@ async function setup() {
 		new CustomPostProcess.SemiSolidPostProcess(),
 		new CustomPostProcess.WallMainPostProcess(),
 		new CustomPostProcess.WallCornersPostProcess(),
-		new EntityDataToEntityFactoryPostProcess(ENTITY_TYPE_TO_ENTITY)
 	]);
 	levelData = postProcessor.execute(levelData);
-	console.log(levelData);
-	// levelData.levels = levelData.levels.map(postProcessWalls).map(postProcessSemisolids);
-	// const json = JSON.stringify(levelData);
-	// console.log(json);
+	const json = JSON.stringify(levelData);
+	console.log(json);
+	
+	const entityConstructionPostProcessor = new LevelDataPostProcessor([
+		new EntityDataToEntityFactoryPostProcess(ENTITY_TYPE_TO_ENTITY)
+	]);
+
+	levelData = entityConstructionPostProcessor.execute(levelData);
 
 	const info = createCanvas();
 	canvas = info.canvas;
@@ -252,7 +255,6 @@ async function setup() {
 	);
 	
 	persistentRegistrar.registerEntity(player);
-	// persistentRegistrar.registerItem(POOL_TYPES.UPDATEABLE, camera);
 
 	roomsPool.foreach((room, index) => {
 		const roomSizeWorldSpace = ROOM_SIZE_TILES.scalar(TILE_SIZE);

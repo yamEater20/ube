@@ -16,8 +16,6 @@ class Sprite {
 	draw(x, y, camera) {
 		camera.drawImage(this.img, x, y);
 	}
-
-	update() {}
 }
 
 class RotatedSprite extends Sprite {
@@ -90,7 +88,6 @@ class AnimatedSprite extends Sprite {
 			const animationFramesSinceStart = Math.floor(framesSinceStart / data.nth);
 			const onComplete = data.onComplete;
 			const isLastFrame = animationFramesSinceStart >= maxFrames;
-
 			if (isLastFrame) {
 				if (onComplete === "stop") {
 					this.setRow(0);
@@ -148,7 +145,7 @@ This will probably cause temporal coupling but maybe that's ok.
 The "correct" way to do it is to make a SpriteService class that's initialized using the sprite mapping.
 But that's not very ergonomic. I don't want to call SpriteService.GetSprite(enumName) every time I want an image.
 */
-const SPRITES = {
+const SPRITE_LK = Object.freeze({
 	SPIKES_IMG: document.getElementById("spikes-img"),
 	WALL_TILESHEET: document.getElementById("wall-tilesheet"),
 	WALL_TILESHEET_OUTER: document.getElementById("wall-tilesheet-2"),
@@ -196,12 +193,12 @@ const SPRITES = {
 	POWERUP_SLIDE_SPRITE: document.getElementById("powerup-slide"),
 	POWERUP_DJ_SPRITE: document.getElementById("powerup-dj"),
 	SPECIAL_MAP: document.getElementById("special-map"),
-}
+});
 
 export {
 	Sprite,
 	AnimatedSprite,
 	TileSprite,
 	RotatedSprite,
-	SPRITES
+	SPRITE_LK
 }

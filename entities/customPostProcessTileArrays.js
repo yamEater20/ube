@@ -1,12 +1,12 @@
-import { ENTITY_TYPE } from "./parseEntityData.js";
+import { ENTITY_TYPES } from "./parseEntityData.js";
 import {ITileArrayPostProcessor} from "../levelEditor/postProcess.js"
 import { Vector, VectorZero, VectorRight } from "../engine/math.js";
 
 export class SemiSolidPostProcess extends ITileArrayPostProcessor {
     postProcessTile(tileArr, entityData, x, y) {
-        if (entityData.entityType === ENTITY_TYPE.SEMISOLID) {
-            const wallLeft = x - 1 < 0                  || tileArr[y][x-1].entityType === ENTITY_TYPE.WALL;
-            const wallRight =  x + 2 > tileArr[y].length    || tileArr[y][x+1].entityType === ENTITY_TYPE.WALL;
+        if (entityData.entityType === ENTITY_TYPES.SEMISOLID) {
+            const wallLeft = x - 1 < 0                  || tileArr[y][x-1].entityType === ENTITY_TYPES.WALL;
+            const wallRight =  x + 2 > tileArr[y].length    || tileArr[y][x+1].entityType === ENTITY_TYPES.WALL;
 
             if (wallLeft) entityData.tileVec = VectorZero;
             else if (wallRight) entityData.tileVec = VectorRight.scalar(2);
@@ -52,7 +52,7 @@ const VEC_TILES_CORNER = Object.freeze([
 export class WallMainPostProcess extends ITileArrayPostProcessor {
     postProcessTile(arr, entityData, x, y) {
         const entityType = entityData.entityType;
-        if (entityType === ENTITY_TYPE.WALL) {
+        if (entityType === ENTITY_TYPES.WALL) {
             let v = 0;
             let vecInds = Array(VEC_TILES.length).fill().map(() => v++);
 
@@ -108,7 +108,7 @@ export class WallMainPostProcess extends ITileArrayPostProcessor {
 export class WallCornersPostProcess extends ITileArrayPostProcessor {
     postProcessTile(arr, entityData, x, y) {
         const entityType = entityData.entityType;
-        if (entityType === ENTITY_TYPE.WALL && entityData.tileVecInd === 4) {
+        if (entityType === ENTITY_TYPES.WALL && entityData.tileVecInd === 4) {
             const left      = x - 1 < 0              || arr[y][x-1].isCorner ? -1 : arr[y][x-1].tileVecInd;
             const right     = x + 2 > arr[y].length  || arr[y][x+1].isCorner ? -1 : arr[y][x+1].tileVecInd;
             const top       = y - 1 < 0              || arr[y-1][x].isCorner ? -1 : arr[y-1][x].tileVecInd;
@@ -134,5 +134,5 @@ export class WallCornersPostProcess extends ITileArrayPostProcessor {
 }
 
 function entityIsWall(entityData) {
-    return entityData.entityType === ENTITY_TYPE.WALL;
+    return entityData.entityType === ENTITY_TYPES.WALL;
 }

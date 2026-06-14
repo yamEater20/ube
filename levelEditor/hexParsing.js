@@ -5,7 +5,7 @@ export class HexToEntityData {
     
     hexToEntityData(hex) {
         const mappedData = this._entityMap[hex];
-        if (typeof mappedData === "object") return structuredClone(mappedData);
+        if (typeof mappedData === "object") return Object.assign({}, mappedData); //shallow copy
         else if (typeof mappedData === "number") return {entityType: mappedData};
         else return {message: "Unknown hex code: " + hex};
     }

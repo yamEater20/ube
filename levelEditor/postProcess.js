@@ -1,6 +1,6 @@
  import { TILE_SIZE } from "../engine/graphics.js";
 import { Vector } from "../engine/math.js";
-import { ENTITY_TYPE } from "../entities/parseEntityData.js";
+import { ENTITY_TYPES } from "../entities/parseEntityData.js";
 
 //TODO: when you move to strongly typed, this should be a
 //generic of type tile + return type.
@@ -72,14 +72,14 @@ export class EntityDataToEntityFactoryPostProcess extends ITileArrayPostProcesso
             failureMessage = entityData.message;
             failure = true;
         } else if (!(entityType in this._entityTypeToEntity)) {
-            const entityTypeName = Object.keys(ENTITY_TYPE).find(k => ENTITY_TYPE[k] === entityType);
+            const entityTypeName = Object.keys(ENTITY_TYPES).find(k => ENTITY_TYPES[k] === entityType);
             failureMessage = `Cannot construct entity, missing factory. For entity type: ${entityType} (${entityTypeName})`;
             failure = true;
         }
 
         if (failure) {
             console.warn(failureMessage);
-            func = this._entityTypeToEntity[ENTITY_TYPE.EMPTY];
+            func = this._entityTypeToEntity[ENTITY_TYPES.EMPTY];
         } else {
             func = this._entityTypeToEntity[entityData.entityType];
         }

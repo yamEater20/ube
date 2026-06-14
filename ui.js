@@ -34,7 +34,7 @@ class Scoreboard extends UI {
 
 		this.camera.drawRect(this.rect, "#000000d0");
 		this.camera.writeText(this.game.formatTimeSinceStart(), 1, rectPos.addPoint({x: 2, y: 2}), this.cheated ? "#FF004D" : "#FFF1E8");
-		this.camera.drawImage(Sprites.SPRITES.SKULL_IMG, this.rect.getX() + 1, this.rect.getY() + 10);
+		this.camera.drawImage(Sprites.SPRITE_LK.SKULL_IMG, this.rect.getX() + 1, this.rect.getY() + 10);
 		this.camera.writeText(this.game.deaths.toString(), 1, rectPos.addPoint({x: 10, y: 11}), "#FFF1E8");
 
 		this.camera.writeText(this.game.money.toString(), 1, rectPos.addPoint({x: 2, y: 19}), "#FFF1E8");
@@ -102,7 +102,7 @@ class MapSec extends UI {
 		if (this.level.myLevelInd === undefined) return;
 		if (this.level.myLevelInd === 2) {
 			if (!this.hasVisited()) {
-				this.camera.drawImage(Sprites.SPRITES.SPECIAL_MAP, offsetX, offsetY)
+				this.camera.drawImage(Sprites.SPRITE_LK.SPECIAL_MAP, offsetX, offsetY)
 				return;
 			}
 		}
