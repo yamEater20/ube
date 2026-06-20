@@ -59,6 +59,13 @@ class Camera {
         this._ctx.scale(this.scale, this.scale);
     }
 
+    drawWithOpacity(func, opacity) {
+        this._ctx.save();
+        this._ctx.globalAlpha = opacity;
+        func(this);
+        this._ctx.restore();
+    }
+
     drawRect(x, y, w, h, color) {
         this._ctx.fillStyle = color ? color : "#29ADFF";
         this._ctx.fillRect(x, y, w, h);

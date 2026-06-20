@@ -1,15 +1,15 @@
 import { Timer } from "../engine/time.js";
 import { GRAVITY_COMING_DOWN, GRAVITY_GOING_UP, HitboxDrawableEntity, PhysObj, RectHitbox } from "../engine/physics.js";
 import { framesToMs, VectorZero } from "../engine/math.js";
-import * as CustomCollisionHandlers from "./customCollisionHandlers.js";
+import * as CustomCollisionHandlers from "./entityCollisionHandlers.js";
 import * as Sprites from "../engine/sprites.js";
 import { UpdatableDrawableEntity } from "../engine/drawableEntity.js";
 import { Vector } from "../engine/math.js";
 import { ResetAtSpawn } from "../services/reset.js";
-import * as GeneralUpdateHandlers from "./physUpdateHandlers.js";
+import * as GeneralUpdateHandlers from "./customUpdateHandlers.js";
 import { debugOptions } from "../engine/debug.js";
 import { POOL_TYPES } from "./poolTypes.js";
-import { Composite } from "../engine/collisionHandlers.js";
+import { Composite } from "../services/customCollisionHandlers.js";
 
 //TODO: provide constants for magic numbers
 
@@ -284,7 +284,7 @@ class CollisionHandlerDebugDecorator {
 	}
 
 	getTag(tag) {
-		throw new Error("Not implemented");
+		return this.getTags()[tag];
 	}
 
 	onCollide(physObj, other, direction) {
@@ -387,9 +387,9 @@ export function make(parent, position, inputProvider, groundedProvider, collidab
 		new CollisionHandlerDebugDecorator(
 			new Composite(
 				[
-					new CustomCollisionHandlers.Wall(),
-					new CustomCollisionHandlers.Ground(),
-					new CustomCollisionHandlers.Ridable()
+					// new CustomCollisionHandlers.Wall(),
+					// new CustomCollisionHandlers.Ground(),
+					// new CustomCollisionHandlers.Ridable()
 				],
 				[
 					new WallReaction(slideHandler, slideBumpHandler),

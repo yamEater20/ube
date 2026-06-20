@@ -1,4 +1,4 @@
-import { IReaction } from "../engine/collisionHandlers.js";
+import { IReaction } from "../services/customCollisionHandlers.js";
 import { directionToVector } from "../engine/math.js";
 
 export const TAG_IDS = Object.freeze({
@@ -108,8 +108,12 @@ export class Spring {
 export class SpringReaction extends IReaction {
     id() { return TAG_IDS.SPRING; }
     react(physObj, other, spring, direction) {
-        physObj.setYVelocity(spring.bounceVelocity);
-        spring.onBounce();
+        //TODO: there's gotta be a better way to do this. But idk what it is.
+        // (the problem is that I went onBounce to only fire once. Idk how to do that.)
+        if (physObj.isTouching(other)) {
+            physObj.setYVelocity(spring.bounceVelocity);
+            spring.onBounce();
+        }
     }
 }
 

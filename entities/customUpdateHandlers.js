@@ -1,6 +1,6 @@
 import { getFallV } from "../engine/physics.js";
 import { VectorDown } from "../engine/math.js";
-import { TAG_IDS } from "./customCollisionHandlers.js";
+import { TAG_IDS } from "./entityCollisionHandlers.js";
 
 export class Composite {
 	constructor(handlers) {
@@ -37,6 +37,19 @@ export class FallUpdateHandler {
 		const yv = physObj.getYVelocity();
 		if (!this._groundedProvider.onGround(physObj))
 			physObj.setYVelocity(getFallV(yv, timeDelta, gravity));
+	}
+}
+
+export class FallAirResistanceUpdateHandler {
+	constructor(fallUpdateHandler, gravity, airResistance) {
+		this._fallUpdateHandler = fallUpdateHandler;
+		this._gravity = gravity;
+		this._airResistance = airResistance;
+	}
+
+	update(physObj, timeDelta) {
+		this._fallUpdateHandler.update(physObj, timeDelta, this._gravity);
+		physObj.velocity = physObj.velocity.scalar(this._airResistance);
 	}
 }
 

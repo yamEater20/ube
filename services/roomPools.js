@@ -5,13 +5,11 @@ import { Pool } from "../engine/pools.js";
 import { POOL_TYPES } from "../entities/poolTypes.js";
 
 export class RegistrarWithRooms extends Registrar {
-    constructor(registrar) {
+    constructor(registrar, roomsPool) {
         super();
         this._registrar = registrar;
+        this._roomsPool = roomsPool;
     }
-
-    setRoomsPool(r) {this._roomsPool = r;}
-    getRoomsPool() {return this._roomsPool;}
 
     getPool(poolType) {
         return this._registrar.getPool(poolType).concat(this._roomsPool.getPool(poolType));
@@ -22,19 +20,17 @@ export class RegistrarWithRooms extends Registrar {
     }
 }
 
-export class GlobalCollidableProvider extends CollidableProvider {
-    constructor(persistentCollidableProvider) {
+export class CollidableProviderWithRooms extends CollidableProvider {
+    constructor(persistentCollidableProvider, roomsPool) {
         super();
         this._persistentCollidableProvider = persistentCollidableProvider;
+        this._roomsPool = roomsPool;
     }
-
-    setRoomsPool(r) {this._roomsPool = r;}
-    getRoomsPool() {return this._roomsPool;}
 
     getAllRiding(physObj) {
         if (debugOptions.showAll) {
-            return this._roomsPool.get().map(r => r.getLocalCollidableProvider().getAllColliding(physObj, offset)).reduce((a, b) => a.concat(b))
-                .concat(this._persistentCollidableProvider.getAllColliding(physObj, offset));
+            return this._roomsPool.get().map(r => r.getLocalCollidableProvider().getAllRiding(physObj)).reduce((a, b) => a.concat(b))
+                .concat(this._persistentCollidableProvider.getAllRiding(physObj));
         }
         
         return this
@@ -47,7 +43,7 @@ export class GlobalCollidableProvider extends CollidableProvider {
             return this._roomsPool.get().map(r => r.getLocalCollidableProvider().getAllColliding(physObj, offset)).reduce((a, b) => a.concat(b))
                 .concat(this._persistentCollidableProvider.getAllColliding(physObj, offset));
         }
-        
+
         return this
             ._roomsPool.getCurrentRoom().getLocalCollidableProvider().getAllColliding(physObj, offset)
             .concat(this._persistentCollidableProvider.getAllColliding(physObj, offset))
@@ -55,10 +51,14 @@ export class GlobalCollidableProvider extends CollidableProvider {
 }
 
 export class RoomsPool extends Pool {
-	constructor(items) {
-		super(items);
+	constructor() {
+		super();
 		this.roomIndex = 12;
 	}
+
+    setRooms(rooms) {
+        this._items = rooms;
+    }
 
 	getCurrentRoom() {
 		return this.get()[this.roomIndex];

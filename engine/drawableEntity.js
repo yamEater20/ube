@@ -1,4 +1,5 @@
 import { Entity } from "./entity.js";
+import { lerp } from "./math.js";
 
 class DrawableEntity extends Entity {
 	constructor(parent, drawable, relativePositon) {
@@ -28,5 +29,5 @@ class UpdatableDrawableEntity extends DrawableEntity {
 
 export {
     DrawableEntity,
-    UpdatableDrawableEntity
+    UpdatableDrawableEntity,
 }

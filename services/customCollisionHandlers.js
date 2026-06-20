@@ -1,5 +1,8 @@
-export class TagOnly {
+import { ICollisionHandler } from "../engine/iCollisionHandler.js";
+
+export class TagOnly extends ICollisionHandler {
     constructor(tags) {
+        super();
         this._tags = tagListIntoDictionary(tags);
     }
 
@@ -30,10 +33,17 @@ export class Composite extends TagOnly {
     getReactions() { return this._reactions; }
 
     onCollide(physObj, others, direction) {
+        //Can't call this.getReactions() because decorators do not override.
+        //I need to rethink this architecture.
+        //TODO: I think composite should contain a TagCollider and a ReactionCollider.
+        // - Clearly, we need TagOnly colliders (ie Walls).
+        // - But we also need Reaction-only colliders. Example: particles.
+        // - More importantly, Compsoite should not inherit from TagOnly. That doesn't make any sense.
         const myReactions = physObj.collisionHandler.getReactions();
 
         let allColliding = [];
         let stoppedAgainst = [];
+        console.log(others);
 
         others.forEach(other => {
             const otherTags = other.collisionHandler.getTags();

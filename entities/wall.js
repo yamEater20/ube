@@ -1,10 +1,10 @@
 import { RectHitbox, PhysObj, DummyCollidableProvider, DummyUpdateHandler, HitboxDrawableEntity } from "../engine/physics.js";
 import { DrawableEntity } from "../engine/drawableEntity.js";
-import * as CustomCollisionHandlers from "./customCollisionHandlers.js";
+import * as CustomCollisionHandlers from "./entityCollisionHandlers.js";
 import { POOL_TYPES } from "./poolTypes.js";
 import * as Sprites from "../engine/sprites.js";
 import { VectorZero } from "../engine/math.js";
-import { TagOnly } from "../engine/collisionHandlers.js";
+import { TagOnly } from "../services/customCollisionHandlers.js";
 
 export function makeWall(parent, relativePosition, entityData) {
 	const hitbox = new RectHitbox(VectorZero, 8, 8);

@@ -13,31 +13,25 @@ import { POOL_TYPES, PoolTypesFactory } from './entities/poolTypes.js';
 import { CollidableProvider } from './services/collidableProvider.js';
 import {Camera} from './engine/camera.js';
 import {InputProvider, TASInputProvider} from './services/input.js';
-import * as UpdateHandlers from './entities/physUpdateHandlers.js';
+import * as UpdateHandlers from './entities/customUpdateHandlers.js';
 import * as Player from './entities/player.js';
 import { Room, ROOM_SIZE_TILES } from './entities/room.js';
 import * as Setup from './engine/setup.js';
-import {toggleDebugAll, debugOptions} from "./engine/debug.js";
 import {HexToEntityData} from "./levelEditor/hexParsing.js";
-import { getLevelData } from './levelEditor/levelEditor.js';
 import { clearCanvas, createCanvas, setMaxSize, TILE_SIZE } from './engine/graphics.js';
 import { CACHED_LEVELS } from './levelEditor/cache.js';
 import { makeRoomCollider } from './entities/roomCollider.js';
 import { EntityDataToEntityFactoryPostProcess as EntityDataToEntityFactoryPostProcess, GeneralPostProcess, LevelDataPostProcessor } from './levelEditor/postProcess.js';
 import * as CustomPostProcess from './entities/customPostProcessTileArrays.js';
 import { ENTITY_MAP, ENTITY_TYPE_TO_ENTITY } from './entities/parseEntityData.js';
-import { RegistrarWithRooms, GlobalCollidableProvider } from './services/roomPools.js';
+import { RegistrarWithRooms, CollidableProviderWithRooms } from './services/roomPools.js';
 import { SpawnPositionProvider } from './services/spawnPositionProvider.js';
 import { RoomsPool } from './services/roomPools.js';
 import { Root } from './entities/root.js';
+import { ParticlePool } from './services/particlePool.js';
+import { LevelBuilderFromImage } from './services/customLevelBuilders.js';
 
 const LEVEL_PATH = "Levels.png";
-
-class ParticleCreator {
-	createSpringParticles(position) {
-		console.log(position.x, position.y);
-	}
-}
 
 let root;
 let canvas;
@@ -53,27 +47,6 @@ let mainLoopDiagnostics = new Diagnostics(mainLoop);
 
 async function setup() {
 	// Setup.setup();
-	let levelData = await timeIt("Read level data", () => getLevelData(LEVEL_PATH));
-	const postProcessor = new LevelDataPostProcessor([
-		new GeneralPostProcess(new HexToEntityData(ENTITY_MAP)),
-		new CustomPostProcess.SemiSolidPostProcess(),
-		new CustomPostProcess.WallMainPostProcess(),
-		new CustomPostProcess.WallCornersPostProcess(),
-	]);
-	levelData = postProcessor.execute(levelData);
-	const json = JSON.stringify(levelData);
-	console.log(json);
-
-	// let levelData = CACHED_LEVELS;
-
-	const particleCreator = new ParticleCreator();
-	
-	const entityConstructionPostProcessor = new LevelDataPostProcessor([
-		new CustomPostProcess.SpringCallbackPostProcess(particleCreator.createSpringParticles),
-		new EntityDataToEntityFactoryPostProcess(ENTITY_TYPE_TO_ENTITY)
-	]);
-
-	levelData = entityConstructionPostProcessor.execute(levelData);
 
 	const info = createCanvas();
 	canvas = info.canvas;
@@ -84,15 +57,22 @@ async function setup() {
 	const poolDict = PoolTypesFactory();
 	poolDict[POOL_TYPES.CAMERA_FOLLOW] = new Pool();
 	const persistentRegistrar = new Registrar(poolDict);
+	
 	const orphanedCollidableProvider = new CollidableProvider(persistentRegistrar.getPool(POOL_TYPES.COLLIDABLE));
-	const globalRegistrar = new RegistrarWithRooms(persistentRegistrar);
-	const globalCollidableProvider = new GlobalCollidableProvider(orphanedCollidableProvider);
-	const groundedProvider = new UpdateHandlers.GroundedProvider(globalCollidableProvider);
+
+	const roomsPool = new RoomsPool();
+	
+	const registrarWithRooms = new RegistrarWithRooms(persistentRegistrar, roomsPool);
+	const collidableProviderWithRooms = new CollidableProviderWithRooms(orphanedCollidableProvider, roomsPool);
+	
+	const groundedProvider = new UpdateHandlers.GroundedProvider(collidableProviderWithRooms);
+
+	const particleCreator = new ParticlePool(persistentRegistrar, collidableProviderWithRooms, groundedProvider);
 
 	const camera = new Camera(
 		ctx,
 		Vector({x: 128*2, y: 128*2}),
-		() => globalRegistrar.getPool(POOL_TYPES.CAMERA_FOLLOW).get()[0]
+		() => registrarWithRooms.getPool(POOL_TYPES.CAMERA_FOLLOW).get()[0]
 	);
 
 	root = new Root(
@@ -100,15 +80,34 @@ async function setup() {
 		new Time(),
 		camera,
 		inputProvider,
-		globalRegistrar
+		registrarWithRooms
 	);
 
-	const roomsPool = new RoomsPool(levelData.levels.map(data => 
+	const postProcessor = new LevelDataPostProcessor([
+		new GeneralPostProcess(new HexToEntityData(ENTITY_MAP)),
+		new CustomPostProcess.SemiSolidPostProcess(),
+		new CustomPostProcess.WallMainPostProcess(),
+		new CustomPostProcess.WallCornersPostProcess(),
+	]);
+
+	const entityConstructionPostProcessor = new LevelDataPostProcessor([
+		new CustomPostProcess.SpringCallbackPostProcess(particleCreator.createSpringParticles),
+		new EntityDataToEntityFactoryPostProcess(ENTITY_TYPE_TO_ENTITY)
+	]);
+
+	const levelBuilder = new LevelBuilderFromImage(
+		LEVEL_PATH,
+		[postProcessor, entityConstructionPostProcessor]
+	)
+
+	const levelData = await levelBuilder.buildLevels();
+
+	roomsPool.setRooms(levelData.levels.map(data => 
 		new Room(
 			root,
 			ROOM_SIZE_TILES.scalar(TILE_SIZE).multElementWise(data),
 			data,
-			globalCollidableProvider
+			collidableProviderWithRooms
 		)
 	));
 
@@ -117,7 +116,7 @@ async function setup() {
 		Vector({x: 128*2+40, y: 128*2+40}),
 		inputProvider,
 		groundedProvider,
-		globalCollidableProvider,
+		collidableProviderWithRooms,
 		new SpawnPositionProvider(roomsPool),
 		roomCollider => roomsPool.roomIndex = roomCollider.roomIndex,
 		() => root.queueReset()
@@ -130,11 +129,8 @@ async function setup() {
 		persistentRegistrar.registerEntity(makeRoomCollider(room, index, roomSizeWorldSpace));
 	});
 
-	globalRegistrar.setRoomsPool(roomsPool);
-	globalCollidableProvider.setRoomsPool(roomsPool);
-	
 	// timeIt("Build levels", () => game.buildLevels(levelData));
-
+	particleCreator.createSpringParticles(roomsPool.get()[5 * 2 + 2], Vector({x: 50, y: 50}));
 	root.queueReset();
 	Setup.beginGameLoop(mainLoopDiagnostics.call);
 }
@@ -142,7 +138,6 @@ async function setup() {
 ;(function () {
 	timeIt("Total setup", setup);
 })();
-
 
 /*
 

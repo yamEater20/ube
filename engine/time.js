@@ -32,7 +32,6 @@ class Time {
         this._lastTime = 0;
         // this.time = window.performance.now();
 
-        this._paused = false;
         this.timers = [];
     }
 

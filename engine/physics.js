@@ -73,14 +73,14 @@ function isOverlap(physObjA, physObjB, offset) {
 	return ret;
 }
 
-// function isTouching(hitboxA, hitboxB) {
-// 	return (
-// 		hitboxA.isOnTopOf(hitbox) ||
-// 		hitboxA.isUnder(hitbox) ||
-// 		hitboxA.isLeftOf(hitbox) ||
-// 		hitboxA.isRightOf(hitbox)
-// 	)
-// }
+function isTouching(physObjA, physObjB) {
+	return (
+		isOnTopOf(physObjA, physObjB) ||
+		isOnTopOf(physObjB, physObjA) ||
+		isLeftOf(physObjA, physObjB) ||
+		isLeftOf(physObjB, physObjA)
+	)
+}
 
 function isOnTopOf(physObjA, physObjB) {
 	const info = hitboxInfo(physObjA, physObjB);
@@ -95,8 +95,8 @@ function isOnTopOf(physObjA, physObjB) {
 
 function isLeftOf(physObjA, physObjB) {
 	const info = hitboxInfo(physObjA, physObjB);
-	const posA = info.hitboxA.globalPosition();
-	const posB = info.hitboxB.globalPosition();
+	const posA = info.posA;
+	const posB = info.posB;
 	return (
 		posA.x + info.hitboxA.width === posB.x &&
 		posA.y < posB.y + info.hitboxB.height &&
@@ -154,6 +154,10 @@ class PhysObj extends Entity {
 		return this !== physObj && isOverlap(this, physObj, offset);
 	}
 
+	isTouching(physObj) {
+		return isTouching(this, physObj);
+	}
+
 	isOnTopOf(physObj) {
 		return isOnTopOf(this, physObj);
 	}
@@ -181,7 +185,6 @@ class PhysObj extends Entity {
 		this.subpixels = amount.addPoint(this.subpixels).subtract(remainder);
 		const directionX = Vector({x: Math.sign(remainder.x), y: 0});
 		const directionY = Vector({x: 0, y: Math.sign(remainder.y)});
-
 		this.moveDirection(remainder.x, directionX);
 		this.moveDirection(remainder.y, directionY);
 	}
@@ -189,11 +192,12 @@ class PhysObj extends Entity {
 	moveDirection(amount, direction) {
 		const directionScalar = direction.x + direction.y;
 		let didCollide = false;
+		
 		while (amount !== 0) {
 			const allRiding = this._collidableProvider.getAllRiding(this);
 			const allColliding = this._collidableProvider.getAllColliding(this, direction).filter(p => !allRiding.includes(p));
-			
-			didCollide = this.collisionHandler.onCollide(this, allColliding, direction);
+
+			if (allColliding.length > 0) didCollide = this.collisionHandler.onCollide(this, allColliding, direction);
 
 			if (didCollide) {
 				if (direction.x !== 0) this.subpixels.x = 0;
@@ -219,7 +223,7 @@ class PhysObj extends Entity {
 
 class DummyCollisionHandler {
 	onCollide(physObj, other, direction) {
-		return true;
+		return false;
 	}
 }
 

@@ -1,7 +1,7 @@
 import { VectorZero } from "../engine/math.js";
 import { Entity } from "../engine/entity.js";
 import { POOL_TYPES } from "./poolTypes.js";
-import { debugOptions } from "../engine/debug.js";
+import { toggleDebugAll, debugOptions } from "../engine/debug.js";
 
 export class Root extends Entity {
 	constructor(trueTime, worldTime, camera, inputProvider, registrar) {
