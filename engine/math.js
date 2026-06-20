@@ -1,9 +1,5 @@
 const Vector = ({ x, y }) => ({
 	x, y,
-	incrPoint(p) {
-		this.x += p.x;
-		this.y += p.y;
-	},
 	add(x, y) {
 		return Vector({ x: this.x + x, y: this.y + y })
 	},

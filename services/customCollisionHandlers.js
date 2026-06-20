@@ -43,7 +43,6 @@ export class Composite extends TagOnly {
 
         let allColliding = [];
         let stoppedAgainst = [];
-        console.log(others);
 
         others.forEach(other => {
             const otherTags = other.collisionHandler.getTags();

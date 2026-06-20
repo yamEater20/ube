@@ -21,7 +21,10 @@ class SpringTagAnimated extends CustomCollisionHandlers.Spring{
 }
 
 export function makeSpring(parent, relativePosition, entityData) {
-	const hitbox = new RectHitbox(Vector({x: 0, y: 4}), 8, 4);
+	const visiblePosition = Vector({x: 0, y: 4});
+	
+	const hitboxWidth = 8;
+	const hitbox = new RectHitbox(visiblePosition, hitboxWidth, 4);
 	const sprite = new AnimatedSprite(
 		SPRITE_LK.SPRING_SPRITESHEET,
 		[
@@ -31,17 +34,18 @@ export function makeSpring(parent, relativePosition, entityData) {
 		]
 	);
 
+	const springParticleGenerationPosition = relativePosition.addPoint(visiblePosition);
+
 	const physObj = new PhysObj(
 		parent,
 		relativePosition,
 		hitbox,
 		new DummyUpdateHandler(),
-		// new CompositeZ(),
 		new TagOnly(
 			[new SpringTagAnimated(
 				-0.26,
 				sprite,
-				() => entityData.onBounce(parent, relativePosition)
+				() => entityData.onBounce(parent._registrar, parent, springParticleGenerationPosition, hitboxWidth)
 			)]
 		),
 		new DummyCollidableProvider(),

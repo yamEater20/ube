@@ -38,7 +38,7 @@ export class Root extends Entity {
 		if (input.debugPressed) toggleDebugAll();
 		if (input.noClipPressed) debugOptions.noClip = !debugOptions.noClip;
 		if (input.debugHitboxesPressed) debugOptions.showHitboxes = !debugOptions.showHitboxes;
-		if (input.nextRoomPressed) this._registrar.getRoomsPool().nextRoom();
+		// if (input.nextRoomPressed) this._registrar.getRoomsPool().nextRoom();
 		if (input.showAllPressed) debugOptions.showAll = !debugOptions.showAll;
 		
 		this._camera.update(this._trueTime.delta);
