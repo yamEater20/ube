@@ -2,9 +2,9 @@ import { Vector, VectorZero } from "../engine/math.js";
 import { HitboxDrawableEntity, PhysObj, RectHitbox } from "../engine/physics.js";
 import { DrawableEntity } from "../engine/drawableEntity.js";
 import { POOL_TYPES } from "./poolTypes.js";
-import { Composite, FallAirResistanceUpdateHandler, FallUpdateHandler } from "./customUpdateHandlers.js";
+import { Composite, FallAirResistanceUpdateHandler, FallUpdateHandler } from "../services/customUpdateHandlers.js";
 import * as CollisionHandlers from "../services/customCollisionHandlers.js";
-import { GroundReaction, WallReaction } from "./entityCollisionHandlers.js";
+import { GroundReaction, WallReaction } from "../services/entityCollisionHandlers.js";
 import { Timer } from "../engine/time.js";
 import { OpacityDrawableDecorator, RectDrawable } from "../services/customDrawables.js";
 

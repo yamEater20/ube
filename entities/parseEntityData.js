@@ -31,6 +31,7 @@ export const ENTITY_MAP = Object.freeze({
     "#676BE8": {entityType: ENTITY_TYPES.TORCH, offset: {x: 4, y: 0}},
 
     "#9FFFA9": {entityType: ENTITY_TYPES.BACK_LAYER_DECOR, spriteArrayName: Sprites.SPRITE_ARRAY_NAMES.PLANT_IMGS },
+    "#C1FFC8": {entityType: ENTITY_TYPES.BACK_LAYER_DECOR, spriteArrayName: Sprites.SPRITE_ARRAY_NAMES.VINE_IMGS },
     
     "#CC92C1": {entityType: ENTITY_TYPES.SPIKE, direction: Direction.NORTH},
     "#E3B5DB": {entityType: ENTITY_TYPES.SPIKE, direction: Direction.WEST},

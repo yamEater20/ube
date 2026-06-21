@@ -3,8 +3,8 @@ export const BUILD_MODES = Object.freeze({
     PRODUCTION: 1
 });
 
-// export const buildMode = BUILD_MODES.LOCAL;
-export const buildMode = BUILD_MODES.PRODUCTION;
+export const buildMode = BUILD_MODES.LOCAL;
+// export const buildMode = BUILD_MODES.PRODUCTION;
 
 export let debugOptions = {
     unlockDebug: buildMode === BUILD_MODES.LOCAL,

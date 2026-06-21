@@ -1,4 +1,4 @@
-import { TAG_IDS } from "../entities/entityCollisionHandlers.js";
+import { TAG_IDS } from "./entityCollisionHandlers.js";
 import { VectorDown } from "../engine/math.js";
 
 export class CollidableProvider {

@@ -1,12 +1,12 @@
 import { Timer } from "../engine/time.js";
 import { GRAVITY_COMING_DOWN, GRAVITY_GOING_UP, HitboxDrawableEntity, PhysObj, RectHitbox } from "../engine/physics.js";
 import { framesToMs, VectorZero } from "../engine/math.js";
-import * as CustomCollisionHandlers from "./entityCollisionHandlers.js";
+import * as CustomCollisionHandlers from "../services/entityCollisionHandlers.js";
 import * as Sprites from "../engine/sprites.js";
 import { UpdatableDrawableEntity } from "../engine/drawableEntity.js";
 import { Vector } from "../engine/math.js";
 import { ResetAtSpawn } from "../services/reset.js";
-import * as GeneralUpdateHandlers from "./customUpdateHandlers.js";
+import * as GeneralUpdateHandlers from "../services/customUpdateHandlers.js";
 import { debugOptions } from "../engine/debug.js";
 import { POOL_TYPES } from "./poolTypes.js";
 import { Composite } from "../services/customCollisionHandlers.js";

@@ -1,6 +1,6 @@
 import { RectHitbox, PhysObj, DummyCollidableProvider, DummyUpdateHandler, HitboxDrawableEntity } from "../engine/physics.js";
 import { DrawableEntity } from "../engine/drawableEntity.js";
-import * as CustomCollisionHandlers from "./entityCollisionHandlers.js";
+import * as CustomCollisionHandlers from "../services/entityCollisionHandlers.js";
 import { POOL_TYPES } from "./poolTypes.js";
 import * as Sprites from "../engine/sprites.js";
 import { Direction, directionToRad, Vector, VectorZero } from "../engine/math.js";

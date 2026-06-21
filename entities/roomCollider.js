@@ -1,4 +1,4 @@
-import { RoomCollider } from "./entityCollisionHandlers.js";
+import { RoomCollider } from "../services/entityCollisionHandlers.js";
 import {TagOnly} from "../services/customCollisionHandlers.js";
 import { VectorZero } from "../engine/math.js";
 import { DummyCollidableProvider, DummyUpdateHandler, HitboxDrawableEntity, PhysObj, RectHitbox } from "../engine/physics.js";

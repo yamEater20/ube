@@ -17,7 +17,7 @@ import { POOL_TYPES, PoolTypesFactory } from './entities/poolTypes.js';
 import { CollidableProvider } from './services/collidableProvider.js';
 import {Camera} from './engine/camera.js';
 import {InputProvider, TASInputProvider} from './services/input.js';
-import * as UpdateHandlers from './entities/customUpdateHandlers.js';
+import * as UpdateHandlers from './services/customUpdateHandlers.js';
 import * as Player from './entities/player.js';
 import { Room, ROOM_SIZE_TILES } from './entities/room.js';
 import * as Setup from './engine/setup.js';
@@ -26,7 +26,7 @@ import { clearCanvas, createCanvas, PIXEL_GAME_SIZE, setMaxSize, TILE_SIZE } fro
 import { CACHED_LEVELS } from './levelEditor/cache.js';
 import { makeRoomCollider } from './entities/roomCollider.js';
 import { EntityDataToEntityFactoryPostProcess as EntityDataToEntityFactoryPostProcess, GeneralPostProcess, LevelDataPostProcessor } from './levelEditor/postProcess.js';
-import * as CustomPostProcess from './entities/customPostProcessTileArrays.js';
+import * as CustomPostProcess from './services/customPostProcessTileArrays.js';
 import { ENTITY_MAP, ENTITY_TYPE_TO_ENTITY } from './entities/parseEntityData.js';
 import { RegistrarWithRooms, CollidableProviderWithRooms } from './services/roomPools.js';
 import { SpawnPositionProvider } from './services/spawnPositionProvider.js';
@@ -133,15 +133,24 @@ async function setup() {
 
 		const playerExtents = playerPos.add(playerWidth, playerHeight);
 		const cameraExtents = cameraPos.addPoint(PIXEL_GAME_SIZE);
+
+		let movingHorizontally = false;
+
 		if (playerExtents.x > cameraExtents.x) {
 			playerPhysObj.moveDirection(-1, VectorLeft);
+			movingHorizontally = true;
 		} else if (playerExtents.y > cameraExtents.y) {
 			playerPhysObj.moveDirection(-1, VectorUp);
 			playerPhysObj.setYVelocity(Math.min(playerPhysObj.getYVelocity(), -0.13));
 		} else if (cameraPos.x > playerPos.x) {
 			playerPhysObj.moveDirection(1, VectorRight);
+			movingHorizontally = true;
 		} else if (cameraPos.y > playerPos.y) {
 			playerPhysObj.moveDirection(1, VectorDown);
+		}
+
+		if (movingHorizontally && Math.abs(playerPhysObj.getXVelocity()) < 0.13) {
+			playerPhysObj.setXVelocity(0);
 		}
 	};
 	

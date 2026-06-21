@@ -1,7 +1,5 @@
 import {
 	Vector,
-    VectorRight,
-    VectorZero
 } from '../engine/math.js';
 import { Registrar, Pool } from '../engine/pools.js';
 import { POOL_TYPES, PoolTypesFactory } from './poolTypes.js';
