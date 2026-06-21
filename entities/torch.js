@@ -30,7 +30,7 @@ class Torch extends Entity {
         return 8 + Math.sin(this.offset*1.5 + this._time * LIGHT_FLICKER_SPEED) * LIGHT_FLICKER_AMPLITUDE;
     }
 
-    reset() {this._time = 0;}
+    reset() {}
 }
 
 class TorchLightDrawable {

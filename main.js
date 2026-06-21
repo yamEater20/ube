@@ -4,6 +4,10 @@
 
 import {
 	Vector,
+    VectorDown,
+    VectorLeft,
+    VectorRight,
+    VectorUp,
     VectorZero
 } from './engine/math.js';
 import { Time } from './engine/time.js';
@@ -18,7 +22,7 @@ import * as Player from './entities/player.js';
 import { Room, ROOM_SIZE_TILES } from './entities/room.js';
 import * as Setup from './engine/setup.js';
 import {HexToEntityData} from "./levelEditor/hexParsing.js";
-import { clearCanvas, createCanvas, setMaxSize, TILE_SIZE } from './engine/graphics.js';
+import { clearCanvas, createCanvas, PIXEL_GAME_SIZE, setMaxSize, TILE_SIZE } from './engine/graphics.js';
 import { CACHED_LEVELS } from './levelEditor/cache.js';
 import { makeRoomCollider } from './entities/roomCollider.js';
 import { EntityDataToEntityFactoryPostProcess as EntityDataToEntityFactoryPostProcess, GeneralPostProcess, LevelDataPostProcessor } from './levelEditor/postProcess.js';
@@ -119,9 +123,37 @@ async function setup() {
 		groundedProvider,
 		collidableProviderWithRooms,
 		new SpawnPositionProvider(roomsPool),
-		roomCollider => roomsPool.roomIndex = roomCollider.roomIndex,
+		roomCollider => {
+			roomsPool.roomIndex = roomCollider.roomIndex;
+			roomsPool.getCurrentRoom().reset();
+		},
 		() => root.queueReset()
 	);
+
+	root.onCameraMove = camera => {
+		const cameraPos = camera._position;
+		// console.log(cameraPos.x,cameraPos.y);
+
+		const playerPhysObj = player[POOL_TYPES.COLLIDABLE][0];
+		const playerPos = playerPhysObj.globalPosition();
+
+		// console.log(playerPos.x, playerPos.y);
+		const playerWidth = playerPhysObj.hitbox.width;
+		const playerHeight = playerPhysObj.hitbox.height;
+
+		const playerExtents = playerPos.add(playerWidth, playerHeight);
+		const cameraExtents = cameraPos.addPoint(PIXEL_GAME_SIZE);
+		if (playerExtents.x > cameraExtents.x) {
+			playerPhysObj.moveDirection(-1, VectorLeft);
+		} else if (playerExtents.y > cameraExtents.y) {
+			playerPhysObj.moveDirection(-1, VectorUp);
+			playerPhysObj.setYVelocity(Math.min(playerPhysObj.getYVelocity(), -0.13));
+		} else if (cameraPos.x > playerPos.x) {
+			playerPhysObj.moveDirection(1, VectorRight);
+		} else if (cameraPos.y > playerPos.y) {
+			playerPhysObj.moveDirection(1, VectorDown);
+		}
+	};
 	
 	persistentRegistrar.registerEntity(player);
 

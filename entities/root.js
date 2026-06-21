@@ -45,6 +45,7 @@ export class Root extends Entity {
 
 		if (this._camera.isMoving) {
 			//Do not update world time on room Transition
+			this.onCameraMove(this._camera);
 		} else {
 			if (input.pausePressed) this._worldPaused = !this._worldPaused;
 

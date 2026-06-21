@@ -25,6 +25,10 @@ class UpdatableDrawableEntity extends DrawableEntity {
 	update(timeDelta) {
 		this.drawable.update(timeDelta);
 	}
+
+	reset() {
+		this.drawable.setRow(0);
+	}
 }
 
 export {

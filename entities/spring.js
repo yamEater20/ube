@@ -58,6 +58,7 @@ export function makeSpring(parent, relativePosition, entityData) {
 	ret[POOL_TYPES.DRAWABLE_DEBUG] = [new HitboxDrawableEntity(physObj, hitbox)];
 	ret[POOL_TYPES.DRAWABLE] = [drawableEntity];
 	ret[POOL_TYPES.UPDATEABLE] = [drawableEntity];
+	ret[POOL_TYPES.RESETTABLE] = [drawableEntity];
 
 	return ret;
 }
