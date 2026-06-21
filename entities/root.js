@@ -35,11 +35,13 @@ export class Root extends Entity {
 		const input = this._inputProvider.getInput();
 
 		//Debug only
+		
 		if (input.debugPressed) toggleDebugAll();
 		if (input.noClipPressed) debugOptions.noClip = !debugOptions.noClip;
 		if (input.debugHitboxesPressed) debugOptions.showHitboxes = !debugOptions.showHitboxes;
 		// if (input.nextRoomPressed) this._registrar.getRoomsPool().nextRoom();
 		if (input.showAllPressed) debugOptions.showAll = !debugOptions.showAll;
+
 		
 		this._camera.update(this._trueTime.delta);
 

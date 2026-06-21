@@ -6,6 +6,7 @@ import { msToFrames } from "./time.js";
 
 class Sprite {
 	constructor(img) {
+		if (img.id == undefined) console.trace();
 		this.img = img;
 	}
 
@@ -195,10 +196,16 @@ const SPRITE_LK = Object.freeze({
 	SPECIAL_MAP: document.getElementById("special-map"),
 });
 
+const SPRITE_ARRAY_NAMES = Object.freeze({
+	VINE_IMGS: "VINE_IMGS",
+	PLANT_IMGS: "PLANT_IMGS"
+});
+
 export {
 	Sprite,
 	AnimatedSprite,
 	TileSprite,
 	RotatedSprite,
-	SPRITE_LK
+	SPRITE_LK,
+	SPRITE_ARRAY_NAMES
 }

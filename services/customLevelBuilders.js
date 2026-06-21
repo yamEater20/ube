@@ -10,9 +10,7 @@ export class LevelBuilderFromCache extends ILevelBuilder {
     }
 
     async buildLevels() {
-        const levelData = this._cachedLevelData;
-        levelData = this._entityConstructionPostProcessor.execute(levelData);
-        return levelData;
+        return this._entityConstructionPostProcessor.execute(this._cachedLevelData);
     }
 }
 

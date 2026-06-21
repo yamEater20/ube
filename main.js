@@ -33,7 +33,8 @@ import { SpawnPositionProvider } from './services/spawnPositionProvider.js';
 import { RoomsPool } from './services/roomPools.js';
 import { Root } from './entities/root.js';
 import { ParticlePool } from './services/particlePool.js';
-import { LevelBuilderFromImage } from './services/customLevelBuilders.js';
+import { LevelBuilderFromCache, LevelBuilderFromImage } from './services/customLevelBuilders.js';
+import { BUILD_MODES, buildMode } from './engine/debug.js';
 
 const LEVEL_PATH = "Levels.png";
 
@@ -88,23 +89,12 @@ async function setup() {
 		registrarWithRooms
 	);
 
-	const postProcessor = new LevelDataPostProcessor([
-		new GeneralPostProcess(new HexToEntityData(ENTITY_MAP)),
-		new CustomPostProcess.SemiSolidPostProcess(),
-		new CustomPostProcess.WallMainPostProcess(),
-		new CustomPostProcess.WallCornersPostProcess(),
-	]);
-
 	const entityConstructionPostProcessor = new LevelDataPostProcessor([
 		new CustomPostProcess.SpringCallbackPostProcess(particlePool.createSpringParticles),
 		new EntityDataToEntityFactoryPostProcess(ENTITY_TYPE_TO_ENTITY)
 	]);
 
-	const levelBuilder = new LevelBuilderFromImage(
-		LEVEL_PATH,
-		[postProcessor, entityConstructionPostProcessor]
-	)
-
+	const levelBuilder = levelBuilderFactory(buildMode, entityConstructionPostProcessor);
 	const levelData = await levelBuilder.buildLevels();
 
 	roomsPool.setRooms(levelData.levels.map(data => 
@@ -162,8 +152,6 @@ async function setup() {
 		persistentRegistrar.registerEntity(makeRoomCollider(room, index, roomSizeWorldSpace));
 	});
 
-	// timeIt("Build levels", () => game.buildLevels(levelData));
-	particlePool.createSpringParticles(roomsPool.get()[5 * 2 + 2], Vector({x: 50, y: 50}), 8);
 	root.queueReset();
 	Setup.beginGameLoop(mainLoopDiagnostics.call);
 }
@@ -171,6 +159,27 @@ async function setup() {
 ;(function () {
 	timeIt("Total setup", setup);
 })();
+
+function levelBuilderFactory(buildMode, entityConstructionPostProcessor) {
+	const postProcessor = new LevelDataPostProcessor([
+		new GeneralPostProcess(new HexToEntityData(ENTITY_MAP)),
+		new CustomPostProcess.SemiSolidPostProcess(),
+		new CustomPostProcess.WallMainPostProcess(),
+		new CustomPostProcess.WallCornersPostProcess(),
+	]);
+
+	switch (buildMode) {
+		case BUILD_MODES.LOCAL:
+			return new LevelBuilderFromImage(
+				LEVEL_PATH,
+				[postProcessor, entityConstructionPostProcessor]
+			);
+		case BUILD_MODES.PRODUCTION:
+			return new LevelBuilderFromCache(CACHED_LEVELS, entityConstructionPostProcessor);
+	}
+
+	throw new Error("Unknown build mode: " + buildMode);
+}
 
 /*
 

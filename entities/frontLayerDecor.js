@@ -3,7 +3,8 @@ import { POOL_TYPES } from "./poolTypes.js";
 import * as Sprites from "../engine/sprites.js";
 
 export function makeFrontLayerDecor(parent, relativePosition, entityData) {
-	const spriteArray = entityData.spriteArray;
+	const spriteArrayName = entityData.spriteArrayName;
+	const spriteArray = Sprites.SPRITE_LK[spriteArrayName];
     const ind = Math.floor(Math.random()*spriteArray.length);
     const drawableEntity = new DrawableEntity(
 		parent,

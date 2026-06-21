@@ -1,5 +1,4 @@
 import { Entity } from "./entity.js";
-import { lerp } from "./math.js";
 
 class DrawableEntity extends Entity {
 	constructor(parent, drawable, relativePositon) {

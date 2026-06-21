@@ -30,7 +30,7 @@ export const ENTITY_MAP = Object.freeze({
     "#3B3FDA": {entityType: ENTITY_TYPES.TORCH, offset: {x: 0, y: 0}},
     "#676BE8": {entityType: ENTITY_TYPES.TORCH, offset: {x: 4, y: 0}},
 
-    "#9FFFA9": {entityType: ENTITY_TYPES.BACK_LAYER_DECOR, spriteArray: Sprites.SPRITE_LK.PLANT_IMGS },
+    "#9FFFA9": {entityType: ENTITY_TYPES.BACK_LAYER_DECOR, spriteArrayName: Sprites.SPRITE_ARRAY_NAMES.PLANT_IMGS },
     
     "#CC92C1": {entityType: ENTITY_TYPES.SPIKE, direction: Direction.NORTH},
     "#E3B5DB": {entityType: ENTITY_TYPES.SPIKE, direction: Direction.WEST},
