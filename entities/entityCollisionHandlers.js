@@ -1,5 +1,5 @@
 import { IReaction } from "../services/customCollisionHandlers.js";
-import { directionToVector } from "../engine/math.js";
+import { directionToVector, VectorZero } from "../engine/math.js";
 
 export const TAG_IDS = Object.freeze({
     GROUND: 0,
@@ -92,7 +92,9 @@ export class RoomColliderReaction extends IReaction {
     }
     id() { return TAG_IDS.ROOM; }
     react(physObj, other, room, direction) {
-        this._handler(room);
+        if (!physObj.isOverlap(other, VectorZero)) {
+            this._handler(room);
+        }
     }
 }
 
@@ -108,9 +110,7 @@ export class Spring {
 export class SpringReaction extends IReaction {
     id() { return TAG_IDS.SPRING; }
     react(physObj, other, spring, direction) {
-        //TODO: there's gotta be a better way to do this. But idk what it is.
-        // (the problem is that I went onBounce to only fire once. Idk how to do that.)
-        if (physObj.isTouching(other)) {
+        if (!physObj.isOverlap(other, VectorZero)) {
             physObj.setYVelocity(spring.bounceVelocity);
             spring.onBounce();
         }

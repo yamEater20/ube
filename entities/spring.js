@@ -45,7 +45,7 @@ export function makeSpring(parent, relativePosition, entityData) {
 			[new SpringTagAnimated(
 				-0.26,
 				sprite,
-				() => entityData.onBounce(parent._registrar, parent, springParticleGenerationPosition, hitboxWidth)
+				() => entityData.onBounce(parent, springParticleGenerationPosition, hitboxWidth)
 			)]
 		),
 		new DummyCollidableProvider(),

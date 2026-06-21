@@ -50,6 +50,10 @@ export class Room extends Entity {
 		this.getPool(POOL_TYPES.UPDATEABLE).foreach(item => item.update(timeDelta));
 	}
 
+	reset() {
+		this.getPool(POOL_TYPES.RESETTABLE).foreach(r => r.reset());
+	}
+
 	getLocalCollidableProvider() {
 		return this._localCollidableProvider;
 	}

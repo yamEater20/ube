@@ -1,0 +1,47 @@
+import { lerp } from "../engine/math.js";
+
+export class RectDrawable {
+    constructor(color) {
+        this._color = color ?? "#ff0000";
+    }
+
+    draw(x, y, camera, color) {
+        camera.drawRect(x, y, 1, 1, color ?? this._color);
+    }
+}
+
+export class OpacityDrawableDecorator {
+    constructor(drawable) {
+        this._drawable = drawable;
+        this._currentOpacity = 1;
+
+        this.color = "#ffffff";
+    }
+
+    reset(opacityStart, opacityEnd, fadeTime, color) {
+        this._opacityStart = opacityStart;
+        this._currentOpacity = opacityStart;
+        
+        this._opacityEnd = opacityEnd;
+        this._fadeTime = fadeTime;
+        this._time = 0;
+
+        this.color = color;
+    }
+
+    draw(x, y, camera) {
+        //TODO: rethink this.
+        // I think you should write a camera.drawWithColor...?
+        // Or, maybe make a DrawableColorable decorator????
+        camera.drawWithOpacity(
+            () => this._drawable.draw(x, y, camera, this.color),
+            this._currentOpacity
+        );
+    }
+
+    update(timeDelta) {
+        this._time += timeDelta;
+        const t = this._time / this._fadeTime;
+        this._currentOpacity = lerp(this._opacityStart, this._opacityEnd, t);
+    }
+}

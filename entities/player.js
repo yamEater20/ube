@@ -102,7 +102,7 @@ class SlideHandler extends IPlayerUpdateHandler {
 
 		const shouldSlideFromBuffer = input.grounded && this._slideJustPressed.running();
 		const shouldSlideFromCoyote = input.slidePressed && this._xoyoteTime.running();
-		if (shouldSlideFromBuffer || shouldSlideFromCoyote) {
+		if (!this._isSliding && (shouldSlideFromBuffer || shouldSlideFromCoyote)) {
 			this._isSliding = true;
 			this._slideDirection = input.facing;
 			this._slideJustPressed.stop();

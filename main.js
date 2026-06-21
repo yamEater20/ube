@@ -67,7 +67,8 @@ async function setup() {
 	
 	const groundedProvider = new UpdateHandlers.GroundedProvider(collidableProviderWithRooms);
 
-	const particleCreator = new ParticlePool(collidableProviderWithRooms, groundedProvider);
+	const particlePool = new ParticlePool(collidableProviderWithRooms, groundedProvider);
+	persistentRegistrar.registerEntity(particlePool.getDataToRegister());
 
 	const camera = new Camera(
 		ctx,
@@ -91,7 +92,7 @@ async function setup() {
 	]);
 
 	const entityConstructionPostProcessor = new LevelDataPostProcessor([
-		new CustomPostProcess.SpringCallbackPostProcess(particleCreator.createSpringParticles),
+		new CustomPostProcess.SpringCallbackPostProcess(particlePool.createSpringParticles),
 		new EntityDataToEntityFactoryPostProcess(ENTITY_TYPE_TO_ENTITY)
 	]);
 
@@ -130,7 +131,7 @@ async function setup() {
 	});
 
 	// timeIt("Build levels", () => game.buildLevels(levelData));
-	particleCreator.createSpringParticles(roomsPool.get()[5 * 2 + 2]._registrar, roomsPool.get()[5 * 2 + 2], Vector({x: 50, y: 50}), 8);
+	particlePool.createSpringParticles(roomsPool.get()[5 * 2 + 2], Vector({x: 50, y: 50}), 8);
 	root.queueReset();
 	Setup.beginGameLoop(mainLoopDiagnostics.call);
 }
