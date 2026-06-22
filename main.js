@@ -48,8 +48,10 @@ function mainLoop() {
 	root.draw();
 }
 
-async function setup(inputProvider) {
+async function setup() {
 	const mainLoopDiagnostics = new Diagnostics(mainLoop);
+
+	const inputProvider = inputProviderFactory(buildMode);
 
 	const info = createCanvas();
 	canvas = info.canvas;
@@ -159,30 +161,20 @@ async function setup(inputProvider) {
 
 	root.queueReset();
 
-	return mainLoopDiagnostics.call;
-}
-
-;(async function () {
-	let inputProvider;
-
-	if (buildMode === BUILD_MODES.LOAD_TEST) {
-		inputProvider = new TASInputProvider();
-	} else {
-		inputProvider = new InputProvider();
-	}
-
-	const loopFunction = await timeIt("Total setup", () => setup(inputProvider));
-
 	if (buildMode === BUILD_MODES.LOAD_TEST) {
 		const numFrames = 100000;
 		timeIt("Total for " + numFrames + " frames", () => {
 			for (let i = 0; i < numFrames; ++i) {
-				loopFunction();
+				mainLoopDiagnostics.call();
 			}
 		});
 	} else {
-		Setup.beginGameLoop(loopFunction);
+		Setup.beginGameLoop(mainLoopDiagnostics.call);
 	}
+}
+
+;(async function () {
+	timeIt("Total setup", setup);
 })();
 
 function levelBuilderFactory(buildMode, entityConstructionPostProcessor) {
@@ -193,15 +185,21 @@ function levelBuilderFactory(buildMode, entityConstructionPostProcessor) {
 		new CustomPostProcess.WallCornersPostProcess(),
 	]);
 
-	switch (buildMode) {
-		case BUILD_MODES.PRODUCTION:
-			return new LevelBuilderFromCache(CACHED_LEVELS, entityConstructionPostProcessor);
-		default:
-			return new LevelBuilderFromImage(
-				LEVEL_PATH,
-				[postProcessor, entityConstructionPostProcessor]
-			);
+	if (BUILD_MODES.PRODUCTION)
+		return new LevelBuilderFromCache(CACHED_LEVELS, entityConstructionPostProcessor);
+
+	return new LevelBuilderFromImage(
+		LEVEL_PATH,
+		[postProcessor, entityConstructionPostProcessor]
+	);
+}
+
+function inputProviderFactory(buildMode) {
+	if (buildMode === BUILD_MODES.LOAD_TEST) {
+		return new TASInputProvider();
 	}
+
+	return new InputProvider();
 }
 
 /*
