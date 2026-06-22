@@ -412,13 +412,11 @@ export function make(parent, position, inputProvider, groundedProvider, collidab
 
 	const ret = {};
 
-	ret[POOL_TYPES.DRAWABLE] = [{item: drawableEntity, layer: 20}];
+	ret[POOL_TYPES.DRAWABLE] = [{item: drawableEntity, layer: 2}];
 	ret[POOL_TYPES.UPDATEABLE] = [drawableEntity, physObj];
 	ret[POOL_TYPES.RESETTABLE] = [physObj, new ResetAtSpawn(physObj, spawnPositionProvider), updateHandler];
 	ret[POOL_TYPES.COLLIDABLE] = [physObj];
 	ret[POOL_TYPES.DRAWABLE_DEBUG] = [new HitboxDrawableEntity(physObj, hitbox, "#00ff0060")];
-	// ret[POOL_TYPES.DRAWABLE] = [hitbox];
-	// ret[POOL_TYPES.CAMERA_FOLLOW] = [hitbox];
 
 	return ret;
 }

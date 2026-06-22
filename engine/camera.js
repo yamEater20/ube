@@ -201,6 +201,11 @@ class Camera {
         }
     }
 
+    drawCanvas(canvas) {
+        this._ctx.scale(7, 7);
+        this._ctx.drawImage(canvas, 0, 0);
+    }
+
     _moveToTarget(timeDelta, targetPosition) {
 		var v = targetPosition.addPoint(this._position.scalar(-1));
 		const mag = v.magnitude();

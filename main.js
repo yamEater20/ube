@@ -22,7 +22,7 @@ import * as Player from './entities/player.js';
 import { Room, ROOM_SIZE_TILES } from './entities/room.js';
 import * as Setup from './engine/setup.js';
 import {HexToEntityData} from "./levelEditor/hexParsing.js";
-import { clearCanvas, createCanvas, PIXEL_GAME_SIZE, setMaxSize, TILE_SIZE } from './engine/graphics.js';
+import { clearCanvas, createCanvas, createFrontBufferCanvas, PIXEL_GAME_SIZE, setMaxSize, TILE_SIZE } from './engine/graphics.js';
 import { CACHED_LEVELS } from './levelEditor/cache.js';
 import { makeRoomCollider } from './entities/roomCollider.js';
 import { EntityDataToEntityFactoryPostProcess as EntityDataToEntityFactoryPostProcess, GeneralPostProcess, LevelDataPostProcessor } from './levelEditor/postProcess.js';
@@ -39,13 +39,19 @@ import { BUILD_MODES, buildMode } from './engine/debug.js';
 const LEVEL_PATH = "Levels.png";
 
 let root;
-let canvas;
+let frontBufferCanvasInfo;
+let mainBufferCanvasInfo;
+
+let frontBufferCamera;
 
 function mainLoop() {
-	setMaxSize(canvas);
-	clearCanvas(canvas);
+	clearCanvas(mainBufferCanvasInfo.canvas);
 	root.update();
 	root.draw();
+
+	clearCanvas(frontBufferCanvasInfo.canvas);
+	setMaxSize(frontBufferCanvasInfo.canvas, frontBufferCanvasInfo.ctx);
+	frontBufferCamera.drawCanvas(mainBufferCanvasInfo.canvas);
 }
 
 async function setup() {
@@ -53,9 +59,8 @@ async function setup() {
 
 	const inputProvider = inputProviderFactory(buildMode);
 
-	const info = createCanvas();
-	canvas = info.canvas;
-	const ctx = info.ctx;
+	frontBufferCanvasInfo = createFrontBufferCanvas();
+	mainBufferCanvasInfo = createCanvas(false);
 
 	const poolDict = PoolTypesFactory();
 	poolDict[POOL_TYPES.CAMERA_FOLLOW] = new Pool();
@@ -74,9 +79,15 @@ async function setup() {
 	persistentRegistrar.registerEntity(particlePool.getDataToRegister());
 
 	const camera = new Camera(
-		ctx,
+		mainBufferCanvasInfo.ctx,
 		Vector({x: 128*2, y: 128*2}),
 		() => registrarWithRooms.getPool(POOL_TYPES.CAMERA_FOLLOW).get()[0]
+	);
+
+	frontBufferCamera = new Camera(
+		frontBufferCanvasInfo.ctx,
+		VectorZero,
+		() => root
 	);
 
 	root = new Root(
@@ -185,7 +196,7 @@ function levelBuilderFactory(buildMode, entityConstructionPostProcessor) {
 		new CustomPostProcess.WallCornersPostProcess(),
 	]);
 
-	if (BUILD_MODES.PRODUCTION)
+	if (buildMode === BUILD_MODES.PRODUCTION)
 		return new LevelBuilderFromCache(CACHED_LEVELS, entityConstructionPostProcessor);
 
 	return new LevelBuilderFromImage(

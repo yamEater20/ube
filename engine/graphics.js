@@ -4,26 +4,42 @@ import { Vector } from "./math.js";
 const PIXEL_GAME_SIZE = Vector({x: 128, y: 128});
 const TILE_SIZE = 8;
 
-function createCanvas() {
-    const canvas = document.createElement("canvas");
-	const CTX = canvas.getContext("2d");
-	canvas.width = PIXEL_GAME_SIZE.x;
-	canvas.height = PIXEL_GAME_SIZE.y;
-	document.body.insertBefore(canvas, document.body.childNodes[0]);
-	CTX.imageSmoothingEnabled = false;
-
+function createFrontBufferCanvas() {
+	const info = createCanvas(true, PIXEL_GAME_SIZE.scalar(4));
+	const canvas = info.canvas;
+	
 	canvas.style.backgroundImage = 'url("images/Background.png")';
-    canvas.ondblclick = () => {
+	canvas.ondblclick = () => {
         toggleFullscreen();
     };
-	setMaxSize(canvas);
+	setMaxSize(canvas, info.ctx);
+
+	return info;
+}
+
+function createCanvas(isVisible, size) {
+	size = size ?? PIXEL_GAME_SIZE;
+    
+	const canvas = document.createElement("canvas");
+	const ctx = canvas.getContext("2d");
+	canvas.width = size.x;
+	canvas.height = size.y;
+	
+	ctx.imageSmoothingEnabled = false;
+	ctx.mozImageSmoothingEnabled = false;
+	ctx.webkitImageSmoothingEnabled = false;
+	
+	if (!isVisible) canvas.style.display = "none";
+
+	document.body.insertBefore(canvas, document.body.childNodes[0]);
+	
 	return {
-		ctx: CTX,
+		ctx: ctx,
 		canvas: canvas
 	};
 }
 
-function setMaxSize(canvas) {
+function setMaxSize(canvas, ctx) {
 	const screenHeight = document.body.scrollHeight;
 	const screenWidth = document.body.scrollWidth;
 	let canvasHeight = Math.floor(screenHeight / PIXEL_GAME_SIZE.y);
@@ -36,6 +52,13 @@ function setMaxSize(canvas) {
 	canvas.style.width = canvasWidth + "px";
 	canvas.style.height = canvasHeight + "px";
 	canvas.style.backgroundSize = canvasHeight + "px";
+
+	canvas.width = canvasWidth;
+	canvas.height = canvasHeight;
+	
+	ctx.imageSmoothingEnabled = false;
+	ctx.mozImageSmoothingEnabled = false;
+	ctx.webkitImageSmoothingEnabled = false;
 }
 
 function clearCanvas(canvas) {
@@ -53,6 +76,7 @@ const toggleFullscreen = (event) => {
 
 export {
     clearCanvas,
+	createFrontBufferCanvas,
     createCanvas,
     setMaxSize,
     PIXEL_GAME_SIZE,
