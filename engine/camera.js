@@ -15,6 +15,30 @@ const SCREEN_SHAKES = [
 	Vector({x: 0, y: 0}),
 ];
 
+export class DummyCamera {
+    getPosition() {return Vector({x: 0, y: 0});}
+
+    shakeScreen(strength = 1, duration = 250) {}
+
+    update(timeDelta) {}
+
+    drawWithOpacity(func, opacity) {}
+
+    drawRect(x, y, w, h, color) {}
+
+    drawRectOutline(x, y, w, h, color) {}
+    
+    drawPixel(x, y, color) {}
+    
+    drawEllipse(x, y, rad, colorA, colorB) {}
+
+    drawImage(image, dx, dy, options) {}
+
+    writeText(txt, size, pos, color, spacing) {}
+
+    drawLine(x0, y0, x1, y1, color) {}
+}
+
 class Camera {
     constructor(ctx, initialPosition, getFollowingFunc) {
         this._ctx = ctx;

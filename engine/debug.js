@@ -1,9 +1,11 @@
 export const BUILD_MODES = Object.freeze({
     LOCAL: 0,
-    PRODUCTION: 1
+    LOAD_TEST: 1,
+    PRODUCTION: 2
 });
 
 export const buildMode = BUILD_MODES.LOCAL;
+// export const buildMode = BUILD_MODES.LOAD_TEST;
 // export const buildMode = BUILD_MODES.PRODUCTION;
 
 export let debugOptions = {

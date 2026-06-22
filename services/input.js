@@ -111,21 +111,21 @@ function setPressed(input, prevInput, name) {
 export class TASInputProvider extends IInputProvider {
     constructor() {
         super();
-        this.frame = 0;
+        // this.frame = 0;
     }
 
     update(timeDelta) {
-        throw new Error("Not implemented. Needs work");
-        this.frame = (this.frame+1) % 30;
-        console.log(this.frame);
+        // throw new Error("Not implemented. Needs work");
+        // this.frame = (this.frame+1) % 30;
+        // console.log(this.frame);
     }
     keyDownHandler(event) {}
     keyUpHandler(event) {}
 
     getInput() {
         return {
-            "moveRight": this.frame < 15,
-            "moveLeft": this.frame >= 15,
+            "moveRight": false,
+            "moveLeft": true,
             "jump": false,
             "jumpPressed": false,
         };;

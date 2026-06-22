@@ -15,7 +15,7 @@ import { Diagnostics, timeIt } from './engine/diagnostics.js';
 import { Registrar, Pool } from './engine/pools.js';
 import { POOL_TYPES, PoolTypesFactory } from './entities/poolTypes.js';
 import { CollidableProvider } from './services/collidableProvider.js';
-import {Camera} from './engine/camera.js';
+import {Camera, DummyCamera} from './engine/camera.js';
 import {InputProvider, TASInputProvider} from './services/input.js';
 import * as UpdateHandlers from './services/customUpdateHandlers.js';
 import * as Player from './entities/player.js';
@@ -48,16 +48,12 @@ function mainLoop() {
 	root.draw();
 }
 
-let mainLoopDiagnostics = new Diagnostics(mainLoop);
-
-async function setup() {
-	// Setup.setup();
+async function setup(inputProvider) {
+	const mainLoopDiagnostics = new Diagnostics(mainLoop);
 
 	const info = createCanvas();
 	canvas = info.canvas;
 	const ctx = info.ctx;
-	
-	const inputProvider = new InputProvider();
 
 	const poolDict = PoolTypesFactory();
 	poolDict[POOL_TYPES.CAMERA_FOLLOW] = new Pool();
@@ -162,11 +158,31 @@ async function setup() {
 	});
 
 	root.queueReset();
-	Setup.beginGameLoop(mainLoopDiagnostics.call);
+
+	return mainLoopDiagnostics.call;
 }
 
-;(function () {
-	timeIt("Total setup", setup);
+;(async function () {
+	let inputProvider;
+
+	if (buildMode === BUILD_MODES.LOAD_TEST) {
+		inputProvider = new TASInputProvider();
+	} else {
+		inputProvider = new InputProvider();
+	}
+
+	const loopFunction = await timeIt("Total setup", () => setup(inputProvider));
+
+	if (buildMode === BUILD_MODES.LOAD_TEST) {
+		const numFrames = 100000;
+		timeIt("Total for " + numFrames + " frames", () => {
+			for (let i = 0; i < numFrames; ++i) {
+				loopFunction();
+			}
+		});
+	} else {
+		Setup.beginGameLoop(loopFunction);
+	}
 })();
 
 function levelBuilderFactory(buildMode, entityConstructionPostProcessor) {
@@ -178,16 +194,14 @@ function levelBuilderFactory(buildMode, entityConstructionPostProcessor) {
 	]);
 
 	switch (buildMode) {
-		case BUILD_MODES.LOCAL:
+		case BUILD_MODES.PRODUCTION:
+			return new LevelBuilderFromCache(CACHED_LEVELS, entityConstructionPostProcessor);
+		default:
 			return new LevelBuilderFromImage(
 				LEVEL_PATH,
 				[postProcessor, entityConstructionPostProcessor]
 			);
-		case BUILD_MODES.PRODUCTION:
-			return new LevelBuilderFromCache(CACHED_LEVELS, entityConstructionPostProcessor);
 	}
-
-	throw new Error("Unknown build mode: " + buildMode);
 }
 
 /*
