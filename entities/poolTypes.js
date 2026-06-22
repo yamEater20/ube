@@ -1,4 +1,4 @@
-import { Pool } from "../engine/pools.js";
+import { LayeredPool, Pool } from "../engine/pools.js";
 
 // TODO: can this be changed to a Dict<type, pool>
 export const POOL_TYPES = Object.freeze({
@@ -15,7 +15,7 @@ export const POOL_TYPES = Object.freeze({
 export function PoolTypesFactory() {
 	const poolDict = {};
 	poolDict[POOL_TYPES.COLLIDABLE] = new Pool();
-	poolDict[POOL_TYPES.DRAWABLE] = new Pool();
+	poolDict[POOL_TYPES.DRAWABLE] = new LayeredPool();
 	poolDict[POOL_TYPES.UPDATEABLE] = new Pool();
 	poolDict[POOL_TYPES.DRAWABLE_DEBUG] = new Pool();
 	poolDict[POOL_TYPES.RESETTABLE] = new Pool();

@@ -75,7 +75,11 @@ export function makeTorch(parent, relativePosition, entityData) {
     
     const flameEntity = new UpdatableDrawableEntity(torch, flameSprite, VectorZero);
 	const ret = {};
-	ret[POOL_TYPES.DRAWABLE] = [handleEntity, flameEntity, lightEntity];
+	ret[POOL_TYPES.DRAWABLE] = [
+        {item: handleEntity, layer: 1},
+        {item: flameEntity, layer: 1},
+        {item: lightEntity, layer: 1},
+    ];
     ret[POOL_TYPES.UPDATEABLE] = [torch, flameEntity];
     ret[POOL_TYPES.RESETTABLE] = [torch];
 

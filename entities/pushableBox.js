@@ -39,7 +39,7 @@ export function makePushableBox(hitbox, updateHandler, collidableProvider, groun
 	ret[POOL_TYPES.COLLIDABLE] = [physObj];
 	ret[POOL_TYPES.UPDATEABLE] = [physObj];
 	ret[POOL_TYPES.DRAWABLE_DEBUG] = [hitbox];
-	ret[POOL_TYPES.DRAWABLE] = [drawableEntity];
+	ret[POOL_TYPES.DRAWABLE] = [{item: drawableEntity, layer: 5}];
 	ret[POOL_TYPES.RESETTABLE] = [physObj, new ResetAtSpawn(hitbox, position)];
 	return ret;
 }

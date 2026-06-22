@@ -103,7 +103,7 @@ export class Spring {
         this.bounceVelocity = bounceVelocity;
     }
     id() { return TAG_IDS.SPRING; }
-    shouldStopMoving(tagPhysObj, movingPhysObj, direction) { return direction.y > 0; }
+    shouldStopMoving(tagPhysObj, movingPhysObj, direction) { return direction.y >= 0; }
     onBounce() {}
 }
 

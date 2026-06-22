@@ -51,17 +51,23 @@ export class CollidableProviderWithRooms extends CollidableProvider {
 }
 
 export class RoomsPool extends Pool {
-	constructor() {
+	constructor(roomIndex) {
 		super();
-		this.roomIndex = 12;
+		this._roomIndex = roomIndex ?? 0;
+        this._lastRoomIndex = this._roomIndex;
 	}
 
     setRooms(rooms) {
         this._items = rooms;
     }
 
+    setRoomIndex(roomIndex) {
+        this._lastRoomIndex = this._roomIndex;
+        this._roomIndex = roomIndex;
+    }
+
 	getCurrentRoom() {
-		return this.get()[this.roomIndex];
+		return this.get()[this._roomIndex];
 	}
 
 	getPool(poolType) {
@@ -69,13 +75,14 @@ export class RoomsPool extends Pool {
 		// 	return this.get().map(r => r.getPool(poolType)).reduce((a, b) => a.concat(b));
 		// }
 		if ((poolType === POOL_TYPES.DRAWABLE || poolType === POOL_TYPES.DRAWABLE_DEBUG)) {
-			return this.get().map(r => r.getPool(poolType)).reduce((a, b) => a.concat(b));
+			if (this._roomIndex === this._lastRoomIndex) return this.getCurrentRoom().getPool(poolType);
+            return this.getCurrentRoom().getPool(poolType).concat(this.get()[this._lastRoomIndex].getPool(poolType));
 		}
 		return this.getCurrentRoom().getPool(poolType);
 		// return this.get().map(r => r.getPool(poolType)).reduce((a, b) => a.concat(b));
 	}
 
 	nextRoom() {
-		this.roomIndex = (this.roomIndex + 1) % this._items.length;
+		this._roomIndex = (this._roomIndex + 1) % this._items.length;
 	}
 }

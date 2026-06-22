@@ -12,7 +12,7 @@ export function makeFrontLayerDecor(parent, relativePosition, entityData) {
         relativePosition
 	);
 	const ret = {};
-	ret[POOL_TYPES.DRAWABLE] = [drawableEntity];
+	ret[POOL_TYPES.DRAWABLE] = [{item: drawableEntity, layer: 8}];
 
 	return ret;
 }

@@ -31,7 +31,7 @@ export class ParticlePool {
         const ret = {};
         ret[POOL_TYPES.UPDATEABLE] = [this];
         ret[POOL_TYPES.DRAWABLE_DEBUG] = [this._debugDrawer];
-        ret[POOL_TYPES.DRAWABLE] = [this];
+        ret[POOL_TYPES.DRAWABLE] = [{item: this, layer: 4},];
         ret[POOL_TYPES.RESETTABLE] = [this];
         return ret;
     }

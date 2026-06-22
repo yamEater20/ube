@@ -412,7 +412,7 @@ export function make(parent, position, inputProvider, groundedProvider, collidab
 
 	const ret = {};
 
-	ret[POOL_TYPES.DRAWABLE] = [drawableEntity];
+	ret[POOL_TYPES.DRAWABLE] = [{item: drawableEntity, layer: 20}];
 	ret[POOL_TYPES.UPDATEABLE] = [drawableEntity, physObj];
 	ret[POOL_TYPES.RESETTABLE] = [physObj, new ResetAtSpawn(physObj, spawnPositionProvider), updateHandler];
 	ret[POOL_TYPES.COLLIDABLE] = [physObj];

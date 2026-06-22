@@ -65,7 +65,7 @@ async function setup() {
 	
 	const orphanedCollidableProvider = new CollidableProvider(persistentRegistrar.getPool(POOL_TYPES.COLLIDABLE));
 
-	const roomsPool = new RoomsPool();
+	const roomsPool = new RoomsPool(12);
 	
 	const registrarWithRooms = new RegistrarWithRooms(persistentRegistrar, roomsPool);
 	const collidableProviderWithRooms = new CollidableProviderWithRooms(orphanedCollidableProvider, roomsPool);
@@ -114,7 +114,7 @@ async function setup() {
 		collidableProviderWithRooms,
 		new SpawnPositionProvider(roomsPool),
 		roomCollider => {
-			roomsPool.roomIndex = roomCollider.roomIndex;
+			roomsPool.setRoomIndex(roomCollider.roomIndex);
 			roomsPool.getCurrentRoom().reset();
 		},
 		() => root.queueReset()

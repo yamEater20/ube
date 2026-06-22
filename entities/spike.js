@@ -28,7 +28,7 @@ export function makeSpike(parent, relativePosition, entityData) {
 	const ret = {};
 	ret[POOL_TYPES.COLLIDABLE] = [physObj];
 	ret[POOL_TYPES.DRAWABLE_DEBUG] = [new HitboxDrawableEntity(physObj, hitbox)];
-	ret[POOL_TYPES.DRAWABLE] = [drawableEntity];
+	ret[POOL_TYPES.DRAWABLE] = [{item: drawableEntity, layer: 5}];
 
 	return ret;
 }
