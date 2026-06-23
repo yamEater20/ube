@@ -35,6 +35,7 @@ import { Root } from './entities/root.js';
 import { ParticlePool } from './services/particlePool.js';
 import { LevelBuilderFromCache, LevelBuilderFromImage } from './services/customLevelBuilders.js';
 import { BUILD_MODES, buildMode } from './engine/debug.js';
+import { Entity } from './engine/entity.js';
 
 const LEVEL_PATH = "Levels.png";
 
@@ -43,6 +44,7 @@ let frontBufferCanvasInfo;
 let mainBufferCanvasInfo;
 
 let frontBufferCamera;
+let worldMainCamera;
 
 function mainLoop() {
 	clearCanvas(mainBufferCanvasInfo.canvas);
@@ -51,7 +53,9 @@ function mainLoop() {
 
 	clearCanvas(frontBufferCanvasInfo.canvas);
 	setMaxSize(frontBufferCanvasInfo.canvas, frontBufferCanvasInfo.ctx);
-	frontBufferCamera.drawCanvas(mainBufferCanvasInfo.canvas);
+
+	const subpixels = worldMainCamera.getSubPixels();
+	frontBufferCamera.drawCanvas(mainBufferCanvasInfo.canvas, subpixels);
 }
 
 async function setup() {
@@ -60,7 +64,7 @@ async function setup() {
 	const inputProvider = inputProviderFactory(buildMode);
 
 	frontBufferCanvasInfo = createFrontBufferCanvas();
-	mainBufferCanvasInfo = createCanvas(false);
+	mainBufferCanvasInfo = createCanvas(false, PIXEL_GAME_SIZE.add(1, 1));
 
 	const poolDict = PoolTypesFactory();
 	poolDict[POOL_TYPES.CAMERA_FOLLOW] = new Pool();
@@ -78,22 +82,24 @@ async function setup() {
 	const particlePool = new ParticlePool(collidableProviderWithRooms, groundedProvider);
 	persistentRegistrar.registerEntity(particlePool.getDataToRegister());
 
-	const camera = new Camera(
+	worldMainCamera = new Camera(
 		mainBufferCanvasInfo.ctx,
 		Vector({x: 128*2, y: 128*2}),
 		() => registrarWithRooms.getPool(POOL_TYPES.CAMERA_FOLLOW).get()[0]
 	);
 
+	const sdflkjsdf = new Entity(root, Vector({x: 30, y: 3}));
+
 	frontBufferCamera = new Camera(
 		frontBufferCanvasInfo.ctx,
 		VectorZero,
-		() => root
+		() => sdflkjsdf
 	);
 
 	root = new Root(
 		new Time(),
 		new Time(),
-		camera,
+		worldMainCamera,
 		inputProvider,
 		registrarWithRooms
 	);

@@ -58,6 +58,14 @@ class Camera {
         return this._position.addPoint(this.screenShakePos).scalar(this.scale).trunc().scalar(-1);
     }
 
+    getSubPixels() {
+        if (this.scale != 1) throw new Error("Not implemented");
+
+        const truncPosition = this.getPosition();
+        const floatPosition = this._position.addPoint(this.screenShakePos).scalar(this.scale);
+        return floatPosition.addPoint(truncPosition);
+    }
+
     shakeScreen(strength = 1, duration = 250) {
         this.shakeTimer.restart(duration);
         this.strength = Math.max(this.strength, strength);
@@ -201,9 +209,10 @@ class Camera {
         }
     }
 
-    drawCanvas(canvas) {
-        this._ctx.scale(7, 7);
-        this._ctx.drawImage(canvas, 0, 0);
+    drawCanvas(canvas, subpixels) {
+        const scale = 7;
+        this._ctx.scale(scale, scale);
+        this._ctx.drawImage(canvas, -subpixels.x, -subpixels.y);
     }
 
     _moveToTarget(timeDelta, targetPosition) {
@@ -217,7 +226,7 @@ class Camera {
 
         this.isMoving = true;
 
-		const speed = Math.min(6, mag / 3) * 0.05;
+		const speed = Math.min(6, mag / 3) * 0.04;
 		v = v.scalar(speed / mag * timeDelta);
 		this._position = this._position.addPoint(v);
     }
