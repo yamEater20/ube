@@ -5,47 +5,27 @@ import {
 
 import { Entity } from './entity.js';
 
-const MAXFALL = 0.2;
-const GRAVITY_GOING_UP = 4.4 / 10000;
-const GRAVITY_COMING_DOWN = 8 / 10000;
+export const MAXFALL = 0.2;
+export const GRAVITY_GOING_UP = 4.4 / 10000;
+export const GRAVITY_COMING_DOWN = 8 / 10000;
 
-class RectHitbox {
+export class RectHitbox {
     constructor(relativePosition, width, height) {
 		this.relativePosition = relativePosition;
 		this.width = width;
 		this.height = height;
     }
-
-	cloneOffset(v) {
-		return new RectHitbox(this.relativePosition.addPoint(v), this.width, this.height);
-	}
 }
 
-class HitboxDrawableEntity extends Entity {
-	constructor(parent, hitbox, color) {
-		super(parent, VectorZero);
-		this._hitbox = hitbox;
-		this._color = color ?? "#ff000040";
-	}
+export function hitboxCloneWithOffset(hitbox, offset) {
+	return new RectHitbox(hitbox.relativePosition.addPoint(offset), hitbox.width, hitbox.height);
+}
 
-	draw(camera) {
-		const relativePosition = this._hitbox.relativePosition;
-		const pos = this.globalPosition().addPoint(relativePosition).trunc();
-		camera.drawRect(
-			pos.x,
-			pos.y,
-			this._hitbox.width,
-			this._hitbox.height,
-			this._color
-		);
-
-		camera.drawRectOutline(
-			pos.x+0.5,
-			pos.y+0.5,
-			this._hitbox.width-1,
-			this._hitbox.height-1,
-			this._color
-		);
+export class HitboxDrawable {
+	constructor(entity, hitbox, color) {
+		this.entity = entity;
+		this.hitbox = hitbox;
+		this.color = color ?? "#ff000040";
 	}
 }
 
