@@ -28,7 +28,7 @@ export class GroundReaction extends IReaction {
                 physObj.setYVelocity(Math.max(physObj.getYVelocity(), -0.05));
             }
         } else if (direction.y > 0) {
-            physObj.setYVelocity(0);
+            physObj.setYVelocity(Math.min(physObj.getYVelocity(), 0));
         }
         return true;
     }
@@ -103,7 +103,7 @@ export class Spring {
         this.bounceVelocity = bounceVelocity;
     }
     id() { return TAG_IDS.SPRING; }
-    shouldStopMoving(tagPhysObj, movingPhysObj, direction) { return direction.y >= 0; }
+    shouldStopMoving(tagPhysObj, movingPhysObj, direction) { return direction.y > 0; }
     onBounce() {}
 }
 
