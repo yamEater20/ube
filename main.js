@@ -10,20 +10,16 @@ import {
     VectorUp,
     VectorZero
 } from './engine/math.js';
-import { FixedTimeDeltaTime, Time } from './engine/time.js';
 import { Diagnostics, timeIt } from './engine/diagnostics.js';
 import { Registrar, Pool } from './engine/pools.js';
 import { POOL_TYPES, PoolTypesFactory } from './entities/poolTypes.js';
 import { CollidableProvider } from './services/collidableProvider.js';
 import {Camera, DummyCamera} from './engine/camera.js';
-import {InputProvider, TASInputProvider} from './services/input.js';
 import * as UpdateHandlers from './services/customUpdateHandlers.js';
 import * as Player from './entities/player.js';
 import { Room, ROOM_SIZE_TILES } from './entities/room.js';
 import * as Setup from './engine/setup.js';
-import {HexToEntityData} from "./levelEditor/hexParsing.js";
 import { clearCanvas, createCanvas, createFrontBufferCanvas as createScreenBufferCanvas, PIXEL_GAME_SIZE, setMaxSize, TILE_SIZE } from './engine/graphics.js';
-import { CACHED_LEVELS } from './levelEditor/cache.js';
 import { makeRoomCollider } from './entities/roomCollider.js';
 import { EntityDataToEntityFactoryPostProcess as EntityDataToEntityFactoryPostProcess, GeneralPostProcess, LevelDataPostProcessor } from './levelEditor/postProcess.js';
 import * as CustomPostProcess from './services/customPostProcessTileArrays.js';
@@ -33,26 +29,18 @@ import { SpawnPositionProvider } from './services/spawnPositionProvider.js';
 import { RoomsPool } from './services/roomPools.js';
 import { Root } from './entities/root.js';
 import { ParticlePool } from './services/particlePool.js';
-import { LevelBuilderFromCache, LevelBuilderFromImage } from './services/customLevelBuilders.js';
 import { BUILD_MODES } from './engine/debug.js';
+import * as Factories from './factories.js';
 
 const LEVEL_PATH = "Levels.png";
-
-let root;
-let worldCameraInfos;
-// let screenBufferCanvasInfo;
-// let mainBufferCanvasInfo;
-// let worldMidgroundBufferCanvasInfo;
-// let worldMidground2BufferCanvasInfo;
-
-let screenBufferCameraInfo;
-// let worldMainCamera;
-// let worldMidgroundCamera;
-// let worldMidground2Camera;
 
 const buildMode = BUILD_MODES.LOCAL;
 // const buildMode = BUILD_MODES.LOAD_TEST;
 // const buildMode = BUILD_MODES.PRODUCTION;
+
+let root;
+let worldCameraInfos;
+let screenBufferCameraInfo;
 
 ;(async function () {
 	timeIt("Total setup", setup);
@@ -87,9 +75,9 @@ function drawScreenBuffer() {
 }
 
 async function setup() {
-	const mainLoopDiagnostics = new Diagnostics(loopFactory(buildMode));
+	const mainLoopDiagnostics = new Diagnostics(Factories.loopFactory(buildMode, mainLoop, updateAll, drawBackBuffers, drawScreenBuffer));
 
-	const inputProvider = inputProviderFactory(buildMode);
+	const inputProvider = Factories.inputProviderFactory(buildMode);
 
 	const poolDict = PoolTypesFactory();
 	poolDict[POOL_TYPES.CAMERA_FOLLOW] = new Pool();
@@ -110,17 +98,15 @@ async function setup() {
 	const getCameraFollow = () => registrarWithRooms.getPool(POOL_TYPES.CAMERA_FOLLOW).get()[0];
 
 	const cameraInitialPosition = Vector({x: 128*2, y: 128*2});
-	worldCameraInfos = camerasFactory(
+	worldCameraInfos = Factories.camerasFactory(
 		cameraInitialPosition,
 		getCameraFollow,
 		[0.05, 0.1, 1]
 	);
 
-	console.log(worldCameraInfos);
-
 	root = new Root(
-		timeFactory(buildMode),
-		timeFactory(buildMode),
+		Factories.timeFactory(buildMode),
+		Factories.timeFactory(buildMode),
 		worldCameraInfos,
 		inputProvider,
 		registrarWithRooms
@@ -141,7 +127,7 @@ async function setup() {
 		new EntityDataToEntityFactoryPostProcess(ENTITY_TYPE_TO_ENTITY)
 	]);
 
-	const levelBuilder = levelBuilderFactory(buildMode, entityConstructionPostProcessor);
+	const levelBuilder = Factories.levelBuilderFactory(buildMode, LEVEL_PATH, entityConstructionPostProcessor);
 	const levelData = await levelBuilder.buildLevels();
 
 	roomsPool.setRooms(levelData.levels.map(data => 
@@ -211,81 +197,6 @@ async function setup() {
 	root.queueReset();
 
 	Setup.beginGameLoop(mainLoopDiagnostics.call);
-}
-
-function camerasFactory(startingPosition, getCameraFollow, depths) {
-	return depths.map(parallaxScale => cameraFactory(startingPosition, getCameraFollow, parallaxScale));
-}
-
-function cameraFactory(startingPosition, getCameraFollow, depths) {
-	const canvasInfo = createCanvas(true, PIXEL_GAME_SIZE.add(1, 1));
-	return {
-		canvasInfo: canvasInfo,
-		camera: new Camera(
-			canvasInfo.ctx,
-			startingPosition,
-			getCameraFollow,
-			depths
-		)
-	}
-}
-
-function timeFactory(buildMode) {
-	return buildMode === BUILD_MODES.LOAD_TEST
-		? new FixedTimeDeltaTime(16)
-		: new Time();
-}
-
-function loopFactory(buildMode) {
-	const numFrames = 30000;
-	let curNumFrames = numFrames;
-	const frameTime = 16;
-
-	let hasPrintedPerformance = false;
-
-	if (buildMode === BUILD_MODES.LOAD_TEST) {
-		return () => {
-			const frameStartTime = window.performance.now();
-			while (window.performance.now() - frameStartTime < frameTime && curNumFrames > 0) {
-				updateAll();
-				drawBackBuffers();
-				curNumFrames--;
-			}
-			if (curNumFrames <= 0 && !hasPrintedPerformance) {
-				const numSeconds = window.performance.now() / 1000;
-				console.log(`Rendered ${numFrames} frames in ${numSeconds} seconds. FPS: ${Math.floor(numFrames/numSeconds)}`);
-				hasPrintedPerformance = true;
-			}
-			drawScreenBuffer();
-		}
-	}
-
-	return mainLoop;
-}
-
-function levelBuilderFactory(buildMode, entityConstructionPostProcessor) {
-	const postProcessor = new LevelDataPostProcessor([
-		new GeneralPostProcess(new HexToEntityData(ENTITY_MAP)),
-		new CustomPostProcess.SemiSolidPostProcess(),
-		new CustomPostProcess.WallMainPostProcess(),
-		new CustomPostProcess.WallCornersPostProcess(),
-	]);
-
-	if (buildMode === BUILD_MODES.PRODUCTION)
-		return new LevelBuilderFromCache(CACHED_LEVELS, entityConstructionPostProcessor);
-
-	return new LevelBuilderFromImage(
-		LEVEL_PATH,
-		[postProcessor, entityConstructionPostProcessor]
-	);
-}
-
-function inputProviderFactory(buildMode) {
-	if (buildMode === BUILD_MODES.LOAD_TEST) {
-		return new TASInputProvider();
-	}
-
-	return new InputProvider();
 }
 
 /*
