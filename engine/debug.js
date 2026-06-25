@@ -4,12 +4,7 @@ export const BUILD_MODES = Object.freeze({
     PRODUCTION: 2
 });
 
-// export const buildMode = BUILD_MODES.LOCAL;
-export const buildMode = BUILD_MODES.LOAD_TEST;
-// export const buildMode = BUILD_MODES.PRODUCTION;
-
 export let debugOptions = {
-    unlockDebug: buildMode === BUILD_MODES.LOCAL,
     noClip: false,
     showHitboxes: false,
     showAll: false,
@@ -22,5 +17,4 @@ export function toggleDebugAll() {
     Object.keys(debugOptions).forEach(key => {
         debugOptions[key] = debug;
       });
-      
 }

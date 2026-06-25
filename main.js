@@ -22,7 +22,7 @@ import * as Player from './entities/player.js';
 import { Room, ROOM_SIZE_TILES } from './entities/room.js';
 import * as Setup from './engine/setup.js';
 import {HexToEntityData} from "./levelEditor/hexParsing.js";
-import { clearCanvas, createCanvas, createFrontBufferCanvas, PIXEL_GAME_SIZE, setMaxSize, TILE_SIZE } from './engine/graphics.js';
+import { clearCanvas, createCanvas, createFrontBufferCanvas as createScreenBufferCanvas, PIXEL_GAME_SIZE, setMaxSize, TILE_SIZE } from './engine/graphics.js';
 import { CACHED_LEVELS } from './levelEditor/cache.js';
 import { makeRoomCollider } from './entities/roomCollider.js';
 import { EntityDataToEntityFactoryPostProcess as EntityDataToEntityFactoryPostProcess, GeneralPostProcess, LevelDataPostProcessor } from './levelEditor/postProcess.js';
@@ -34,20 +34,25 @@ import { RoomsPool } from './services/roomPools.js';
 import { Root } from './entities/root.js';
 import { ParticlePool } from './services/particlePool.js';
 import { LevelBuilderFromCache, LevelBuilderFromImage } from './services/customLevelBuilders.js';
-import { BUILD_MODES, buildMode } from './engine/debug.js';
+import { BUILD_MODES } from './engine/debug.js';
 
 const LEVEL_PATH = "Levels.png";
 
 let root;
-let screenBufferCanvasInfo;
-let mainBufferCanvasInfo;
-let worldMidgroundBufferCanvasInfo;
-let worldMidground2BufferCanvasInfo;
+let worldCameraInfos;
+// let screenBufferCanvasInfo;
+// let mainBufferCanvasInfo;
+// let worldMidgroundBufferCanvasInfo;
+// let worldMidground2BufferCanvasInfo;
 
-let screenBufferCamera;
-let worldMainCamera;
-let worldMidgroundCamera;
-let worldMidground2Camera;
+let screenBufferCameraInfo;
+// let worldMainCamera;
+// let worldMidgroundCamera;
+// let worldMidground2Camera;
+
+const buildMode = BUILD_MODES.LOCAL;
+// const buildMode = BUILD_MODES.LOAD_TEST;
+// const buildMode = BUILD_MODES.PRODUCTION;
 
 ;(async function () {
 	timeIt("Total setup", setup);
@@ -64,34 +69,27 @@ function updateAll() {
 }
 
 function drawBackBuffers() {
-	clearCanvas(mainBufferCanvasInfo);
-	clearCanvas(worldMidgroundBufferCanvasInfo);
-	clearCanvas(worldMidground2BufferCanvasInfo);
+	worldCameraInfos.forEach(i => clearCanvas(i.canvasInfo))
 	root.draw();
 }
 
 function drawScreenBuffer() {
+	const screenBufferCanvasInfo = screenBufferCameraInfo.canvasInfo;
+
 	clearCanvas(screenBufferCanvasInfo);
+	
 	const scale = setMaxSize(screenBufferCanvasInfo.canvas, screenBufferCanvasInfo.ctx);
 	
-	const subpixels = worldMainCamera.getSubPixels();
-	const midSubpixels = worldMidgroundCamera.getSubPixels();
-	const mid2Subpixels = worldMidground2Camera.getSubPixels();
-	
-	screenBufferCamera.drawCanvas(worldMidgroundBufferCanvasInfo.canvas, scale, midSubpixels);
-	screenBufferCamera.drawCanvas(worldMidground2BufferCanvasInfo.canvas, scale, mid2Subpixels);
-	screenBufferCamera.drawCanvas(mainBufferCanvasInfo.canvas, scale, subpixels);
+	worldCameraInfos.forEach(i => {
+		const subpixels = i.camera.getSubPixels();
+		screenBufferCameraInfo.camera.drawCanvas(i.canvasInfo.canvas, scale, subpixels);
+	});
 }
 
 async function setup() {
 	const mainLoopDiagnostics = new Diagnostics(loopFactory(buildMode));
 
 	const inputProvider = inputProviderFactory(buildMode);
-
-	screenBufferCanvasInfo = createFrontBufferCanvas();
-	mainBufferCanvasInfo = createCanvas(true, PIXEL_GAME_SIZE.add(1, 1));
-	worldMidgroundBufferCanvasInfo = createCanvas(true, PIXEL_GAME_SIZE.add(1, 1));
-	worldMidground2BufferCanvasInfo = createCanvas(true, PIXEL_GAME_SIZE.add(1, 1));
 
 	const poolDict = PoolTypesFactory();
 	poolDict[POOL_TYPES.CAMERA_FOLLOW] = new Pool();
@@ -111,41 +109,32 @@ async function setup() {
 
 	const getCameraFollow = () => registrarWithRooms.getPool(POOL_TYPES.CAMERA_FOLLOW).get()[0];
 
-	worldMainCamera = new Camera(
-		mainBufferCanvasInfo.ctx,
-		Vector({x: 128*2, y: 128*2}),
-		getCameraFollow
-	);
-
-	worldMidgroundCamera = new Camera(
-		worldMidgroundBufferCanvasInfo.ctx,
-		Vector({x: 128*2, y: 128*2}),
+	const cameraInitialPosition = Vector({x: 128*2, y: 128*2});
+	worldCameraInfos = camerasFactory(
+		cameraInitialPosition,
 		getCameraFollow,
-		0.05
+		[0.05, 0.1, 1]
 	);
 
-	worldMidground2Camera = new Camera(
-		worldMidground2BufferCanvasInfo.ctx,
-		Vector({x: 128*2, y: 128*2}),
-		getCameraFollow,
-		0.1
-	);
-
-	screenBufferCamera = new Camera(
-		screenBufferCanvasInfo.ctx,
-		Vector({x: 128*2, y: 128*2}),
-		() => root
-	);
+	console.log(worldCameraInfos);
 
 	root = new Root(
 		timeFactory(buildMode),
 		timeFactory(buildMode),
-		worldMainCamera,
-		worldMidgroundCamera,
-		worldMidground2Camera,
+		worldCameraInfos,
 		inputProvider,
 		registrarWithRooms
 	);
+
+	const screenBufferCanvasInfo = createScreenBufferCanvas();
+	screenBufferCameraInfo = {
+		canvasInfo: screenBufferCanvasInfo,
+		camera: new Camera(
+			screenBufferCanvasInfo.ctx,
+			cameraInitialPosition,
+			() => root
+		)
+	};
 
 	const entityConstructionPostProcessor = new LevelDataPostProcessor([
 		new CustomPostProcess.SpringCallbackPostProcess(particlePool.createSpringParticles),
@@ -163,6 +152,11 @@ async function setup() {
 			collidableProviderWithRooms
 		)
 	));
+
+	roomsPool.foreach((room, index) => {
+		const roomSizeWorldSpace = ROOM_SIZE_TILES.scalar(TILE_SIZE);
+		persistentRegistrar.registerEntity(makeRoomCollider(room, index, roomSizeWorldSpace));
+	});
 
 	const player = Player.make(
 		root,
@@ -214,14 +208,26 @@ async function setup() {
 	
 	persistentRegistrar.registerEntity(player);
 
-	roomsPool.foreach((room, index) => {
-		const roomSizeWorldSpace = ROOM_SIZE_TILES.scalar(TILE_SIZE);
-		persistentRegistrar.registerEntity(makeRoomCollider(room, index, roomSizeWorldSpace));
-	});
-
 	root.queueReset();
 
 	Setup.beginGameLoop(mainLoopDiagnostics.call);
+}
+
+function camerasFactory(startingPosition, getCameraFollow, depths) {
+	return depths.map(parallaxScale => cameraFactory(startingPosition, getCameraFollow, parallaxScale));
+}
+
+function cameraFactory(startingPosition, getCameraFollow, depths) {
+	const canvasInfo = createCanvas(true, PIXEL_GAME_SIZE.add(1, 1));
+	return {
+		canvasInfo: canvasInfo,
+		camera: new Camera(
+			canvasInfo.ctx,
+			startingPosition,
+			getCameraFollow,
+			depths
+		)
+	}
 }
 
 function timeFactory(buildMode) {

@@ -9,7 +9,8 @@ export const POOL_TYPES = Object.freeze({
 	DRAWABLE_DEBUG: 4,
 	ROOM: 5,
 	CAMERA_FOLLOW: 6,
-	SPAWN: 7
+	SPAWN: 7,
+	CAMERAS: 8
 });
 
 export function PoolTypesFactory() {

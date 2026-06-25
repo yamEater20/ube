@@ -6,13 +6,11 @@ import { DrawableEntity } from "../engine/drawableEntity.js";
 import { Sprite, SPRITE_LK } from "../engine/sprites.js";
 
 export class Root extends Entity {
-	constructor(trueTime, worldTime, camera, midgroundCamera, midgroundCamera2, inputProvider, registrar) {
+	constructor(trueTime, worldTime, worldCameras, inputProvider, registrar) {
 		super();
         this._trueTime = trueTime;
 		this._worldTime = worldTime;
-		this._camera = camera;
-		this._midgroundCamera = midgroundCamera;
-		this._midgroundCamera2 = midgroundCamera2;
+		this._worldCameras = worldCameras;
 		this._inputProvider = inputProvider;
 		this._registrar = registrar;
 
@@ -33,17 +31,22 @@ export class Root extends Entity {
 		);
 	}
 
+	_getMainCamera() {
+		return this._worldCameras[2].camera;
+	}
+
 	globalPosition() {
 		return VectorZero;
 	}
 
 	draw() {
-		this._registrar.getPool(POOL_TYPES.DRAWABLE).foreach(item => item.draw(this._camera));
+		const mainCamera = this._getMainCamera();
+		this._registrar.getPool(POOL_TYPES.DRAWABLE).foreach(item => item.draw(mainCamera));
 
-		this._midgroundEntity.draw(this._midgroundCamera);
-		this._midgroundEntity2.draw(this._midgroundCamera2);
+		this._midgroundEntity.draw(this._worldCameras[0].camera);
+		this._midgroundEntity2.draw(this._worldCameras[1].camera);
 
-		if (debugOptions.showHitboxes) this._registrar.getPool(POOL_TYPES.DRAWABLE_DEBUG).foreach(item => item.draw(this._camera));
+		if (debugOptions.showHitboxes) this._registrar.getPool(POOL_TYPES.DRAWABLE_DEBUG).foreach(item => item.draw(mainCamera));
 	}
 
 	update() {
@@ -62,14 +65,13 @@ export class Root extends Entity {
 		// if (input.nextRoomPressed) this._registrar.getRoomsPool().nextRoom();
 		if (input.showAllPressed) debugOptions.showAll = !debugOptions.showAll;
 
-		
-		this._camera.update(this._trueTime.delta);
-		this._midgroundCamera.update(this._trueTime.delta);
-		this._midgroundCamera2.update(this._trueTime.delta);
+		this._worldCameras.forEach(c => c.camera.update(this._trueTime.delta));
 
-		if (this._camera.isMoving) {
+		const mainCamera = this._getMainCamera();
+
+		if (mainCamera.isMoving) {
 			//Do not update world time on room Transition
-			this.onCameraMove(this._camera);
+			this.onCameraMove(mainCamera);
 		} else {
 			if (input.pausePressed) this._worldPaused = !this._worldPaused;
 

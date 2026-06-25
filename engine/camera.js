@@ -40,7 +40,7 @@ export class DummyCamera {
 }
 
 class Camera {
-    constructor(ctx, initialPosition, getFollowingFunc, followScale) {
+    constructor(ctx, initialPosition, getFollowingFunc, depth) {
         this._ctx = ctx;
         this._position = initialPosition ?? Vector({x: 0, y: 0});
         this.screenShakePos = Vector({x: 0, y: 0});
@@ -53,18 +53,18 @@ class Camera {
         this._getFollowingFunc = getFollowingFunc;
         this.isMoving = false;
 
-        this._followScale = followScale ?? 1;
+        this.depth = depth ?? 1;
     }
 
     getPosition() {
-        return this._position.addPoint(this.screenShakePos).scalar(this.scale * this._followScale).trunc().scalar(-1);
+        return this._position.addPoint(this.screenShakePos).scalar(this.scale * this.depth).trunc().scalar(-1);
     }
 
     getSubPixels() {
         if (this.scale != 1) throw new Error("Not implemented");
 
         const truncPosition = this.getPosition();
-        const floatPosition = this._position.addPoint(this.screenShakePos).scalar(this.scale * this._followScale);
+        const floatPosition = this._position.addPoint(this.screenShakePos).scalar(this.scale * this.depth);
         return floatPosition.addPoint(truncPosition);
     }
 
