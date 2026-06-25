@@ -74,6 +74,8 @@ class Camera {
     }
 
     update(timeDelta) {
+        this._ctx.reset();
+
         if (this.shakeTimer.finished()) {
             this.screenShakePos = Vector({x: 0, y: 0});
         } else {

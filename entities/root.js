@@ -3,7 +3,6 @@ import { Entity } from "../engine/entity.js";
 import { POOL_TYPES } from "./poolTypes.js";
 import { toggleDebugAll, debugOptions } from "../engine/debug.js";
 import { DrawableEntity } from "../engine/drawableEntity.js";
-import { RectDrawable } from "../services/customDrawables.js";
 import { Sprite, SPRITE_LK } from "../engine/sprites.js";
 
 export class Root extends Entity {

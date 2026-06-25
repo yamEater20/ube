@@ -23,6 +23,15 @@ class Timer {
     running() {return this._durationMs > 0;}
 }
 
+class FixedTimeDeltaTime {
+    constructor(timeDelta) {
+        this.delta = timeDelta;
+        this.scale = 1;
+        this.start = window.performance.now();
+    }
+    tick() {}
+}
+
 class Time {
     constructor() {
         this.start = window.performance.now();
@@ -30,9 +39,6 @@ class Time {
         this.delta = 0;
         
         this._lastTime = 0;
-        // this.time = window.performance.now();
-
-        this.timers = [];
     }
 
     tick() {
@@ -41,16 +47,10 @@ class Time {
 		this._lastTime = now;
         // this.time += this.delta;
 	}
-
-    newTimer(_durationMs) {
-        const ret = new Timer(_durationMs);
-        this.timers.push(ret);
-        return ret;
-    }
 }
 
 function msToFrames(time) {
     return Math.floor(time * 0.06);
 }
 
-export {Time, Timer, msToFrames};
+export {Time, FixedTimeDeltaTime, Timer, msToFrames};

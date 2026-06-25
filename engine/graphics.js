@@ -64,7 +64,8 @@ function setMaxSize(canvas, ctx) {
 }
 
 function clearCanvas(info) {
-	info.canvas.width = info.canvas.width;
+	// info.canvas.width = info.canvas.width;
+	info.ctx.clearRect(0, 0, info.canvas.width, info.canvas.height);
 }
 
 const toggleFullscreen = (event) => {

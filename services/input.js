@@ -111,23 +111,26 @@ function setPressed(input, prevInput, name) {
 export class TASInputProvider extends IInputProvider {
     constructor() {
         super();
-        // this.frame = 0;
+        this.time = 0;
+        this.movingLeft = true;
     }
 
     update(timeDelta) {
-        // throw new Error("Not implemented. Needs work");
-        // this.frame = (this.frame+1) % 30;
-        // console.log(this.frame);
+        this.time += timeDelta;
+        
+        if (Math.random() > 0.999) {
+            this.movingLeft = !this.movingLeft;
+        }
     }
     keyDownHandler(event) {}
     keyUpHandler(event) {}
 
     getInput() {
         return {
-            "moveRight": false,
-            "moveLeft": true,
+            "moveRight": !this.movingLeft,
+            "moveLeft": this.movingLeft,
             "jump": false,
-            "jumpPressed": false,
+            "jumpPressed": Math.random() > 0.95,
         };;
     }
 }

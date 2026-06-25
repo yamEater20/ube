@@ -10,7 +10,7 @@ import {
     VectorUp,
     VectorZero
 } from './engine/math.js';
-import { Time } from './engine/time.js';
+import { FixedTimeDeltaTime, Time } from './engine/time.js';
 import { Diagnostics, timeIt } from './engine/diagnostics.js';
 import { Registrar, Pool } from './engine/pools.js';
 import { POOL_TYPES, PoolTypesFactory } from './entities/poolTypes.js';
@@ -49,13 +49,28 @@ let worldMainCamera;
 let worldMidgroundCamera;
 let worldMidground2Camera;
 
+;(async function () {
+	timeIt("Total setup", setup);
+})();
+
 function mainLoop() {
+	updateAll();
+	drawBackBuffers();
+	drawScreenBuffer();
+}
+
+function updateAll() {
+	root.update();
+}
+
+function drawBackBuffers() {
 	clearCanvas(mainBufferCanvasInfo);
 	clearCanvas(worldMidgroundBufferCanvasInfo);
 	clearCanvas(worldMidground2BufferCanvasInfo);
-	root.update();
 	root.draw();
+}
 
+function drawScreenBuffer() {
 	clearCanvas(screenBufferCanvasInfo);
 	const scale = setMaxSize(screenBufferCanvasInfo.canvas, screenBufferCanvasInfo.ctx);
 	
@@ -69,7 +84,7 @@ function mainLoop() {
 }
 
 async function setup() {
-	const mainLoopDiagnostics = new Diagnostics(mainLoop);
+	const mainLoopDiagnostics = new Diagnostics(loopFactory(buildMode));
 
 	const inputProvider = inputProviderFactory(buildMode);
 
@@ -104,27 +119,27 @@ async function setup() {
 
 	worldMidgroundCamera = new Camera(
 		worldMidgroundBufferCanvasInfo.ctx,
-		VectorZero,
+		Vector({x: 128*2, y: 128*2}),
 		getCameraFollow,
 		0.05
 	);
 
 	worldMidground2Camera = new Camera(
 		worldMidground2BufferCanvasInfo.ctx,
-		VectorZero,
+		Vector({x: 128*2, y: 128*2}),
 		getCameraFollow,
 		0.1
 	);
 
 	screenBufferCamera = new Camera(
 		screenBufferCanvasInfo.ctx,
-		VectorZero,
+		Vector({x: 128*2, y: 128*2}),
 		() => root
 	);
 
 	root = new Root(
-		new Time(),
-		new Time(),
+		timeFactory(buildMode),
+		timeFactory(buildMode),
 		worldMainCamera,
 		worldMidgroundCamera,
 		worldMidground2Camera,
@@ -206,21 +221,41 @@ async function setup() {
 
 	root.queueReset();
 
-	if (buildMode === BUILD_MODES.LOAD_TEST) {
-		const numFrames = 100000;
-		timeIt("Total for " + numFrames + " frames", () => {
-			for (let i = 0; i < numFrames; ++i) {
-				mainLoopDiagnostics.call();
-			}
-		});
-	} else {
-		Setup.beginGameLoop(mainLoopDiagnostics.call);
-	}
+	Setup.beginGameLoop(mainLoopDiagnostics.call);
 }
 
-;(async function () {
-	timeIt("Total setup", setup);
-})();
+function timeFactory(buildMode) {
+	return buildMode === BUILD_MODES.LOAD_TEST
+		? new FixedTimeDeltaTime(16)
+		: new Time();
+}
+
+function loopFactory(buildMode) {
+	const numFrames = 30000;
+	let curNumFrames = numFrames;
+	const frameTime = 16;
+
+	let hasPrintedPerformance = false;
+
+	if (buildMode === BUILD_MODES.LOAD_TEST) {
+		return () => {
+			const frameStartTime = window.performance.now();
+			while (window.performance.now() - frameStartTime < frameTime && curNumFrames > 0) {
+				updateAll();
+				drawBackBuffers();
+				curNumFrames--;
+			}
+			if (curNumFrames <= 0 && !hasPrintedPerformance) {
+				const numSeconds = window.performance.now() / 1000;
+				console.log(`Rendered ${numFrames} frames in ${numSeconds} seconds. FPS: ${Math.floor(numFrames/numSeconds)}`);
+				hasPrintedPerformance = true;
+			}
+			drawScreenBuffer();
+		}
+	}
+
+	return mainLoop;
+}
 
 function levelBuilderFactory(buildMode, entityConstructionPostProcessor) {
 	const postProcessor = new LevelDataPostProcessor([
