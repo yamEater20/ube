@@ -8,7 +8,7 @@ function createFrontBufferCanvas() {
 	const info = createCanvas(true, PIXEL_GAME_SIZE.scalar(4));
 	const canvas = info.canvas;
 	
-	canvas.style.backgroundImage = 'url("images/Background.png")';
+	// canvas.style.backgroundImage = 'url("images/Background.png")';
 	canvas.ondblclick = () => {
         toggleFullscreen();
     };
@@ -59,10 +59,12 @@ function setMaxSize(canvas, ctx) {
 	ctx.imageSmoothingEnabled = false;
 	ctx.mozImageSmoothingEnabled = false;
 	ctx.webkitImageSmoothingEnabled = false;
+
+	return smallestRatio;
 }
 
-function clearCanvas(canvas) {
-	canvas.width = canvas.width;
+function clearCanvas(info) {
+	info.canvas.width = info.canvas.width;
 }
 
 const toggleFullscreen = (event) => {

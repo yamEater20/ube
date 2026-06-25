@@ -35,27 +35,37 @@ import { Root } from './entities/root.js';
 import { ParticlePool } from './services/particlePool.js';
 import { LevelBuilderFromCache, LevelBuilderFromImage } from './services/customLevelBuilders.js';
 import { BUILD_MODES, buildMode } from './engine/debug.js';
-import { Entity } from './engine/entity.js';
 
 const LEVEL_PATH = "Levels.png";
 
 let root;
-let frontBufferCanvasInfo;
+let screenBufferCanvasInfo;
 let mainBufferCanvasInfo;
+let worldMidgroundBufferCanvasInfo;
+let worldMidground2BufferCanvasInfo;
 
-let frontBufferCamera;
+let screenBufferCamera;
 let worldMainCamera;
+let worldMidgroundCamera;
+let worldMidground2Camera;
 
 function mainLoop() {
-	clearCanvas(mainBufferCanvasInfo.canvas);
+	clearCanvas(mainBufferCanvasInfo);
+	clearCanvas(worldMidgroundBufferCanvasInfo);
+	clearCanvas(worldMidground2BufferCanvasInfo);
 	root.update();
 	root.draw();
 
-	clearCanvas(frontBufferCanvasInfo.canvas);
-	setMaxSize(frontBufferCanvasInfo.canvas, frontBufferCanvasInfo.ctx);
-
+	clearCanvas(screenBufferCanvasInfo);
+	const scale = setMaxSize(screenBufferCanvasInfo.canvas, screenBufferCanvasInfo.ctx);
+	
 	const subpixels = worldMainCamera.getSubPixels();
-	frontBufferCamera.drawCanvas(mainBufferCanvasInfo.canvas, subpixels);
+	const midSubpixels = worldMidgroundCamera.getSubPixels();
+	const mid2Subpixels = worldMidground2Camera.getSubPixels();
+	
+	screenBufferCamera.drawCanvas(worldMidgroundBufferCanvasInfo.canvas, scale, midSubpixels);
+	screenBufferCamera.drawCanvas(worldMidground2BufferCanvasInfo.canvas, scale, mid2Subpixels);
+	screenBufferCamera.drawCanvas(mainBufferCanvasInfo.canvas, scale, subpixels);
 }
 
 async function setup() {
@@ -63,8 +73,10 @@ async function setup() {
 
 	const inputProvider = inputProviderFactory(buildMode);
 
-	frontBufferCanvasInfo = createFrontBufferCanvas();
-	mainBufferCanvasInfo = createCanvas(false, PIXEL_GAME_SIZE.add(1, 1));
+	screenBufferCanvasInfo = createFrontBufferCanvas();
+	mainBufferCanvasInfo = createCanvas(true, PIXEL_GAME_SIZE.add(1, 1));
+	worldMidgroundBufferCanvasInfo = createCanvas(true, PIXEL_GAME_SIZE.add(1, 1));
+	worldMidground2BufferCanvasInfo = createCanvas(true, PIXEL_GAME_SIZE.add(1, 1));
 
 	const poolDict = PoolTypesFactory();
 	poolDict[POOL_TYPES.CAMERA_FOLLOW] = new Pool();
@@ -82,24 +94,40 @@ async function setup() {
 	const particlePool = new ParticlePool(collidableProviderWithRooms, groundedProvider);
 	persistentRegistrar.registerEntity(particlePool.getDataToRegister());
 
+	const getCameraFollow = () => registrarWithRooms.getPool(POOL_TYPES.CAMERA_FOLLOW).get()[0];
+
 	worldMainCamera = new Camera(
 		mainBufferCanvasInfo.ctx,
 		Vector({x: 128*2, y: 128*2}),
-		() => registrarWithRooms.getPool(POOL_TYPES.CAMERA_FOLLOW).get()[0]
+		getCameraFollow
 	);
 
-	const sdflkjsdf = new Entity(root, Vector({x: 30, y: 3}));
-
-	frontBufferCamera = new Camera(
-		frontBufferCanvasInfo.ctx,
+	worldMidgroundCamera = new Camera(
+		worldMidgroundBufferCanvasInfo.ctx,
 		VectorZero,
-		() => sdflkjsdf
+		getCameraFollow,
+		0.05
+	);
+
+	worldMidground2Camera = new Camera(
+		worldMidground2BufferCanvasInfo.ctx,
+		VectorZero,
+		getCameraFollow,
+		0.1
+	);
+
+	screenBufferCamera = new Camera(
+		screenBufferCanvasInfo.ctx,
+		VectorZero,
+		() => root
 	);
 
 	root = new Root(
 		new Time(),
 		new Time(),
 		worldMainCamera,
+		worldMidgroundCamera,
+		worldMidground2Camera,
 		inputProvider,
 		registrarWithRooms
 	);

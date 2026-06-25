@@ -194,6 +194,12 @@ const SPRITE_LK = Object.freeze({
 	POWERUP_SLIDE_SPRITE: document.getElementById("powerup-slide"),
 	POWERUP_DJ_SPRITE: document.getElementById("powerup-dj"),
 	SPECIAL_MAP: document.getElementById("special-map"),
+
+	BG_LAYERS_IMGS: [
+		document.getElementById("bg-layers-0"),
+		document.getElementById("bg-layers-1"),
+		document.getElementById("bg-layers-2")
+	]
 });
 
 const SPRITE_ARRAY_NAMES = Object.freeze({
