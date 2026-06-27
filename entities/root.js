@@ -29,6 +29,8 @@ export class Root extends Entity {
 			new Sprite(SPRITE_LK.BG_LAYERS_IMGS[2]),
 			Vector({x: 0, y: 0})
 		);
+
+		this.staticCam = [];
 	}
 
 	_getMainCamera() {

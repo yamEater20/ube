@@ -7,7 +7,6 @@ export class Entity {
     }
 
     globalPosition() {
-        if (!this.parent.globalPosition) console.log(this);
         return this.relativePosition.addPoint(this.parent.globalPosition());
     }
 }

@@ -35,6 +35,7 @@ const VectorRight = Vector({ x: 1, y: 0 });
 const VectorDown = Vector({ x: 0, y: 1 });
 const VectorLeft = Vector({ x: -1, y: 0 });
 const VectorZero = Vector({ x: 0, y: 0 });
+const VectorOne = Vector({x: 1, y: 1});
 
 function vectorToRadians(v) {
 	switch (v) {
@@ -115,6 +116,7 @@ export {
 	VectorDown,
 	VectorLeft,
 	VectorZero,
+	VectorOne,
 	directionToVector,
 	directionToRad,
 	Direction,

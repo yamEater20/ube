@@ -1,12 +1,17 @@
-import { lerp } from "../engine/math.js";
+import { lerp, VectorDown } from "../engine/math.js";
 
 export class RectDrawable {
-    constructor(color) {
+    constructor(size, color) {
+        this.size = size ?? VectorOne;
         this._color = color ?? "#ff0000";
     }
 
     draw(x, y, camera, color) {
-        camera.drawRect(x, y, 1, 1, color ?? this._color);
+        camera.drawRect(
+            x, y,
+            this.size.x, this.size.y,
+            color ?? this._color
+        );
     }
 }
 

@@ -36,29 +36,34 @@ export function timeFactory(buildMode) {
 
 export function loopFactory(buildMode, mainLoop, updateAll, drawBackBuffers, drawScreenBuffer) {
 	const numFrames = 30000;
-	let curNumFrames = numFrames;
+	let curNumFramesRemaining = numFrames;
 	const frameTime = 16;
 
 	let hasPrintedPerformance = false;
 
 	if (buildMode === BUILD_MODES.LOAD_TEST) {
-		return () => {
-			const frameStartTime = window.performance.now();
-			while (window.performance.now() - frameStartTime < frameTime && curNumFrames > 0) {
-				updateAll();
-				drawBackBuffers();
-				curNumFrames--;
-			}
-			if (curNumFrames <= 0 && !hasPrintedPerformance) {
-				const numSeconds = window.performance.now() / 1000;
-				console.log(`Rendered ${numFrames} frames in ${numSeconds} seconds. FPS: ${Math.floor(numFrames/numSeconds)}`);
-				hasPrintedPerformance = true;
-			}
-			drawScreenBuffer();
+		return {
+			mainLoop: () => {
+				const frameStartTime = window.performance.now();
+				while (window.performance.now() - frameStartTime < frameTime && curNumFramesRemaining > 0) {
+					updateAll();
+					drawBackBuffers();
+					curNumFramesRemaining--;
+				}
+				if (curNumFramesRemaining <= 0 && !hasPrintedPerformance) {
+					const numSeconds = window.performance.now() / 1000;
+					console.log(`Rendered ${numFrames} frames in ${numSeconds} seconds. FPS: ${Math.floor(numFrames/numSeconds)}`);
+					hasPrintedPerformance = true;
+				}
+				drawScreenBuffer();
+			},
+			getPercentProgress: () => 1 - curNumFramesRemaining / numFrames
 		}
 	}
 
-	return mainLoop;
+	return {
+		mainLoop: mainLoop
+	};
 }
 
 export function levelBuilderFactory(buildMode, levelPath, entityConstructionPostProcessor) {

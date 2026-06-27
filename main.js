@@ -7,6 +7,7 @@ import {
 	Vector,
     VectorDown,
     VectorLeft,
+    VectorOne,
     VectorRight,
     VectorUp,
     VectorZero
@@ -33,12 +34,15 @@ import { ParticlePool } from './services/particlePool.js';
 import { BUILD_MODES } from './engine/debug.js';
 import * as Factories from './factories.js';
 import { DummyScreenShakeOffsetProvider, ScreenShakeOffsetProvider } from './services/cameraServices.js';
+import { createProgressBar } from './entities/progressBar.js';
 
 const LEVEL_PATH = "Levels.png";
 
-const buildMode = BUILD_MODES.LOCAL;
-// const buildMode = BUILD_MODES.LOAD_TEST;
+// const buildMode = BUILD_MODES.LOCAL;
+const buildMode = BUILD_MODES.LOAD_TEST;
 // const buildMode = BUILD_MODES.PRODUCTION;
+
+//TODO: somehow match different entities to different layers
 
 let root;
 let worldCameraInfos;
@@ -77,7 +81,8 @@ function drawScreenBuffer() {
 }
 
 async function setup() {
-	const mainLoopDiagnostics = new Diagnostics(Factories.loopFactory(buildMode, mainLoop, updateAll, drawBackBuffers, drawScreenBuffer));
+	const loops = Factories.loopFactory(buildMode, mainLoop, updateAll, drawBackBuffers, drawScreenBuffer);
+	const mainLoopDiagnostics = new Diagnostics(loops.mainLoop);
 
 	const poolDict = PoolTypesFactory();
 	poolDict[POOL_TYPES.CAMERA_FOLLOW] = new Pool();
@@ -209,6 +214,17 @@ async function setup() {
 	
 	persistentRegistrar.registerEntity(player);
 	persistentRegistrar.registerItem(POOL_TYPES.UPDATEABLE, screenShakeOffsetProvider);
+
+	if (buildMode === BUILD_MODES.LOAD_TEST) {
+		persistentRegistrar.registerEntity(
+			createProgressBar(
+				root,
+				Vector({x: 256+8, y: 256+8}),
+				loops.getPercentProgress,
+				worldCameraInfos[2].camera
+			)
+		);
+	}
 
 	root.queueReset();
 

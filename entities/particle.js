@@ -1,4 +1,4 @@
-import { Vector, VectorZero } from "../engine/math.js";
+import { Vector, VectorOne, VectorZero } from "../engine/math.js";
 import { HitboxDrawableEntity, PhysObj, RectHitbox } from "../engine/physics.js";
 import { DrawableEntity } from "../engine/drawableEntity.js";
 import { POOL_TYPES } from "./poolTypes.js";
@@ -7,16 +7,6 @@ import * as CollisionHandlers from "../services/customCollisionHandlers.js";
 import { GroundReaction, WallReaction } from "../services/entityCollisionHandlers.js";
 import { Timer } from "../engine/time.js";
 import { OpacityDrawableDecorator, RectDrawable } from "../services/customDrawables.js";
-
-class ResetParticle {
-    constructor(onFinished) {
-        this._onFinished = onFinished;
-    }
-
-    reset() {
-        this._onFinished();
-    }
-}
 
 export function makeParticle(parent, relativePosition, collidableProvider, groundedProvider) {
     const hitbox = new RectHitbox(VectorZero, 1, 1);
@@ -42,7 +32,7 @@ export function makeParticle(parent, relativePosition, collidableProvider, groun
         collidableProvider
     );
 
-    const rectDrawable = new RectDrawable();
+    const rectDrawable = new RectDrawable(VectorOne);
     const opacityDrawable = new OpacityDrawableDecorator(rectDrawable);
     const drawableEntity = new DrawableEntity(p, opacityDrawable);
 

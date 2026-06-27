@@ -37,10 +37,10 @@ export class ParticlePool {
     }
 
 	createSpringParticles(parent, position, spawnAreaWidth) {
-		for (let i = 0; i < Math.random() * 3 + 5; ++i) {
-            const particleData = this._createSpringParticle(parent, position, spawnAreaWidth);
-            this._activeParticles.push(particleData);
-        }
+		// for (let i = 0; i < Math.random() * 3 + 5; ++i) {
+        //     const particleData = this._createSpringParticle(parent, position, spawnAreaWidth);
+        //     this._activeParticles.push(particleData);
+        // }
 	}
 
     _createSpringParticle(parent, position, spawnAreaWidth) {
