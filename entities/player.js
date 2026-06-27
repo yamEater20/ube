@@ -86,13 +86,14 @@ class FacingHandler extends IPlayerUpdateHandler {
 }
 
 class SlideHandler extends IPlayerUpdateHandler {
-	constructor() {
+	constructor(shakeScreen) {
 		super();
 		this._slideJustPressed = new Timer();
 		this._xoyoteTime = new Timer();
 
 		this._isSliding = false;
 		this._slideDirection = 0;
+		this._shakeScreen = shakeScreen;
 	}
 
 	update(physObj, timeDelta, input) {
@@ -103,10 +104,7 @@ class SlideHandler extends IPlayerUpdateHandler {
 		const shouldSlideFromBuffer = input.grounded && this._slideJustPressed.running();
 		const shouldSlideFromCoyote = input.slidePressed && this._xoyoteTime.running();
 		if (!this._isSliding && (shouldSlideFromBuffer || shouldSlideFromCoyote)) {
-			this._isSliding = true;
-			this._slideDirection = input.facing;
-			this._slideJustPressed.stop();
-			this._xoyoteTime.stop();
+			this._startSlide(input.facing);
 		} else if (input.grounded) {
 			this._xoyoteTime.restart(framesToMs(8));
 		}
@@ -115,6 +113,14 @@ class SlideHandler extends IPlayerUpdateHandler {
 		input.slideDirection = this._slideDirection;
 		this._slideJustPressed.update(timeDelta);
 		this._xoyoteTime.update(timeDelta);
+	}
+
+	_startSlide(facing) {
+		this._isSliding = true;
+		this._slideDirection = facing;
+		this._slideJustPressed.stop();
+		this._xoyoteTime.stop();
+		this._shakeScreen(2, 125);
 	}
 
 	isSliding() {return this._isSliding; }
@@ -241,11 +247,12 @@ class DrawableUpdateHandler extends IPlayerUpdateHandler {
 }
 
 class SlideBumpHandler extends IPlayerUpdateHandler {
-	constructor() {
+	constructor(shakeScreen) {
 		super();
 		this._bumpTimer = new Timer();
 		this._bumpTimer.stop();
 		this._bumpFacing = 0;
+		this._shakeScreen = shakeScreen;
 	}
 
 	update(physObj, timeDelta, input) {
@@ -261,6 +268,7 @@ class SlideBumpHandler extends IPlayerUpdateHandler {
 	slideBump(facing) {
 		this._bumpFacing = facing;
 		this._bumpTimer.restart(framesToMs(8));
+		this._shakeScreen(1, 125);
 	}
 }
 
@@ -347,13 +355,13 @@ export class SpikeReaction extends CustomCollisionHandlers.SpikeReaction {
     }
 }
 
-export function make(parent, position, inputProvider, groundedProvider, collidableProvider, spawnPositionProvider, onRoomCollide, killPlayer) {
+export function make(parent, position, inputProvider, groundedProvider, collidableProvider, spawnPositionProvider, onRoomCollide, screenShakeFunc, killPlayer) {
 	const hitbox = new RectHitbox(VectorZero, 6, 6);
 
 	const roomColliderReaction = new CustomCollisionHandlers.RoomColliderReaction(onRoomCollide);
 	const doubleJumpHandler = new DoubleJumpHandler();
-	const slideHandler = new SlideHandler();
-	const slideBumpHandler = new SlideBumpHandler();
+	const slideHandler = new SlideHandler(screenShakeFunc);
+	const slideBumpHandler = new SlideBumpHandler(screenShakeFunc);
 
 	const drawable = new Sprites.AnimatedSprite(
 		Sprites.SPRITE_LK.MAIN_CHARA_SPRITESHEET,

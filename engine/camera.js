@@ -3,18 +3,6 @@ import {PIXEL_GAME_SIZE} from './graphics.js';
 import * as Text from './text.js';
 import {msToFrames, Timer} from './time.js';
 
-const SCREEN_SHAKES = [
-	Vector({x: 0, y: 0}),
-	Vector({x: -2, y: -2}),
-	Vector({x: -2, y: -2}),
-	Vector({x: 0, y: -2}),
-	Vector({x: 0, y: -2}),
-	Vector({x: 2, y: 0}),
-	Vector({x: 2, y: 0}),
-	Vector({x: 0, y: 0}),
-	Vector({x: 0, y: 0}),
-];
-
 export class DummyCamera {
     getPosition() {return Vector({x: 0, y: 0});}
 
@@ -40,52 +28,41 @@ export class DummyCamera {
 }
 
 class Camera {
-    constructor(ctx, initialPosition, getFollowingFunc, depth) {
+    constructor(ctx, initialPosition, getFollowingFunc, screenShakeOffsetProvider, depth) {
         this._ctx = ctx;
         this._position = initialPosition ?? Vector({x: 0, y: 0});
-        this.screenShakePos = Vector({x: 0, y: 0});
-        this.screenshakeTime = 0;
         this.scale = 1;
-
-        this.strength = 0;
-        this.shakeTimer = new Timer(1000);
 
         this._getFollowingFunc = getFollowingFunc;
         this.isMoving = false;
 
+        this._screenShakeOffsetProvider = screenShakeOffsetProvider;
+
         this.depth = depth ?? 1;
     }
 
+    _getScreenShakeOffset() {
+        return this._screenShakeOffsetProvider.getOffset();
+    }
+
+    _getPositionUnTruncated() {
+        return this._position.addPoint(this._getScreenShakeOffset()).scalar(this.scale * this.depth);
+    }
+
     getPosition() {
-        return this._position.addPoint(this.screenShakePos).scalar(this.scale * this.depth).trunc().scalar(-1);
+        return this._getPositionUnTruncated().trunc().scalar(-1);
     }
 
     getSubPixels() {
         if (this.scale != 1) throw new Error("Not implemented");
 
         const truncPosition = this.getPosition();
-        const floatPosition = this._position.addPoint(this.screenShakePos).scalar(this.scale * this.depth);
+        const floatPosition = this._getPositionUnTruncated();
         return floatPosition.addPoint(truncPosition);
-    }
-
-    shakeScreen(strength = 1, duration = 250) {
-        this.shakeTimer.restart(duration);
-        this.strength = Math.max(this.strength, strength);
     }
 
     update(timeDelta) {
         this._ctx.reset();
-
-        if (this.shakeTimer.finished()) {
-            this.screenShakePos = Vector({x: 0, y: 0});
-        } else {
-            this.shakeTimer.update(timeDelta);
-
-            const index = this.shakeTimer.framesRemaining() % SCREEN_SHAKES.length;
-            this.screenShakePos = SCREEN_SHAKES[index].scalar(this.strength);
-            const canvas = document.getElementsByTagName("canvas")[0];
-            canvas.style.backgroundPosition = `top ${this.screenShakePos.x * 3}px left ${this.screenShakePos.y * 2}px`;
-        }
 
         //TODO: change this pool to a queue for cinematics, remove hardcoded logic
         this._moveToTarget(timeDelta, this._getFollowingFunc().globalPosition().add(-PIXEL_GAME_SIZE.x/2, -PIXEL_GAME_SIZE.y/2));
@@ -144,28 +121,11 @@ class Camera {
             }
 
             if (options.rotation) {
-                this._ctx.translate(dx+4, dy+4);
+                const rotateAroundX = options.rotateAround?.x ?? 0;
+                const rotateAroundY = options.rotateAround?.y ?? 0;
+                this._ctx.translate(dx+rotateAroundX, dy+rotateAroundY);
                 this._ctx.rotate(options.rotation);
-                this._ctx.translate(-dx-4, -dy-4);
-                
-                // let uberOffset = Vector({x: 0, y: 0});
-                // switch (this.direction) {
-                //     case VectorUp:
-                //         break;
-                //     case VectorLeft:
-                //         uberOffset.x = -TILE_SIZE;
-                //         break;
-                //     case VectorRight:
-                //         uberOffset.y = -TILE_SIZE;
-                //         break;
-                //     case VectorDown:
-                //         uberOffset.x = -TILE_SIZE;
-                //         uberOffset.y = -TILE_SIZE;
-                //     default:
-                //         break;
-                // }
-
-                // CTX.translate(-x + uberOffset.x, -y + uberOffset.y);
+                this._ctx.translate(-dx-rotateAroundX, -dy-rotateAroundY);
             }
     
             if (options.sWidth) {
@@ -237,10 +197,17 @@ class Camera {
     }
 }
 
+class IScreenShakeOffsetProvider {
+    getOffset() {
+        throw new Error("Must implement");
+    }
+}
+
 // camera._position = Vector({x: 5, y: 20});
 const staticCamera = new Camera();
 
 export {
     Camera,
+    IScreenShakeOffsetProvider,
     staticCamera
 }

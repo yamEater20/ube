@@ -3,7 +3,7 @@ import { DrawableEntity } from "../engine/drawableEntity.js";
 import * as CustomCollisionHandlers from "../services/entityCollisionHandlers.js";
 import { POOL_TYPES } from "./poolTypes.js";
 import * as Sprites from "../engine/sprites.js";
-import { Direction, directionToRad, Vector, VectorZero } from "../engine/math.js";
+import { Direction, directionToRad as directionToRadians, Vector, VectorZero } from "../engine/math.js";
 import { TILE_SIZE } from "../engine/graphics.js";
 import { TagOnly } from "../services/customCollisionHandlers.js";
 
@@ -23,7 +23,11 @@ export function makeSpike(parent, relativePosition, entityData) {
 
 	const drawableEntity = new DrawableEntity(
 		physObj,
-		new Sprites.RotatedSprite(Sprites.SPRITE_LK.SPIKES_IMG, directionToRad(entityData.direction))
+		new Sprites.RotatedSprite(
+			Sprites.SPRITE_LK.SPIKES_IMG,
+			directionToRadians(entityData.direction),
+			Vector({x: 4, y: 4})
+		)
 	);
 	const ret = {};
 	ret[POOL_TYPES.COLLIDABLE] = [physObj];

@@ -20,9 +20,9 @@ class Sprite {
 }
 
 class RotatedSprite extends Sprite {
-	constructor(img, rotationRadians) {
+	constructor(img, rotationRadians, rotateAround) {
 		super(img);
-		this._options = {rotation: rotationRadians};
+		this._options = {rotation: rotationRadians, rotateAround: rotateAround};
 	}
 
 	draw(x, y, camera) {

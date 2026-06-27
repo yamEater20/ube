@@ -60,7 +60,7 @@ async function getLevelData(levelPath, entityMap) {
 
     return {
         "levels": levels,
-        "navigateMap": (curLevelInd, direction) => navigateMap(graph, curLevelInd, direction),
+        "mapGraph": graph,
         "numLevels": levels.length,
         "worldLevelLocations": levels.map(
             l => Vector({
@@ -146,10 +146,6 @@ function createMapGraph(wl, hl) {
         }
     }
     return ret;
-}
-
-function navigateMap(graph, curLevelInd, direction) {
-    return graph[curLevelInd][direction];
 }
 
 function saveFile(levels) {

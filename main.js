@@ -3,6 +3,7 @@
 // From Yam (the Dev)
 
 import {
+	Direction,
 	Vector,
     VectorDown,
     VectorLeft,
@@ -24,13 +25,14 @@ import { makeRoomCollider } from './entities/roomCollider.js';
 import { EntityDataToEntityFactoryPostProcess as EntityDataToEntityFactoryPostProcess, GeneralPostProcess, LevelDataPostProcessor } from './levelEditor/postProcess.js';
 import * as CustomPostProcess from './services/customPostProcessTileArrays.js';
 import { ENTITY_MAP, ENTITY_TYPE_TO_ENTITY } from './entities/parseEntityData.js';
-import { RegistrarWithRooms, CollidableProviderWithRooms } from './services/roomPools.js';
+import { RegistrarWithRooms, CollidableProviderWithRooms, RoomIndicesProvider } from './services/roomPools.js';
 import { SpawnPositionProvider } from './services/spawnPositionProvider.js';
 import { RoomsPool } from './services/roomPools.js';
 import { Root } from './entities/root.js';
 import { ParticlePool } from './services/particlePool.js';
 import { BUILD_MODES } from './engine/debug.js';
 import * as Factories from './factories.js';
+import { DummyScreenShakeOffsetProvider, ScreenShakeOffsetProvider } from './services/cameraServices.js';
 
 const LEVEL_PATH = "Levels.png";
 
@@ -77,22 +79,28 @@ function drawScreenBuffer() {
 async function setup() {
 	const mainLoopDiagnostics = new Diagnostics(Factories.loopFactory(buildMode, mainLoop, updateAll, drawBackBuffers, drawScreenBuffer));
 
-	const inputProvider = Factories.inputProviderFactory(buildMode);
-
 	const poolDict = PoolTypesFactory();
 	poolDict[POOL_TYPES.CAMERA_FOLLOW] = new Pool();
 	const persistentRegistrar = new Registrar(poolDict);
 	
-	const orphanedCollidableProvider = new CollidableProvider(persistentRegistrar.getPool(POOL_TYPES.COLLIDABLE));
-
-	const roomsPool = new RoomsPool(12);
+	const screenShakeOffsetProvider = new ScreenShakeOffsetProvider();
+	const drawableRoomIndicesProvider = new RoomIndicesProvider(() => !screenShakeOffsetProvider.isShaking());
 	
+	const roomsPool = new RoomsPool(drawableRoomIndicesProvider, 12);
+	
+	const inputProvider = Factories.inputProviderFactory(buildMode);
+
 	const registrarWithRooms = new RegistrarWithRooms(persistentRegistrar, roomsPool);
-	const collidableProviderWithRooms = new CollidableProviderWithRooms(orphanedCollidableProvider, roomsPool);
-	
-	const groundedProvider = new UpdateHandlers.GroundedProvider(collidableProviderWithRooms);
+	const globalCollidableProvider = new CollidableProviderWithRooms(
+		new CollidableProvider(
+			persistentRegistrar.getPool(POOL_TYPES.COLLIDABLE)
+		),
+		roomsPool
+	);
+	const groundedProvider = new UpdateHandlers.GroundedProvider(globalCollidableProvider);
 
-	const particlePool = new ParticlePool(collidableProviderWithRooms, groundedProvider);
+	
+	const particlePool = new ParticlePool(globalCollidableProvider, groundedProvider);
 	persistentRegistrar.registerEntity(particlePool.getDataToRegister());
 
 	const getCameraFollow = () => registrarWithRooms.getPool(POOL_TYPES.CAMERA_FOLLOW).get()[0];
@@ -101,7 +109,9 @@ async function setup() {
 	worldCameraInfos = Factories.camerasFactory(
 		cameraInitialPosition,
 		getCameraFollow,
-		[0.05, 0.1, 1]
+		[0.05, 0.1, 1],
+		false,
+		screenShakeOffsetProvider
 	);
 
 	root = new Root(
@@ -118,6 +128,7 @@ async function setup() {
 		camera: new Camera(
 			screenBufferCanvasInfo.ctx,
 			cameraInitialPosition,
+			new DummyScreenShakeOffsetProvider(),
 			() => root
 		)
 	};
@@ -129,15 +140,16 @@ async function setup() {
 
 	const levelBuilder = Factories.levelBuilderFactory(buildMode, LEVEL_PATH, entityConstructionPostProcessor);
 	const levelData = await levelBuilder.buildLevels();
-
 	roomsPool.setRooms(levelData.levels.map(data => 
 		new Room(
 			root,
 			ROOM_SIZE_TILES.scalar(TILE_SIZE).multElementWise(data),
 			data,
-			collidableProviderWithRooms
+			globalCollidableProvider
 		)
 	));
+
+	drawableRoomIndicesProvider.setMapGraph(levelData.mapGraph);
 
 	roomsPool.foreach((room, index) => {
 		const roomSizeWorldSpace = ROOM_SIZE_TILES.scalar(TILE_SIZE);
@@ -149,16 +161,19 @@ async function setup() {
 		Vector({x: 128*2+40, y: 128*2+40}),
 		inputProvider,
 		groundedProvider,
-		collidableProviderWithRooms,
+		globalCollidableProvider,
 		new SpawnPositionProvider(roomsPool),
 		roomCollider => {
 			roomsPool.setRoomIndex(roomCollider.roomIndex);
 			roomsPool.getCurrentRoom().reset();
 		},
+		screenShakeOffsetProvider.shakeScreen,
 		() => root.queueReset()
 	);
 
 	root.onCameraMove = camera => {
+		screenShakeOffsetProvider.cancelScreenShake();
+
 		const cameraPos = camera._position;
 		// console.log(cameraPos.x,cameraPos.y);
 
@@ -193,6 +208,7 @@ async function setup() {
 	};
 	
 	persistentRegistrar.registerEntity(player);
+	persistentRegistrar.registerItem(POOL_TYPES.UPDATEABLE, screenShakeOffsetProvider);
 
 	root.queueReset();
 

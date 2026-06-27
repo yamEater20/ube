@@ -50,10 +50,31 @@ export class CollidableProviderWithRooms extends CollidableProvider {
     }
 }
 
+export class RoomIndicesProvider {
+    constructor(shouldReturnIdentity) {
+        this._mapGraph = {};
+        this._shouldReturnIdentity = shouldReturnIdentity;
+    }
+
+    setMapGraph(mapGraph) {
+        this._mapGraph = mapGraph;
+    }
+
+    getIndices(roomInd) {
+        if (this._shouldReturnIdentity()) return [roomInd];
+
+        const potentialIndices = this._mapGraph[roomInd];
+        return Object.values(potentialIndices)
+            .filter(ind => ind !== -1)
+            .concat([roomInd]);
+    }
+}
+
 export class RoomsPool extends Pool {
-	constructor(roomIndex) {
+	constructor(drawableRoomIndicesProvider, initialRoomIndex) {
 		super();
-		this._roomIndex = roomIndex ?? 0;
+        this._drawableRoomIndicesProvider = drawableRoomIndicesProvider;
+		this._roomIndex = initialRoomIndex ?? 0;
         this._lastRoomIndex = this._roomIndex;
 	}
 
@@ -71,15 +92,20 @@ export class RoomsPool extends Pool {
 	}
 
 	getPool(poolType) {
-		// if (debugOptions.showAll && (poolType === POOL_TYPES.DRAWABLE || poolType === POOL_TYPES.DRAWABLE_DEBUG)) {
+		// if (poolType === POOL_TYPES.DRAWABLE || poolType === POOL_TYPES.DRAWABLE_DEBUG) {
 		// 	return this.get().map(r => r.getPool(poolType)).reduce((a, b) => a.concat(b));
 		// }
 		if ((poolType === POOL_TYPES.DRAWABLE || poolType === POOL_TYPES.DRAWABLE_DEBUG)) {
-			if (this._roomIndex === this._lastRoomIndex) return this.getCurrentRoom().getPool(poolType);
-            return this.getCurrentRoom().getPool(poolType).concat(this.get()[this._lastRoomIndex].getPool(poolType));
+            const roomIndices = this._drawableRoomIndicesProvider.getIndices(this._roomIndex);
+            return roomIndices
+                .map(roomInd => this.get()[roomInd].getPool(poolType))
+                // .map(p => {console.log(p); return p;})
+                .reduce((a, b) => a.concat(b));
+            // if (this._roomIndex === this._lastRoomIndex) return this.getCurrentRoom().getPool(poolType);
+            //     return this.getCurrentRoom().getPool(poolType).concat(this.get()[this._lastRoomIndex].getPool(poolType));
 		}
+
 		return this.getCurrentRoom().getPool(poolType);
-		// return this.get().map(r => r.getPool(poolType)).reduce((a, b) => a.concat(b));
 	}
 
 	nextRoom() {

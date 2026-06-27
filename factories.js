@@ -10,19 +10,20 @@ import { CACHED_LEVELS } from './levelEditor/cache.js';
 import * as CustomPostProcess from './services/customPostProcessTileArrays.js';
 import { BUILD_MODES } from './engine/debug.js';
 
-export function camerasFactory(startingPosition, getCameraFollow, depths) {
-	return depths.map(parallaxScale => cameraFactory(startingPosition, getCameraFollow, parallaxScale));
+export function camerasFactory(startingPosition, getCameraFollow, depths, visibleCanvas, screenShakeOffsetProvider) {
+	return depths.map(parallaxScale => cameraFactory(startingPosition, getCameraFollow, parallaxScale, visibleCanvas, screenShakeOffsetProvider));
 }
 
-function cameraFactory(startingPosition, getCameraFollow, depths) {
-	const canvasInfo = createCanvas(true, PIXEL_GAME_SIZE.add(1, 1));
+function cameraFactory(startingPosition, getCameraFollow, depth, visibleCanvas, screenShakeOffsetProvider) {
+	const canvasInfo = createCanvas(visibleCanvas, PIXEL_GAME_SIZE.add(1, 1));
 	return {
 		canvasInfo: canvasInfo,
 		camera: new Camera(
 			canvasInfo.ctx,
 			startingPosition,
 			getCameraFollow,
-			depths
+			screenShakeOffsetProvider,
+			depth
 		)
 	}
 }
