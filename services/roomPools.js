@@ -51,22 +51,51 @@ export class CollidableProviderWithRooms extends CollidableProvider {
 }
 
 export class RoomIndicesProvider {
-    constructor(shouldReturnIdentity) {
+    constructor(initialRoomIndex) {
         this._mapGraph = {};
-        this._shouldReturnIdentity = shouldReturnIdentity;
+        this.isCameraShaking;
+        this.isCameraMoving;
+
+        this._roomIndex = initialRoomIndex;
+        this._lastRoomIndex = initialRoomIndex;
     }
 
     setMapGraph(mapGraph) {
         this._mapGraph = mapGraph;
     }
 
-    getIndices(roomInd) {
-        if (this._shouldReturnIdentity()) return [roomInd];
+    newRoomIndex(roomIndex) {
+        this._lastRoomIndex = this._roomIndex;
+        this._roomIndex = roomIndex;
+    }
 
-        const potentialIndices = this._mapGraph[roomInd];
-        return Object.values(potentialIndices)
-            .filter(ind => ind !== -1)
-            .concat([roomInd]);
+    getIndices(roomInd) {
+        let ret = [roomInd];
+        
+        const isShaking = this.isCameraShaking();
+        if (isShaking) {
+            const potentialIndices = this._mapGraph[roomInd];
+            ret = ret.concat(
+                Object.values(potentialIndices)
+                    .filter(ind => ind !== -1)
+                    .concat([roomInd])
+            );
+        }
+
+        if (this.isCameraMoving()) {
+            ret = ret.concat(this._lastRoomIndex);
+
+            if (isShaking) {
+                const potentialIndices = this._mapGraph[this._lastRoomIndex];
+                ret = ret.concat(
+                    Object.values(potentialIndices)
+                        .filter(ind => ind !== -1)
+                        .concat([roomInd])
+                );
+            }
+        }
+
+        return [...new Set(ret)];
     }
 }
 
@@ -75,7 +104,6 @@ export class RoomsPool extends Pool {
 		super();
         this._drawableRoomIndicesProvider = drawableRoomIndicesProvider;
 		this._roomIndex = initialRoomIndex ?? 0;
-        this._lastRoomIndex = this._roomIndex;
 	}
 
     setRooms(rooms) {
@@ -83,7 +111,6 @@ export class RoomsPool extends Pool {
     }
 
     setRoomIndex(roomIndex) {
-        this._lastRoomIndex = this._roomIndex;
         this._roomIndex = roomIndex;
     }
 

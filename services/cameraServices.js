@@ -44,6 +44,7 @@ export class ScreenShakeOffsetProvider extends IScreenShakeOffsetProvider {
 
     cancelScreenShake() {
         this._shakeTimer.stop();
+        this._screenShakePos = VectorZero;
     }
 
     update(timeDelta) {

@@ -30,7 +30,6 @@ export function makeSpring(parent, relativePosition, entityData) {
 		[
 			{frames: 1, onComplete: "stop"},
 			{frames: 15, onComplete: "stop", nth: 1},
-			// {frames: 1, onComplete: "stay", nth: 1}
 		]
 	);
 

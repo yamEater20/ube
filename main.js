@@ -38,11 +38,13 @@ import { createProgressBar } from './entities/progressBar.js';
 
 const LEVEL_PATH = "Levels.png";
 
-// const buildMode = BUILD_MODES.LOCAL;
-const buildMode = BUILD_MODES.LOAD_TEST;
-// const buildMode = BUILD_MODES.PRODUCTION;
+// const CURRENT_BUILD_MODE = BUILD_MODES.LOCAL;
+const CURRENT_BUILD_MODE = BUILD_MODES.LOAD_TEST;
+// const CURRENT_BUILD_MODE = BUILD_MODES.PRODUCTION;
 
 //TODO: somehow match different entities to different layers
+
+const INITIAL_ROOM_INDEX = 12;
 
 let root;
 let worldCameraInfos;
@@ -81,7 +83,7 @@ function drawScreenBuffer() {
 }
 
 async function setup() {
-	const loops = Factories.loopFactory(buildMode, mainLoop, updateAll, drawBackBuffers, drawScreenBuffer);
+	const loops = Factories.loopFactory(CURRENT_BUILD_MODE, mainLoop, updateAll, drawBackBuffers, drawScreenBuffer);
 	const mainLoopDiagnostics = new Diagnostics(loops.mainLoop);
 
 	const poolDict = PoolTypesFactory();
@@ -89,11 +91,11 @@ async function setup() {
 	const persistentRegistrar = new Registrar(poolDict);
 	
 	const screenShakeOffsetProvider = new ScreenShakeOffsetProvider();
-	const drawableRoomIndicesProvider = new RoomIndicesProvider(() => !screenShakeOffsetProvider.isShaking());
+	const drawableRoomIndicesProvider = new RoomIndicesProvider(INITIAL_ROOM_INDEX);
+
+	const roomsPool = new RoomsPool(drawableRoomIndicesProvider, INITIAL_ROOM_INDEX);
 	
-	const roomsPool = new RoomsPool(drawableRoomIndicesProvider, 12);
-	
-	const inputProvider = Factories.inputProviderFactory(buildMode);
+	const inputProvider = Factories.inputProviderFactory(CURRENT_BUILD_MODE);
 
 	const registrarWithRooms = new RegistrarWithRooms(persistentRegistrar, roomsPool);
 	const globalCollidableProvider = new CollidableProviderWithRooms(
@@ -104,6 +106,8 @@ async function setup() {
 	);
 	const groundedProvider = new UpdateHandlers.GroundedProvider(globalCollidableProvider);
 
+	drawableRoomIndicesProvider.isCameraShaking = screenShakeOffsetProvider.isShaking;
+	drawableRoomIndicesProvider.isCameraMoving = () => worldCameraInfos[2].camera.isMoving;
 	
 	const particlePool = new ParticlePool(globalCollidableProvider, groundedProvider);
 	persistentRegistrar.registerEntity(particlePool.getDataToRegister());
@@ -115,13 +119,13 @@ async function setup() {
 		cameraInitialPosition,
 		getCameraFollow,
 		[0.05, 0.1, 1],
-		false,
+		true,
 		screenShakeOffsetProvider
 	);
 
 	root = new Root(
-		Factories.timeFactory(buildMode),
-		Factories.timeFactory(buildMode),
+		Factories.timeFactory(CURRENT_BUILD_MODE),
+		Factories.timeFactory(CURRENT_BUILD_MODE),
 		worldCameraInfos,
 		inputProvider,
 		registrarWithRooms
@@ -133,17 +137,19 @@ async function setup() {
 		camera: new Camera(
 			screenBufferCanvasInfo.ctx,
 			cameraInitialPosition,
-			new DummyScreenShakeOffsetProvider(),
-			() => root
+			() => root,
+			screenShakeOffsetProvider
 		)
 	};
+
+	//tx, initialPosition, getFollowingFunc, screenShakeOffsetProvider, depth
 
 	const entityConstructionPostProcessor = new LevelDataPostProcessor([
 		new CustomPostProcess.SpringCallbackPostProcess(particlePool.createSpringParticles),
 		new EntityDataToEntityFactoryPostProcess(ENTITY_TYPE_TO_ENTITY)
 	]);
 
-	const levelBuilder = Factories.levelBuilderFactory(buildMode, LEVEL_PATH, entityConstructionPostProcessor);
+	const levelBuilder = Factories.levelBuilderFactory(CURRENT_BUILD_MODE, LEVEL_PATH, entityConstructionPostProcessor);
 	const levelData = await levelBuilder.buildLevels();
 	roomsPool.setRooms(levelData.levels.map(data => 
 		new Room(
@@ -169,7 +175,11 @@ async function setup() {
 		globalCollidableProvider,
 		new SpawnPositionProvider(roomsPool),
 		roomCollider => {
-			roomsPool.setRoomIndex(roomCollider.roomIndex);
+			worldCameraInfos.forEach(info => info.camera.isMoving = true);
+			// screenShakeOffsetProvider.cancelScreenShake();
+			const roomIndex = roomCollider.roomIndex;
+			drawableRoomIndicesProvider.newRoomIndex(roomIndex);
+			roomsPool.setRoomIndex(roomIndex);
 			roomsPool.getCurrentRoom().reset();
 		},
 		screenShakeOffsetProvider.shakeScreen,
@@ -177,15 +187,11 @@ async function setup() {
 	);
 
 	root.onCameraMove = camera => {
-		screenShakeOffsetProvider.cancelScreenShake();
-
 		const cameraPos = camera._position;
-		// console.log(cameraPos.x,cameraPos.y);
 
 		const playerPhysObj = player[POOL_TYPES.COLLIDABLE][0];
 		const playerPos = playerPhysObj.globalPosition();
 
-		// console.log(playerPos.x, playerPos.y);
 		const playerWidth = playerPhysObj.hitbox.width;
 		const playerHeight = playerPhysObj.hitbox.height;
 
@@ -215,7 +221,7 @@ async function setup() {
 	persistentRegistrar.registerEntity(player);
 	persistentRegistrar.registerItem(POOL_TYPES.UPDATEABLE, screenShakeOffsetProvider);
 
-	if (buildMode === BUILD_MODES.LOAD_TEST) {
+	if (CURRENT_BUILD_MODE === BUILD_MODES.LOAD_TEST) {
 		persistentRegistrar.registerEntity(
 			createProgressBar(
 				root,
