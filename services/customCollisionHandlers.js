@@ -1,6 +1,6 @@
-import { ICollisionHandler } from "../engine/iCollisionHandler.js";
+import { ICollidable, ICollisionHandler } from "../engine/iCollisionHandler.js";
 
-export class TagOnly extends ICollisionHandler {
+export class Tags extends ICollidable {
     constructor(tags) {
         super();
         this._tags = tagListIntoDictionary(tags);
@@ -17,16 +17,11 @@ export class TagOnly extends ICollisionHandler {
     getTag(tag) {
         return this._tags[tag];
     }
-
-
-    onCollide() {
-        throw new Error("You are calling onCollide from something that's not supposed to be moving.");
-    }
 }
 
-export class Composite extends TagOnly {
-    constructor(tags, reactions) {
-        super(tags);
+export class Reactions extends ICollisionHandler {
+    constructor(reactions) {
+        super();
         this._reactions = reactions;
     }
 
@@ -35,10 +30,6 @@ export class Composite extends TagOnly {
     onCollide(physObj, others, direction) {
         //Can't call this.getReactions() because decorators do not override.
         //I need to rethink this architecture.
-        //TODO: I think composite should contain a TagCollider and a ReactionCollider.
-        // - Clearly, we need TagOnly colliders (ie Walls).
-        // - But we also need Reaction-only colliders. Example: particles.
-        // - More importantly, Compsoite should not inherit from TagOnly. That doesn't make any sense.
         const myReactions = physObj.collisionHandler.getReactions();
 
         let allColliding = [];
@@ -67,6 +58,21 @@ export class Composite extends TagOnly {
             return true;
         }
     }
+}
+
+export class Composite extends ICollisionHandler {
+    constructor(tagCollider, reactionCollider) {
+        super();
+        this._tagCollider = tagCollider;
+        this._reactionCollider = reactionCollider;
+    }
+
+    getTags() {return this._tagCollider.getTags();}
+    containsTag(tag) {return this._tagCollider.containsTag(tag);}
+    getTag(tag) {return this._tagCollider.getTag(tag);}
+
+    getReactions() { return this._reactionCollider.getReactions(); }
+    onCollide(physObj, others, direction) {return this._reactionCollider.onCollide(physObj, others, direction);}
 }
 
 export class IReaction {

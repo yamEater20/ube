@@ -9,7 +9,7 @@ import { ResetAtSpawn } from "../services/reset.js";
 import * as GeneralUpdateHandlers from "../services/customUpdateHandlers.js";
 import { debugOptions } from "../engine/debug.js";
 import { POOL_TYPES } from "./poolTypes.js";
-import { Composite } from "../services/customCollisionHandlers.js";
+import { Composite, Reactions, Tags } from "../services/customCollisionHandlers.js";
 
 //TODO: provide constants for magic numbers
 
@@ -394,18 +394,22 @@ export function make(parent, position, inputProvider, groundedProvider, collidab
 		updateHandler,
 		new CollisionHandlerDebugDecorator(
 			new Composite(
-				[
-					// new CustomCollisionHandlers.Wall(),
-					// new CustomCollisionHandlers.Ground(),
-					// new CustomCollisionHandlers.Ridable()
-				],
-				[
-					new WallReaction(slideHandler, slideBumpHandler),
-					new CustomCollisionHandlers.GroundReaction(groundedProvider),
-					new SpringReaction(doubleJumpHandler),
-					new SpikeReaction(killPlayer, slideHandler),
-					roomColliderReaction
-				]
+				new Tags(
+					[
+						// new CustomCollisionHandlers.Wall(),
+						// new CustomCollisionHandlers.Ground(),
+						// new CustomCollisionHandlers.Ridable()
+					]
+				),
+				new Reactions(
+					[
+						new WallReaction(slideHandler, slideBumpHandler),
+						new CustomCollisionHandlers.GroundReaction(groundedProvider),
+						new SpringReaction(doubleJumpHandler),
+						new SpikeReaction(killPlayer, slideHandler),
+						roomColliderReaction
+					]
+				)
 			),
 			[roomColliderReaction]
 		),

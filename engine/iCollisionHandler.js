@@ -3,3 +3,7 @@ export class ICollisionHandler {
         throw new Error("Must implement");
     }
 }
+
+export class ICollidable {
+    //What should go in here? Nothing?
+}

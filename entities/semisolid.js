@@ -4,7 +4,7 @@ import * as CustomCollisionHandlers from "../services/entityCollisionHandlers.js
 import { POOL_TYPES } from "./poolTypes.js";
 import * as Sprites from "../engine/sprites.js";
 import { VectorZero } from "../engine/math.js";
-import { TagOnly } from "../services/customCollisionHandlers.js";
+import { Tags } from "../services/customCollisionHandlers.js";
 
 class SemisolidCollisionTag extends CustomCollisionHandlers.Ground {
 	isGround(movingPhysObj, tagPhysObj, direction) {
@@ -24,7 +24,7 @@ export function makeSemiSolid(parent, relativePosition, entityData) {
 		relativePosition,
 		hitbox,
 		new DummyUpdateHandler(),
-		new TagOnly(
+		new Tags(
 			[new SemisolidCollisionTag()]
 		),
 		new DummyCollidableProvider(),

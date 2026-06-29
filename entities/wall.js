@@ -4,7 +4,7 @@ import * as CustomCollisionHandlers from "../services/entityCollisionHandlers.js
 import { POOL_TYPES } from "./poolTypes.js";
 import * as Sprites from "../engine/sprites.js";
 import { VectorZero } from "../engine/math.js";
-import { TagOnly } from "../services/customCollisionHandlers.js";
+import { Tags } from "../services/customCollisionHandlers.js";
 
 export function makeWall(parent, relativePosition, entityData) {
 	const hitbox = new RectHitbox(VectorZero, 8, 8);
@@ -13,7 +13,7 @@ export function makeWall(parent, relativePosition, entityData) {
 		relativePosition,
 		hitbox,
 		new DummyUpdateHandler(),
-		new TagOnly(
+		new Tags(
 			[new CustomCollisionHandlers.Wall(), new CustomCollisionHandlers.Ground()]
 		),
 		new DummyCollidableProvider(),

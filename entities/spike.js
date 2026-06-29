@@ -5,7 +5,7 @@ import { POOL_TYPES } from "./poolTypes.js";
 import * as Sprites from "../engine/sprites.js";
 import { Direction, directionToRad as directionToRadians, Vector, VectorZero } from "../engine/math.js";
 import { TILE_SIZE } from "../engine/graphics.js";
-import { TagOnly } from "../services/customCollisionHandlers.js";
+import { Tags } from "../services/customCollisionHandlers.js";
 
 export function makeSpike(parent, relativePosition, entityData) {
 	let hitbox = getSpikeHitbox(entityData.direction);
@@ -15,7 +15,7 @@ export function makeSpike(parent, relativePosition, entityData) {
 		relativePosition,
 		hitbox,
 		new DummyUpdateHandler(),
-		new TagOnly(
+		new Tags(
 			[new CustomCollisionHandlers.Spike(entityData.direction)]
 		),
 		new DummyCollidableProvider(),

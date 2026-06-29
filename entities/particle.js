@@ -19,11 +19,10 @@ export function makeParticle(parent, relativePosition, collidableProvider, groun
             new FallAirResistanceUpdateHandler(
                 new FallUpdateHandler(groundedProvider),
                 0.0001,
-                0.9
+                0.006
             )
         ]),
-        new CollisionHandlers.Composite(
-            [],
+        new CollisionHandlers.Reactions(
             [
                 new GroundReaction(groundedProvider),
                 new WallReaction()

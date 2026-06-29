@@ -49,7 +49,8 @@ export class FallAirResistanceUpdateHandler {
 
 	update(physObj, timeDelta) {
 		this._fallUpdateHandler.update(physObj, timeDelta, this._gravity);
-		physObj.velocity = physObj.velocity.scalar(this._airResistance);
+		const airResistance = Math.max(1 - this._airResistance * timeDelta, 0);
+		physObj.velocity = physObj.velocity.scalar(airResistance);
 	}
 }
 

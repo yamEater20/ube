@@ -4,8 +4,7 @@ import * as CustomCollisionHandlers from "../services/entityCollisionHandlers.js
 import { POOL_TYPES } from "./poolTypes.js";
 import { AnimatedSprite, SPRITE_LK } from "../engine/sprites.js";
 import { Vector } from "../engine/math.js";
-import { TagOnly } from "../services/customCollisionHandlers.js";
-import { Composite } from "../services/customUpdateHandlers.js";
+import { Tags } from "../services/customCollisionHandlers.js";
 
 class SpringTagAnimated extends CustomCollisionHandlers.Spring{
 	constructor(bounceV, animatedSprite, onBounceCallback) {
@@ -40,7 +39,7 @@ export function makeSpring(parent, relativePosition, entityData) {
 		relativePosition,
 		hitbox,
 		new DummyUpdateHandler(),
-		new TagOnly(
+		new Tags(
 			[new SpringTagAnimated(
 				-0.26,
 				sprite,

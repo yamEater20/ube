@@ -5,6 +5,7 @@ import { DrawableEntity } from "../engine/drawableEntity.js";
 import * as Sprites from "../engine/sprites.js";
 import { ResetAtSpawn } from "../reset.js";
 import { POOL_TYPES } from "../pools.js";
+import { Reactions, Tags } from "../services/customCollisionHandlers.js";
 
 export function makePushableBox(hitbox, updateHandler, collidableProvider, groundedProvider) {
 	const position = Vector({x: hitbox.relativePosition.x, y: hitbox.relativePosition.y});
@@ -12,17 +13,17 @@ export function makePushableBox(hitbox, updateHandler, collidableProvider, groun
 		hitbox,
 		updateHandler,
 		new CollisionHandlers.Composite(
-			[
+			new Tags([
 				new CollisionHandlers.Ground(),
 				new CollisionHandlers.PushableBox(),
 				new CollisionHandlers.Ridable()
-			],
-			[
+			]),
+			new Reactions([
 				//TODO: figure out lifetimes. These are stateless and should be singletons.
 				new CollisionHandlers.PushableBoxReaction(),
 				new CollisionHandlers.WallReaction(),
 				new CollisionHandlers.GroundReaction(groundedProvider)
-			]
+			])
 		),
 		collidableProvider
 	);

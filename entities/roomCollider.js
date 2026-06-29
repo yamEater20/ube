@@ -1,5 +1,5 @@
 import { RoomCollider } from "../services/entityCollisionHandlers.js";
-import {TagOnly} from "../services/customCollisionHandlers.js";
+import {Tags} from "../services/customCollisionHandlers.js";
 import { VectorZero } from "../engine/math.js";
 import { DummyCollidableProvider, DummyUpdateHandler, HitboxDrawableEntity, PhysObj, RectHitbox } from "../engine/physics.js";
 import { POOL_TYPES } from "./poolTypes.js";
@@ -11,7 +11,7 @@ export function makeRoomCollider(room, roomIndex, colliderSize) {
         VectorZero,
         hitbox,
         new DummyUpdateHandler(),
-        new TagOnly([new RoomCollider(roomIndex)]),
+        new Tags([new RoomCollider(roomIndex)]),
         new DummyCollidableProvider()
     );
 

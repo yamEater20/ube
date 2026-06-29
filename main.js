@@ -38,8 +38,8 @@ import { createProgressBar } from './entities/progressBar.js';
 
 const LEVEL_PATH = "Levels.png";
 
-// const CURRENT_BUILD_MODE = BUILD_MODES.LOCAL;
-const CURRENT_BUILD_MODE = BUILD_MODES.LOAD_TEST;
+const CURRENT_BUILD_MODE = BUILD_MODES.LOCAL;
+// const CURRENT_BUILD_MODE = BUILD_MODES.LOAD_TEST;
 // const CURRENT_BUILD_MODE = BUILD_MODES.PRODUCTION;
 
 //TODO: somehow match different entities to different layers
@@ -119,7 +119,7 @@ async function setup() {
 		cameraInitialPosition,
 		getCameraFollow,
 		[0.05, 0.1, 1],
-		true,
+		false,
 		screenShakeOffsetProvider
 	);
 
@@ -220,6 +220,9 @@ async function setup() {
 	
 	persistentRegistrar.registerEntity(player);
 	persistentRegistrar.registerItem(POOL_TYPES.UPDATEABLE, screenShakeOffsetProvider);
+
+	const a = Factories.drawEdgesAroundWorld(levelData, root, 12, "black");
+	a.forEach(item => persistentRegistrar.registerItem(POOL_TYPES.DRAWABLE, {item: item, layer: 0}));
 
 	if (CURRENT_BUILD_MODE === BUILD_MODES.LOAD_TEST) {
 		persistentRegistrar.registerEntity(
