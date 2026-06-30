@@ -1,6 +1,6 @@
 import { FixedTimeDeltaTime, Time } from './engine/time.js';
 import {Camera, DummyCamera} from './engine/camera.js';
-import {InputProvider, TASInputProvider} from './services/input.js';
+import {InputProvider, TASInputProvider} from './services/customInputProviders.js';
 import {HexToEntityData} from "./levelEditor/hexParsing.js";
 import { createCanvas, PIXEL_GAME_SIZE, TILE_SIZE } from './engine/graphics.js';
 import { LevelBuilderFromCache, LevelBuilderFromImage } from './services/customLevelBuilders.js';

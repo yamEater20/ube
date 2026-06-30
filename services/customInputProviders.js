@@ -1,4 +1,21 @@
 import { IInputProvider } from "../engine/iInputProvider.js";
+import { framesToMs } from "../engine/math.js";
+import { Timer } from "../engine/time.js";
+
+class InputBuffer {
+    constructor(durationMs) {
+        this._timer = new Timer(durationMs);
+    }
+
+    update(timeDelta, mePressed) {
+        this._timer.update(timeDelta);
+        if (mePressed) this._timer.restart();
+    }
+
+    stop() {this._timer.stop();}
+
+    inBuffer() {return this._timer.running();}
+}
 
 export class InputProvider extends IInputProvider {
     constructor() {
@@ -36,9 +53,7 @@ export class InputProvider extends IInputProvider {
             "Space": false,
         };
 
-        this._input = {
-            "jump": false,
-        }
+        this._input = {};
 
         this._prevInput = structuredClone(this._input);
 
@@ -54,6 +69,12 @@ export class InputProvider extends IInputProvider {
             "showAll",
             "nextRoom"
         ];
+
+        this._pressBuffers = Object.fromEntries(
+            this._pressCodes.map(
+                actionName => [actionName, new InputBuffer(framesToMs(8))]
+            )
+        );
 
         document.addEventListener('keydown', this.keyDownHandler.bind(this), false);
         document.addEventListener('keyup', this.keyUpHandler.bind(this), false);
@@ -97,6 +118,15 @@ export class InputProvider extends IInputProvider {
         this._pressCodes.forEach(
             k => setPressed(this._input, this._prevInput, k)
         );
+
+        Object.keys(this._pressBuffers)
+            .forEach(
+                actionName => {
+                    const curBuffer = this._pressBuffers[actionName];
+                    curBuffer.update(timeDelta, this._input[actionName + "Pressed"]);
+                    this._input[actionName+"Buffer"] = curBuffer;
+                }
+            );
     }
     
     getInput() {

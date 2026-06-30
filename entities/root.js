@@ -55,7 +55,7 @@ export class Root extends Entity {
 		this._trueTime.tick();
 		this._worldTime.tick();
 
-		this._inputProvider.update();
+		this._inputProvider.update(this._trueTime.delta);
 
 		const input = this._inputProvider.getInput();
 

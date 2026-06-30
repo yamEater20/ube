@@ -40,32 +40,24 @@ function jump(physObj, jumpV) {
 class JumpUpdateHandler extends IPlayerUpdateHandler {
 	constructor() {
 		super();
-		this._jumpJustPressed = new Timer();
 		this._coyoteTime = new Timer();
 	}
 
 	update(physObj, timeDelta, input) {
-		if (input.jumpPressed) {
-			this._jumpJustPressed.restart(framesToMs(8));
-		}
-
-		const shouldJumpFromBuffer = input.grounded && this._jumpJustPressed.running();
+		const shouldJumpFromBuffer = input.grounded && input.jumpBuffer.inBuffer();
 		const shouldJumpFromCoyote = input.jumpPressed && this._coyoteTime.running();
 		if (shouldJumpFromBuffer || shouldJumpFromCoyote) {
 			jump(physObj, -0.17);
 			this._coyoteTime.stop();
-			this._jumpJustPressed.stop();
-			input.jumpedThisFrame = true;
+			input.jumpBuffer.stop();
 		} else if (input.grounded) {
 			this._coyoteTime.restart(framesToMs(8));
 		}
 
-		this._jumpJustPressed.update(timeDelta);
 		this._coyoteTime.update(timeDelta);
 	}
 
 	reset() {
-		this._jumpJustPressed.stop();
 		this._coyoteTime.stop();
 	}
 }
@@ -88,7 +80,6 @@ class FacingHandler extends IPlayerUpdateHandler {
 class SlideHandler extends IPlayerUpdateHandler {
 	constructor(shakeScreen) {
 		super();
-		this._slideJustPressed = new Timer();
 		this._xoyoteTime = new Timer();
 
 		this._isSliding = false;
@@ -97,30 +88,21 @@ class SlideHandler extends IPlayerUpdateHandler {
 	}
 
 	update(physObj, timeDelta, input) {
-		if (input.slidePressed) {
-			this._slideJustPressed.restart(framesToMs(8));
-		}
-
-		const shouldSlideFromBuffer = input.grounded && this._slideJustPressed.running();
+		const shouldSlideFromBuffer = input.grounded && input.slideBuffer.inBuffer();
 		const shouldSlideFromCoyote = input.slidePressed && this._xoyoteTime.running();
 		if (!this._isSliding && (shouldSlideFromBuffer || shouldSlideFromCoyote)) {
-			this._startSlide(input.facing);
+			this._isSliding = true;
+			this._slideDirection = input.facing;
+			this._xoyoteTime.stop();
+			input.slideBuffer.stop();
+			this._shakeScreen();
 		} else if (input.grounded) {
 			this._xoyoteTime.restart(framesToMs(8));
 		}
 
 		input.sliding = this._isSliding;
 		input.slideDirection = this._slideDirection;
-		this._slideJustPressed.update(timeDelta);
 		this._xoyoteTime.update(timeDelta);
-	}
-
-	_startSlide(facing) {
-		this._isSliding = true;
-		this._slideDirection = facing;
-		this._slideJustPressed.stop();
-		this._xoyoteTime.stop();
-		this._shakeScreen(2, 125);
 	}
 
 	isSliding() {return this._isSliding; }
@@ -132,7 +114,6 @@ class SlideHandler extends IPlayerUpdateHandler {
 
 	reset() {
 		this._isSliding = false;
-		this._slideJustPressed.stop();
 		this._xoyoteTime.stop();
 	}
 }
@@ -146,8 +127,9 @@ class DoubleJumpHandler extends IPlayerUpdateHandler {
 	update(physObj, timeDelta, input) {
 		if (input.grounded) {
 			this._canDoubleJump = true;
-		} else if (input.jumpPressed && this._canDoubleJump && !input.jumpedThisFrame) {
+		} else if (input.jumpBuffer.inBuffer() && this._canDoubleJump) {
 			jump(physObj, -0.145);
+			input.jumpBuffer.stop();
 			this._canDoubleJump = false;
 		}
 	}
@@ -162,9 +144,15 @@ class DoubleJumpHandler extends IPlayerUpdateHandler {
 }
 
 class HorizontalUpdateHandler extends IPlayerUpdateHandler {
+	constructor(onSlideFunc) {
+		super();
+		this._onSlideFunc = onSlideFunc;
+	}
+
 	update(physObj, timeDelta, input) {
 		if (input.sliding) {
 			physObj.setXVelocity(0.2 * input.slideDirection);
+			this._onSlideFunc(physObj, timeDelta);
 			return;
 		}
 
@@ -268,7 +256,7 @@ class SlideBumpHandler extends IPlayerUpdateHandler {
 	slideBump(facing) {
 		this._bumpFacing = facing;
 		this._bumpTimer.restart(framesToMs(8));
-		this._shakeScreen(1, 125);
+		this._shakeScreen();
 	}
 }
 
@@ -355,13 +343,19 @@ export class SpikeReaction extends CustomCollisionHandlers.SpikeReaction {
     }
 }
 
-export function make(parent, position, inputProvider, groundedProvider, collidableProvider, spawnPositionProvider, onRoomCollide, screenShakeFunc, killPlayer) {
+export function make(
+	parent, position,
+	inputProvider,
+	groundedProvider, collidableProvider, spawnPositionProvider, vfxManager,
+	onRoomCollide,
+	killPlayer
+) {
 	const hitbox = new RectHitbox(VectorZero, 6, 6);
 
 	const roomColliderReaction = new CustomCollisionHandlers.RoomColliderReaction(onRoomCollide);
 	const doubleJumpHandler = new DoubleJumpHandler();
-	const slideHandler = new SlideHandler(screenShakeFunc);
-	const slideBumpHandler = new SlideBumpHandler(screenShakeFunc);
+	const slideHandler = new SlideHandler(vfxManager.startSlide);
+	const slideBumpHandler = new SlideBumpHandler(vfxManager.stopSlide);
 
 	const drawable = new Sprites.AnimatedSprite(
 		Sprites.SPRITE_LK.MAIN_CHARA_SPRITESHEET,
@@ -381,9 +375,9 @@ export function make(parent, position, inputProvider, groundedProvider, collidab
 			new JumpUpdateHandler(),
 			doubleJumpHandler,
 			slideHandler,
-			new HorizontalUpdateHandler(),
+			new HorizontalUpdateHandler(vfxManager.onSlide),
+			slideBumpHandler,
 			new DrawableUpdateHandler(drawable, slideHandler),
-			slideBumpHandler
 		]
 	);
 

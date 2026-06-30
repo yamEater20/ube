@@ -35,6 +35,7 @@ import { BUILD_MODES } from './engine/debug.js';
 import * as Factories from './factories.js';
 import { DummyScreenShakeOffsetProvider, ScreenShakeOffsetProvider } from './services/cameraServices.js';
 import { createProgressBar } from './entities/progressBar.js';
+import { PlayerVFXManager } from './services/playerVFXManager.js';
 
 const LEVEL_PATH = "Levels.png";
 
@@ -109,9 +110,9 @@ async function setup() {
 	drawableRoomIndicesProvider.isCameraShaking = screenShakeOffsetProvider.isShaking;
 	drawableRoomIndicesProvider.isCameraMoving = () => worldCameraInfos[2].camera.isMoving;
 	
-	const particlePool = new ParticlePool(globalCollidableProvider, groundedProvider);
+	const particlePool = new ParticlePool(globalCollidableProvider, groundedProvider, root);
 	persistentRegistrar.registerEntity(particlePool.getDataToRegister());
-
+	
 	const getCameraFollow = () => registrarWithRooms.getPool(POOL_TYPES.CAMERA_FOLLOW).get()[0];
 
 	const cameraInitialPosition = Vector({x: 128*2, y: 128*2});
@@ -167,6 +168,8 @@ async function setup() {
 		persistentRegistrar.registerEntity(makeRoomCollider(room, index, roomSizeWorldSpace));
 	});
 
+	const playerVFXManager = new PlayerVFXManager(particlePool, root, screenShakeOffsetProvider);
+
 	const player = Player.make(
 		root,
 		Vector({x: 128*2+40, y: 128*2+40}),
@@ -174,6 +177,7 @@ async function setup() {
 		groundedProvider,
 		globalCollidableProvider,
 		new SpawnPositionProvider(roomsPool),
+		playerVFXManager,
 		roomCollider => {
 			worldCameraInfos.forEach(info => info.camera.isMoving = true);
 			// screenShakeOffsetProvider.cancelScreenShake();
@@ -182,7 +186,6 @@ async function setup() {
 			roomsPool.setRoomIndex(roomIndex);
 			roomsPool.getCurrentRoom().reset();
 		},
-		screenShakeOffsetProvider.shakeScreen,
 		() => root.queueReset()
 	);
 

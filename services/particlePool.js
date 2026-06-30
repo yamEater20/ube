@@ -36,6 +36,11 @@ export class ParticlePool {
         return ret;
     }
 
+    createPlayerSlideParticle(parent, position) {
+        //TODO: why is this not working?
+        this._createSpringParticle(parent, position, 3);
+    }
+
 	createSpringParticles(parent, position, spawnAreaWidth) {
 		for (let i = 0; i < Math.random() * 3 + 5; ++i) {
             const particleData = this._createSpringParticle(parent, position, spawnAreaWidth);
@@ -63,7 +68,6 @@ export class ParticlePool {
         const fadeTime = Math.random() * 500 + 3000;
 
         particleData.typedData.opacityDrawable.reset(1, 0, fadeTime, "#ff004d");
-
         particleData.typedData.disableTimer.restart(fadeTime);
         return particleData;
     }
