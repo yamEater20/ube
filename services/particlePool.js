@@ -1,4 +1,4 @@
-import { Vector, VectorZero } from "../engine/math.js";
+import { Vector, VectorOne, VectorZero } from "../engine/math.js";
 import { makeParticle } from "../entities/particle.js";
 import { POOL_TYPES } from "../entities/poolTypes.js";
 
@@ -18,7 +18,8 @@ export class ParticlePool {
         this._collidableProvider = collidableProvider;
         this._groundedProvider = groundedProvider;
 
-        this.createSpringParticles = this.createSpringParticles.bind(this);
+        this.createParticle = this.createParticle.bind(this);
+        this.createParticles = this.createParticles.bind(this);
 
         this._activeParticles = [];
         this._notActiveParticles = [];
@@ -36,40 +37,48 @@ export class ParticlePool {
         return ret;
     }
 
-    createPlayerSlideParticle(parent, position) {
-        //TODO: why is this not working?
-        this._createSpringParticle(parent, position, 3);
-    }
-
-	createSpringParticles(parent, position, spawnAreaWidth) {
-		for (let i = 0; i < Math.random() * 3 + 5; ++i) {
-            const particleData = this._createSpringParticle(parent, position, spawnAreaWidth);
-            this._activeParticles.push(particleData);
+	createParticles(parent, position, options) {
+        for (let i = 0; i < options.numParticlesFunction(); ++i) {
+            this.createParticle(parent, position, options);
         }
 	}
 
-    _createSpringParticle(parent, position, spawnAreaWidth) {
-        const normalizedXOffset = Math.random() - 0.5;
-        const xOffset = (normalizedXOffset + 0.5) * spawnAreaWidth;
-
+    createParticle(parent, position, options) {
         let particleData = this._notActiveParticles.pop();
         if (particleData == undefined) {
             particleData = makeParticle(parent, VectorZero, this._collidableProvider, this._groundedProvider);
         }
 
+        let spawnOffset = VectorZero;
+        let normalizedSpawnOffset = VectorZero;
+        
+        let initialVelocity = Vector({x: 0, y: 0});
+
+        const size = options.size ?? VectorOne;
+
+        if (options.spawnArea) {
+            normalizedSpawnOffset = Vector({x: Math.random(), y: Math.random()}).add(-0.5, -0.5);
+            spawnOffset = normalizedSpawnOffset.multElementWise(options.spawnArea);
+        }
+
+        if (options.initialVelocityFunction) {
+            initialVelocity = options.initialVelocityFunction(normalizedSpawnOffset);
+        }
+
         const physObj = particleData.typedData.physObj;
         physObj.parent = parent;
-        physObj.relativePosition = position.add(xOffset, 0);
-        physObj.velocity = Vector({
-            x: normalizedXOffset * 0.1,
-            y: -(Math.random() * 0.05 + 0.05)
-        });
+        physObj.relativePosition = position.addPoint(spawnOffset);
+        physObj.velocity = initialVelocity;
 
-        const fadeTime = Math.random() * 500 + 3000;
+        const fadeTime = options.fadeTimeFunction();
 
-        particleData.typedData.opacityDrawable.reset(1, 0, fadeTime, "#ff004d");
+        particleData.typedData.opacityDrawable.reset(1, 0, fadeTime, options.color);
         particleData.typedData.disableTimer.restart(fadeTime);
-        return particleData;
+        particleData.typedData.rectDrawable.size = size;
+        particleData.typedData.physObj.hitbox.width = size.x;
+        particleData.typedData.physObj.hitbox.height = size.y;
+        
+        this._activeParticles.push(particleData);
     }
 
     update(timeDelta) {

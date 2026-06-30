@@ -32,7 +32,17 @@ export function makeSpring(parent, relativePosition, entityData) {
 		]
 	);
 
-	const springParticleGenerationPosition = relativePosition.addPoint(visiblePosition);
+	const springParticleOptions = {
+		numParticlesFunction: () => Math.random() * 3 + 5,
+		fadeTimeFunction: () => Math.random() * 500 + 3000,
+		color: "#ff004d",
+		spawnArea: Vector({x: 8, y: 0}),
+		initialVelocityFunction: (normalizedSpawnPosition) => Vector({
+			x: normalizedSpawnPosition.x * 0.1,
+			y: -(Math.random() * 0.05 + 0.05)
+		})
+	};
+	const springParticleGenerationPosition = relativePosition.addPoint(visiblePosition).add(4, 0);
 
 	const physObj = new PhysObj(
 		parent,
@@ -43,7 +53,7 @@ export function makeSpring(parent, relativePosition, entityData) {
 			[new SpringTagAnimated(
 				-0.26,
 				sprite,
-				() => entityData.onBounce(parent, springParticleGenerationPosition, hitboxWidth)
+				() => entityData.onBounce(parent, springParticleGenerationPosition, springParticleOptions)
 			)]
 		),
 		new DummyCollidableProvider(),

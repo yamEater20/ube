@@ -67,6 +67,7 @@ class AnimatedSprite extends Sprite {
 	}
 
 	setRow(r) {
+		//TODO: Fix.
 		if (r === 0) {
 			this.playing = false;
 		} else {

@@ -151,8 +151,9 @@ class HorizontalUpdateHandler extends IPlayerUpdateHandler {
 
 	update(physObj, timeDelta, input) {
 		if (input.sliding) {
+			console.log(input.slideDirection);
 			physObj.setXVelocity(0.2 * input.slideDirection);
-			this._onSlideFunc(physObj, timeDelta);
+			this._onSlideFunc(physObj, timeDelta, input.slideDirection);
 			return;
 		}
 

@@ -143,10 +143,8 @@ async function setup() {
 		)
 	};
 
-	//tx, initialPosition, getFollowingFunc, screenShakeOffsetProvider, depth
-
 	const entityConstructionPostProcessor = new LevelDataPostProcessor([
-		new CustomPostProcess.SpringCallbackPostProcess(particlePool.createSpringParticles),
+		new CustomPostProcess.SpringCallbackPostProcess(particlePool.createParticles),
 		new EntityDataToEntityFactoryPostProcess(ENTITY_TYPE_TO_ENTITY)
 	]);
 
