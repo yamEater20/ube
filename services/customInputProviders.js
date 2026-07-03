@@ -2,21 +2,6 @@ import { IInputProvider } from "../engine/iInputProvider.js";
 import { framesToMs } from "../engine/math.js";
 import { Timer } from "../engine/time.js";
 
-class InputBuffer {
-    constructor(durationMs) {
-        this._timer = new Timer(durationMs);
-    }
-
-    update(timeDelta, mePressed) {
-        this._timer.update(timeDelta);
-        if (mePressed) this._timer.restart();
-    }
-
-    stop() {this._timer.stop();}
-
-    inBuffer() {return this._timer.running();}
-}
-
 export class KeyboardInputProvider extends IInputProvider {
     constructor() {
         super();
@@ -158,6 +143,21 @@ export class BufferedInput extends IInputProvider {
     getInput() {
         return this._input;
     }
+}
+
+class InputBuffer {
+    constructor(durationMs) {
+        this._timer = new Timer(durationMs);
+    }
+
+    update(timeDelta, mePressed) {
+        this._timer.update(timeDelta);
+        if (mePressed) this._timer.restart();
+    }
+
+    stop() {this._timer.stop();}
+
+    inBuffer() {return this._timer.running();}
 }
 
 export class TASInputProvider extends IInputProvider {

@@ -11,7 +11,7 @@ import * as CustomPostProcess from './services/customPostProcessTileArrays.js';
 import { BUILD_MODES } from './engine/debug.js';
 import { ROOM_SIZE_TILES } from './entities/room.js';
 import { RectDrawable } from './services/customDrawables.js';
-import { Vector } from './engine/math.js';
+import { framesToMs, Vector } from './engine/math.js';
 import { DrawableEntity } from './engine/drawableEntity.js';
 
 export function camerasFactory(startingPosition, getCameraFollow, depths, visibleCanvas, screenShakeOffsetProvider) {
@@ -105,12 +105,15 @@ export function inputProviderFactory(buildMode) {
 		"jump",
 		"slide"
 	];
+
+	const bufferMs = framesToMs(8);
 	
 	if (buildMode === BUILD_MODES.LOAD_TEST) {
 		return new BufferedInput(
 			new TASInputProvider(),
-			bufferCodes
-		);;
+			bufferCodes,
+			bufferMs
+		);
 	}
 
 	return new BufferedInput(
@@ -118,7 +121,8 @@ export function inputProviderFactory(buildMode) {
 			new KeyboardInputProvider(),
 			pressCodes
 		),
-		bufferCodes
+		bufferCodes,
+		bufferMs
 	);
 }
 
