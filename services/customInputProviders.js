@@ -17,7 +17,7 @@ class InputBuffer {
     inBuffer() {return this._timer.running();}
 }
 
-export class InputProvider extends IInputProvider {
+export class KeyboardInputProvider extends IInputProvider {
     constructor() {
         super();
         this._keyCodes = {
@@ -55,27 +55,6 @@ export class InputProvider extends IInputProvider {
 
         this._input = {};
 
-        this._prevInput = structuredClone(this._input);
-
-        this._pressCodes = [
-            "jump",
-            "slide",
-            "pause",
-            "reset",
-            
-            "debug",
-            "debugHitboxes",
-            "noClip",
-            "showAll",
-            "nextRoom"
-        ];
-
-        this._pressBuffers = Object.fromEntries(
-            this._pressCodes.map(
-                actionName => [actionName, new InputBuffer(framesToMs(8))]
-            )
-        );
-
         document.addEventListener('keydown', this.keyDownHandler.bind(this), false);
         document.addEventListener('keyup', this.keyUpHandler.bind(this), false);
     }
@@ -93,8 +72,6 @@ export class InputProvider extends IInputProvider {
     }
 
     update(timeDelta) {
-        this._prevInput = this._input;
-
         this._input = {
             "moveRight": this._keyCodes.ArrowRight || this._keyCodes.KeyD,
             "moveLeft": this._keyCodes.ArrowLeft || this._keyCodes.KeyA,
@@ -114,10 +91,59 @@ export class InputProvider extends IInputProvider {
             "nextRoom": this._keyCodes.KeyI,
             "debugHitboxes": this._keyCodes.KeyH
         };
+    }
+    
+    getInput() {
+        return this._input;
+    }
+}
 
+export class InputProviderWithPresses extends IInputProvider {
+    constructor(keyboardInput, pressCodes) {
+        super();
+        this._keyboardInput = keyboardInput;
+
+        this._pressCodes = pressCodes;
+
+        this._input = {};
+        this._prevInput = {};
+    }
+
+    update(timeDelta) {
+        this._prevInput = this._input;
+        
+        this._keyboardInput.update(timeDelta);
+        this._input = this._keyboardInput.getInput();
+        
         this._pressCodes.forEach(
-            k => setPressed(this._input, this._prevInput, k)
+            k => this.setPressed(this._input, this._prevInput, k)
         );
+    }
+
+    getInput() {return this._input;}
+
+    setPressed(input, prevInput, name) {
+        input[name + "Pressed"] = input[name] && !prevInput[name];
+    }
+}
+
+export class BufferedInput extends IInputProvider {
+    constructor(inputWithPress, bufferCodes, bufferMs) {
+        super();
+        this._inputWithPress = inputWithPress;
+
+        this._pressBuffers = Object.fromEntries(
+            bufferCodes.map(
+                actionName => [actionName, new InputBuffer(bufferMs)]
+            )
+        );
+
+        this._input = {};
+    }
+
+    update(timeDelta) {
+        this._inputWithPress.update(timeDelta);
+        this._input = this._inputWithPress.getInput();
 
         Object.keys(this._pressBuffers)
             .forEach(
@@ -134,21 +160,14 @@ export class InputProvider extends IInputProvider {
     }
 }
 
-function setPressed(input, prevInput, name) {
-    input[name + "Pressed"] = input[name] && !prevInput[name];
-}
-
 export class TASInputProvider extends IInputProvider {
     constructor() {
         super();
-        this.time = 0;
         this.movingLeft = true;
     }
 
     update(timeDelta) {
-        this.time += timeDelta;
-        
-        if (Math.random() > 0.999) {
+        if (Math.random() > 0.997) {
             this.movingLeft = !this.movingLeft;
         }
     }
@@ -160,7 +179,8 @@ export class TASInputProvider extends IInputProvider {
             "moveRight": !this.movingLeft,
             "moveLeft": this.movingLeft,
             "jump": false,
-            "jumpPressed": Math.random() > 0.95,
+            "jumpPressed": Math.random() > 0.99,
+            "slidePressed": Math.random() > 0.99,
         };;
     }
 }

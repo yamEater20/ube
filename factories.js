@@ -1,6 +1,6 @@
 import { FixedTimeDeltaTime, Time } from './engine/time.js';
 import {Camera, DummyCamera} from './engine/camera.js';
-import {InputProvider, TASInputProvider} from './services/customInputProviders.js';
+import {BufferedInput, InputProviderWithPresses, KeyboardInputProvider, TASInputProvider} from './services/customInputProviders.js';
 import {HexToEntityData} from "./levelEditor/hexParsing.js";
 import { createCanvas, PIXEL_GAME_SIZE, TILE_SIZE } from './engine/graphics.js';
 import { LevelBuilderFromCache, LevelBuilderFromImage } from './services/customLevelBuilders.js';
@@ -88,11 +88,38 @@ export function levelBuilderFactory(buildMode, levelPath, entityConstructionPost
 }
 
 export function inputProviderFactory(buildMode) {
+	const pressCodes = [
+		"jump",
+		"slide",
+		"pause",
+		"reset",
+		
+		"debug",
+		"debugHitboxes",
+		"noClip",
+		"showAll",
+		"nextRoom"
+	];
+
+	const bufferCodes = [
+		"jump",
+		"slide"
+	];
+	
 	if (buildMode === BUILD_MODES.LOAD_TEST) {
-		return new TASInputProvider();
+		return new BufferedInput(
+			new TASInputProvider(),
+			bufferCodes
+		);;
 	}
 
-	return new InputProvider();
+	return new BufferedInput(
+		new InputProviderWithPresses(
+			new KeyboardInputProvider(),
+			pressCodes
+		),
+		bufferCodes
+	);
 }
 
 // Draw 4 rectangles around the empty space formed by the world

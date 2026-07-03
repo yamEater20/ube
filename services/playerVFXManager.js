@@ -25,7 +25,7 @@ export class PlayerVFXManager {
         this._slideParticleTime += timeDelta;
         const slideParticlePosition = physObj
             .globalPosition()
-            .add(slideDirection < 0 ? 0 : -6, 6);
+            .add(slideDirection < 0 ? 0 : -6, 5);
 
         while (this._slideParticleTime >= this._slideParticleIntervalMs) {
             const newOptions = Object.assign({}, this._slideParticleOptions); //Shallow copy
