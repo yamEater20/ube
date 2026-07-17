@@ -6,12 +6,20 @@ export class PlayerVFXManager {
         this._particleParent = particleParent;
         this._screenShakeOffsetProvider = screenShakeOffsetProvider;
         
-        this._slideParticleIntervalMs = 25;
+        this._slideParticleIntervalMs = 40;
         this._slideParticleTime = 0;
         this._slideParticleOptions = {
             fadeTimeFunction: () => Math.random() * 500 + 3000,
             spawnArea: Vector({x: 8, y: 0}),
             color: "#ffa100"
+        };
+
+        this._slideStartParticleOptions = {
+            color: "#ffa100",
+            fadeTimeFunction: () => Math.random() * 500 + 3000,
+            spawnArea: Vector({x: 4, y: 12}),
+            numParticlesFunction: () => Math.random() * 2 + 6,
+            airResitanceFunction: () => 0.004 + Math.random() * 0.002
         };
 
         this.onSlide = this.onSlide.bind(this);
@@ -29,7 +37,7 @@ export class PlayerVFXManager {
 
         while (this._slideParticleTime >= this._slideParticleIntervalMs) {
             const newOptions = Object.assign({}, this._slideParticleOptions); //Shallow copy
-            newOptions.initialVelocityFunction = (s) => Vector({
+            newOptions.initialVelocityFunction = s => Vector({
                 x: slideDirection * -0.1,
                 y: -(Math.random() * 0.1 + 0.05)
             });
@@ -46,8 +54,25 @@ export class PlayerVFXManager {
 
     }
 
-    startSlide() {
+    startSlide(slideStartInformation) {
         this._screenShakeOffsetProvider.shakeScreen(2, 125);
+        
+        const slideDirection = slideStartInformation.direction;
+        const slidePosition = slideStartInformation.position
+            .add(slideDirection < 0 ? 1 : 4, 0);
+        
+        
+        const newOptions = Object.assign({}, this._slideStartParticleOptions); //Shallow copy
+        newOptions.initialVelocityFunction = () => Vector({
+            x: -slideDirection * (Math.random() * 0.03 + 0.05),
+            y: -(Math.random() * 0.01)
+        });
+
+        this._particlePool.createParticles(
+            this._particleParent,
+            slidePosition,
+            newOptions
+        );
     }
 
     stopSlide() {

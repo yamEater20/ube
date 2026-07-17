@@ -15,7 +15,7 @@ class Sprite {
 	}
 
 	draw(x, y, camera) {
-		camera.drawImage(this.img, x, y);
+		camera.getRenderTarget().drawImage(this.img, x, y);
 	}
 }
 
@@ -26,7 +26,7 @@ class RotatedSprite extends Sprite {
 	}
 
 	draw(x, y, camera) {
-		camera.drawImage(this.img, x, y, this._options);
+		camera.getRenderTarget().drawImage(this.img, x, y, this._options);
 	}
 }
 
@@ -59,7 +59,7 @@ class AnimatedSprite extends Sprite {
 		const xOffset = realColumn * this.w;
 		this.options.sx = xOffset;
 
-		camera.drawImage(
+		camera.getRenderTarget().drawImage(
 			super.getImage(),
 			x, y,
 			this.options
@@ -129,7 +129,7 @@ class TileSprite extends Sprite {
 	}
 
 	draw(x, y, camera) {
-		camera.drawImage(
+		camera.getRenderTarget().drawImage(
 			super.getImage(),
 			x, y,
 			this._options

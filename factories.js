@@ -13,23 +13,30 @@ import { ROOM_SIZE_TILES } from './entities/room.js';
 import { RectDrawable } from './services/customDrawables.js';
 import { framesToMs, Vector } from './engine/math.js';
 import { DrawableEntity } from './engine/drawableEntity.js';
+import { CanvasRenderTarget } from './engine/renderTarget.js';
 
 export function camerasFactory(startingPosition, getCameraFollow, depths, visibleCanvas, screenShakeOffsetProvider) {
-	return depths.map(parallaxScale => cameraFactory(startingPosition, getCameraFollow, parallaxScale, visibleCanvas, screenShakeOffsetProvider));
+	return depths.map(
+		parallaxScale => cameraFactory(
+			startingPosition,
+			getCameraFollow,
+			parallaxScale,
+			visibleCanvas,
+			screenShakeOffsetProvider
+		)
+	);
 }
 
 function cameraFactory(startingPosition, getCameraFollow, depth, visibleCanvas, screenShakeOffsetProvider) {
 	const canvasInfo = createCanvas(visibleCanvas, PIXEL_GAME_SIZE.add(1, 1));
-	return {
-		canvasInfo: canvasInfo,
-		camera: new Camera(
-			canvasInfo.ctx,
-			startingPosition,
-			getCameraFollow,
-			screenShakeOffsetProvider,
-			depth
-		)
-	}
+	const renderTarget = new CanvasRenderTarget(canvasInfo.canvas, canvasInfo.ctx);
+	return new Camera(
+		renderTarget,
+		startingPosition,
+		getCameraFollow,
+		screenShakeOffsetProvider,
+		depth
+	)
 }
 
 export function timeFactory(buildMode) {

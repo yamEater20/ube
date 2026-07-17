@@ -31,10 +31,12 @@ export class Root extends Entity {
 		);
 
 		this.staticCam = [];
+
+		this.onCameraMove;
 	}
 
-	_getMainCamera() {
-		return this._worldCameras[2].camera;
+	_getMainLayerCamera() {
+		return this._worldCameras[2];
 	}
 
 	globalPosition() {
@@ -42,11 +44,11 @@ export class Root extends Entity {
 	}
 
 	draw() {
-		const mainCamera = this._getMainCamera();
+		const mainCamera = this._getMainLayerCamera();
 		this._registrar.getPool(POOL_TYPES.DRAWABLE).foreach(item => item.draw(mainCamera));
 
-		this._midgroundEntity.draw(this._worldCameras[0].camera);
-		this._midgroundEntity2.draw(this._worldCameras[1].camera);
+		this._midgroundEntity.draw(this._worldCameras[0]);
+		this._midgroundEntity2.draw(this._worldCameras[1]);
 
 		if (debugOptions.showHitboxes) this._registrar.getPool(POOL_TYPES.DRAWABLE_DEBUG).foreach(item => item.draw(mainCamera));
 	}
@@ -67,13 +69,13 @@ export class Root extends Entity {
 		// if (input.nextRoomPressed) this._registrar.getRoomsPool().nextRoom();
 		if (input.showAllPressed) debugOptions.showAll = !debugOptions.showAll;
 
-		this._worldCameras.forEach(c => c.camera.update(this._trueTime.delta));
+		this._worldCameras.forEach(c => c.update(this._trueTime.delta));
 
-		const mainCamera = this._getMainCamera();
+		const mainCamera = this._getMainLayerCamera();
 
 		if (mainCamera.isMoving) {
 			//Do not update world time on room Transition
-			this.onCameraMove(mainCamera);
+			this.onCameraMove.onCameraMove(mainCamera);
 		} else {
 			if (input.pausePressed) this._worldPaused = !this._worldPaused;
 

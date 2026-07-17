@@ -40,8 +40,8 @@ class TorchLightDrawable {
 
 	draw(x, y, camera) {
         const radius = this._radiusProvider.getRadius();
-        camera.drawEllipse(x, y, radius, "#29adff40", "#29adff00");
-        camera.drawEllipse(x, y, radius + 4, "#29adff30", "#29adff00");
+        camera.getRenderTarget().drawEllipse(x, y, radius, "#29adff40", "#29adff00");
+        camera.getRenderTarget().drawEllipse(x, y, radius + 4, "#29adff30", "#29adff00");
     }
 }
 

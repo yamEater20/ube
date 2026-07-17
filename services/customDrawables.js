@@ -7,7 +7,7 @@ export class RectDrawable {
     }
 
     draw(x, y, camera, color) {
-        camera.drawRect(
+        camera.getRenderTarget().drawRect(
             x, y,
             this.size.x, this.size.y,
             color ?? this._color
@@ -35,10 +35,10 @@ export class OpacityDrawableDecorator {
     }
 
     draw(x, y, camera) {
-        //TODO: rethink this.
+        //TODO: generalize this to draw for any color.
         // I think you should write a camera.drawWithColor...?
         // Or, maybe make a DrawableColorable decorator????
-        camera.drawWithOpacity(
+        camera.getRenderTarget().drawWithOpacity(
             () => this._drawable.draw(x, y, camera, this.color),
             this._currentOpacity
         );

@@ -33,7 +33,6 @@ class FallUpdateHandler extends IPlayerUpdateHandler {
 }
 
 function jump(physObj, jumpV) {
-	//TODO: play around with yv/2.
 	physObj.setYVelocity(jumpV);
 }
 
@@ -78,13 +77,13 @@ class FacingHandler extends IPlayerUpdateHandler {
 }
 
 class SlideHandler extends IPlayerUpdateHandler {
-	constructor(shakeScreen) {
+	constructor(onStartSlide) {
 		super();
 		this._xoyoteTime = new Timer();
 
 		this._isSliding = false;
 		this._slideDirection = 0;
-		this._shakeScreen = shakeScreen;
+		this._onStartSlide = onStartSlide;
 	}
 
 	update(physObj, timeDelta, input) {
@@ -95,7 +94,10 @@ class SlideHandler extends IPlayerUpdateHandler {
 			this._slideDirection = input.facing;
 			this._xoyoteTime.stop();
 			input.slideBuffer.stop();
-			this._shakeScreen();
+			this._onStartSlide({
+				position: physObj.globalPosition(),
+				direction: this._slideDirection
+			});
 		} else if (input.grounded) {
 			this._xoyoteTime.restart(framesToMs(8));
 		}

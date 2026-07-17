@@ -4,11 +4,10 @@ import { Vector } from "./math.js";
 const PIXEL_GAME_SIZE = Vector({x: 128, y: 128});
 const TILE_SIZE = 8;
 
-function createFrontBufferCanvas() {
+function createScreenBufferCanvas() {
 	const info = createCanvas(true, PIXEL_GAME_SIZE.scalar(4));
 	const canvas = info.canvas;
 	
-	// canvas.style.backgroundImage = 'url("images/Background.png")';
 	canvas.ondblclick = () => {
         toggleFullscreen();
     };
@@ -63,11 +62,6 @@ function setMaxSize(canvas, ctx) {
 	return smallestRatio;
 }
 
-function clearCanvas(info) {
-	// info.canvas.width = info.canvas.width;
-	info.ctx.clearRect(0, 0, info.canvas.width, info.canvas.height);
-}
-
 const toggleFullscreen = (event) => {
 	const fullScreen = document.fullscreenElement;
 	if (fullScreen) {
@@ -78,8 +72,7 @@ const toggleFullscreen = (event) => {
 };
 
 export {
-    clearCanvas,
-	createFrontBufferCanvas,
+	createScreenBufferCanvas,
     createCanvas,
     setMaxSize,
     PIXEL_GAME_SIZE,

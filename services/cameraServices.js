@@ -1,5 +1,5 @@
 import { IScreenShakeOffsetProvider } from "../engine/camera.js";
-import { VectorZero, Vector } from "../engine/math.js";
+import { VectorZero, Vector, VectorLeft, VectorUp, VectorRight, VectorDown } from "../engine/math.js";
 import { Timer } from "../engine/time.js";
 
 const SCREEN_SHAKES = [
@@ -60,5 +60,43 @@ export class ScreenShakeOffsetProvider extends IScreenShakeOffsetProvider {
 
     getOffset() {
         return this._screenShakePos;
+    }
+}
+
+export class OnCameraMovePushPlayer {
+    constructor(playerPhysObj) {
+        this._playerPhysObj = playerPhysObj;
+    }
+    
+    onCameraMove(camera) {
+        const cameraPos = camera._position;
+        
+        const playerPhysObj = this._playerPhysObj;
+        const playerPos = playerPhysObj.globalPosition();
+
+        const playerWidth = playerPhysObj.hitbox.width;
+        const playerHeight = playerPhysObj.hitbox.height;
+
+        const playerExtents = playerPos.add(playerWidth, playerHeight);
+        const cameraExtents = cameraPos.addPoint(camera.extents);
+
+        let movingHorizontally = false;
+
+        if (playerExtents.x > cameraExtents.x) {
+            playerPhysObj.moveDirection(-1, VectorLeft);
+            movingHorizontally = true;
+        } else if (playerExtents.y > cameraExtents.y) {
+            playerPhysObj.moveDirection(-1, VectorUp);
+            playerPhysObj.setYVelocity(Math.min(playerPhysObj.getYVelocity(), -0.13));
+        } else if (cameraPos.x > playerPos.x) {
+            playerPhysObj.moveDirection(1, VectorRight);
+            movingHorizontally = true;
+        } else if (cameraPos.y > playerPos.y) {
+            playerPhysObj.moveDirection(1, VectorDown);
+        }
+
+        if (movingHorizontally && Math.abs(playerPhysObj.getXVelocity()) < 0.13) {
+            playerPhysObj.setXVelocity(0);
+        }
     }
 }

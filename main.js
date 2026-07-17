@@ -16,16 +16,15 @@ import { Diagnostics, timeIt } from './engine/diagnostics.js';
 import { Registrar, Pool } from './engine/pools.js';
 import { POOL_TYPES, PoolTypesFactory } from './entities/poolTypes.js';
 import { CollidableProvider } from './services/collidableProvider.js';
-import {Camera, DummyCamera} from './engine/camera.js';
 import * as UpdateHandlers from './services/customUpdateHandlers.js';
 import * as Player from './entities/player.js';
 import { Room, ROOM_SIZE_TILES } from './entities/room.js';
 import * as Setup from './engine/setup.js';
-import { clearCanvas, createCanvas, createFrontBufferCanvas as createScreenBufferCanvas, PIXEL_GAME_SIZE, setMaxSize, TILE_SIZE } from './engine/graphics.js';
+import { createScreenBufferCanvas, setMaxSize, TILE_SIZE } from './engine/graphics.js';
 import { makeRoomCollider } from './entities/roomCollider.js';
 import { EntityDataToEntityFactoryPostProcess as EntityDataToEntityFactoryPostProcess, GeneralPostProcess, LevelDataPostProcessor } from './levelEditor/postProcess.js';
 import * as CustomPostProcess from './services/customPostProcessTileArrays.js';
-import { ENTITY_MAP, ENTITY_TYPE_TO_ENTITY } from './entities/parseEntityData.js';
+import { ENTITY_TYPE_TO_ENTITY } from './entities/parseEntityData.js';
 import { RegistrarWithRooms, CollidableProviderWithRooms, RoomIndicesProvider } from './services/roomPools.js';
 import { SpawnPositionProvider } from './services/spawnPositionProvider.js';
 import { RoomsPool } from './services/roomPools.js';
@@ -33,23 +32,26 @@ import { Root } from './entities/root.js';
 import { ParticlePool } from './services/particlePool.js';
 import { BUILD_MODES } from './engine/debug.js';
 import * as Factories from './factories.js';
-import { DummyScreenShakeOffsetProvider, ScreenShakeOffsetProvider } from './services/cameraServices.js';
+import { OnCameraMovePushPlayer, ScreenShakeOffsetProvider } from './services/cameraServices.js';
 import { createProgressBar } from './entities/progressBar.js';
 import { PlayerVFXManager } from './services/playerVFXManager.js';
+import { Camera } from './engine/camera.js';
+import { CanvasRenderTarget } from './engine/renderTarget.js';
 
 const LEVEL_PATH = "Levels.png";
 
-const CURRENT_BUILD_MODE = BUILD_MODES.LOCAL;
+// const CURRENT_BUILD_MODE = BUILD_MODES.LOCAL;
 // const CURRENT_BUILD_MODE = BUILD_MODES.LOAD_TEST;
-// const CURRENT_BUILD_MODE = BUILD_MODES.PRODUCTION;
+const CURRENT_BUILD_MODE = BUILD_MODES.PRODUCTION;
 
-//TODO: somehow match different entities to different layers
+//TODO: somehow match different entities to different renderTargets
 
 const INITIAL_ROOM_INDEX = 12;
 
 let root;
-let worldCameraInfos;
-let screenBufferCameraInfo;
+let worldCameras;
+let screenBufferCamera;
+let screenBufferCanvasInfo;
 
 ;(async function () {
 	timeIt("Total setup", setup);
@@ -66,26 +68,30 @@ function updateAll() {
 }
 
 function drawBackBuffers() {
-	worldCameraInfos.forEach(i => clearCanvas(i.canvasInfo))
+	worldCameras.forEach(camera => camera.getRenderTarget().clear())
 	root.draw();
 }
 
 function drawScreenBuffer() {
-	const screenBufferCanvasInfo = screenBufferCameraInfo.canvasInfo;
+	const renderTarget = screenBufferCamera.getRenderTarget();
+	
+	renderTarget.clear();
+	const canvas = screenBufferCanvasInfo.canvas;
+	const context = screenBufferCanvasInfo.ctx;
 
-	clearCanvas(screenBufferCanvasInfo);
+	const scale = setMaxSize(canvas, context);
 	
-	const scale = setMaxSize(screenBufferCanvasInfo.canvas, screenBufferCanvasInfo.ctx);
-	
-	worldCameraInfos.forEach(i => {
-		const subpixels = i.camera.getSubPixels();
-		screenBufferCameraInfo.camera.drawCanvas(i.canvasInfo.canvas, scale, subpixels);
+	worldCameras.forEach(camera => {
+		const subpixels = camera.getSubPixels();
+		screenBufferCamera.getRenderTarget().drawRenderTarget(camera.getRenderTarget(), scale, subpixels);
 	});
 }
 
 async function setup() {
 	const loops = Factories.loopFactory(CURRENT_BUILD_MODE, mainLoop, updateAll, drawBackBuffers, drawScreenBuffer);
 	const mainLoopDiagnostics = new Diagnostics(loops.mainLoop);
+
+	screenBufferCanvasInfo = createScreenBufferCanvas();
 
 	const poolDict = PoolTypesFactory();
 	poolDict[POOL_TYPES.CAMERA_FOLLOW] = new Pool();
@@ -108,7 +114,7 @@ async function setup() {
 	const groundedProvider = new UpdateHandlers.GroundedProvider(globalCollidableProvider);
 
 	drawableRoomIndicesProvider.isCameraShaking = screenShakeOffsetProvider.isShaking;
-	drawableRoomIndicesProvider.isCameraMoving = () => worldCameraInfos[2].camera.isMoving;
+	drawableRoomIndicesProvider.isCameraMoving = () => worldCameras[2].isMoving;
 	
 	const particlePool = new ParticlePool(globalCollidableProvider, groundedProvider, root);
 	persistentRegistrar.registerEntity(particlePool.getDataToRegister());
@@ -116,7 +122,7 @@ async function setup() {
 	const getCameraFollow = () => registrarWithRooms.getPool(POOL_TYPES.CAMERA_FOLLOW).get()[0];
 
 	const cameraInitialPosition = Vector({x: 128*2, y: 128*2});
-	worldCameraInfos = Factories.camerasFactory(
+	worldCameras = Factories.camerasFactory(
 		cameraInitialPosition,
 		getCameraFollow,
 		[0.05, 0.1, 1],
@@ -124,24 +130,20 @@ async function setup() {
 		screenShakeOffsetProvider
 	);
 
+	screenBufferCamera = new Camera(
+		new CanvasRenderTarget(screenBufferCanvasInfo.canvas, screenBufferCanvasInfo.ctx),
+		cameraInitialPosition,
+		() => root,
+		screenShakeOffsetProvider
+	);
+
 	root = new Root(
 		Factories.timeFactory(CURRENT_BUILD_MODE),
 		Factories.timeFactory(CURRENT_BUILD_MODE),
-		worldCameraInfos,
+		worldCameras,
 		inputProvider,
 		registrarWithRooms
 	);
-
-	const screenBufferCanvasInfo = createScreenBufferCanvas();
-	screenBufferCameraInfo = {
-		canvasInfo: screenBufferCanvasInfo,
-		camera: new Camera(
-			screenBufferCanvasInfo.ctx,
-			cameraInitialPosition,
-			() => root,
-			screenShakeOffsetProvider
-		)
-	};
 
 	const entityConstructionPostProcessor = new LevelDataPostProcessor([
 		new CustomPostProcess.SpringCallbackPostProcess(particlePool.createParticles),
@@ -177,7 +179,7 @@ async function setup() {
 		new SpawnPositionProvider(roomsPool),
 		playerVFXManager,
 		roomCollider => {
-			worldCameraInfos.forEach(info => info.camera.isMoving = true);
+			worldCameras.forEach(camera => camera.isMoving = true);
 			// screenShakeOffsetProvider.cancelScreenShake();
 			const roomIndex = roomCollider.roomIndex;
 			drawableRoomIndicesProvider.newRoomIndex(roomIndex);
@@ -187,37 +189,7 @@ async function setup() {
 		() => root.queueReset()
 	);
 
-	root.onCameraMove = camera => {
-		const cameraPos = camera._position;
-
-		const playerPhysObj = player[POOL_TYPES.COLLIDABLE][0];
-		const playerPos = playerPhysObj.globalPosition();
-
-		const playerWidth = playerPhysObj.hitbox.width;
-		const playerHeight = playerPhysObj.hitbox.height;
-
-		const playerExtents = playerPos.add(playerWidth, playerHeight);
-		const cameraExtents = cameraPos.addPoint(PIXEL_GAME_SIZE);
-
-		let movingHorizontally = false;
-
-		if (playerExtents.x > cameraExtents.x) {
-			playerPhysObj.moveDirection(-1, VectorLeft);
-			movingHorizontally = true;
-		} else if (playerExtents.y > cameraExtents.y) {
-			playerPhysObj.moveDirection(-1, VectorUp);
-			playerPhysObj.setYVelocity(Math.min(playerPhysObj.getYVelocity(), -0.13));
-		} else if (cameraPos.x > playerPos.x) {
-			playerPhysObj.moveDirection(1, VectorRight);
-			movingHorizontally = true;
-		} else if (cameraPos.y > playerPos.y) {
-			playerPhysObj.moveDirection(1, VectorDown);
-		}
-
-		if (movingHorizontally && Math.abs(playerPhysObj.getXVelocity()) < 0.13) {
-			playerPhysObj.setXVelocity(0);
-		}
-	};
+	root.onCameraMove = new OnCameraMovePushPlayer(player[POOL_TYPES.COLLIDABLE][0]);
 	
 	persistentRegistrar.registerEntity(player);
 	persistentRegistrar.registerItem(POOL_TYPES.UPDATEABLE, screenShakeOffsetProvider);

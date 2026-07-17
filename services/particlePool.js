@@ -38,7 +38,8 @@ export class ParticlePool {
     }
 
 	createParticles(parent, position, options) {
-        for (let i = 0; i < options.numParticlesFunction(); ++i) {
+        const numParticles = options.numParticlesFunction();
+        for (let i = 0; i < numParticles; ++i) {
             this.createParticle(parent, position, options);
         }
 	}
@@ -53,16 +54,21 @@ export class ParticlePool {
         let normalizedSpawnOffset = VectorZero;
         
         let initialVelocity = Vector({x: 0, y: 0});
+        let airResistance = 0.006;
 
         const size = options.size ?? VectorOne;
 
         if (options.spawnArea) {
             normalizedSpawnOffset = Vector({x: Math.random(), y: Math.random()}).add(-0.5, -0.5);
-            spawnOffset = normalizedSpawnOffset.multElementWise(options.spawnArea);
+            spawnOffset = normalizedSpawnOffset.multElementWise(options.spawnArea).trunc();
         }
 
         if (options.initialVelocityFunction) {
             initialVelocity = options.initialVelocityFunction(normalizedSpawnOffset);
+        }
+
+        if (options.airResitanceFunction) {
+            airResistance = options.airResitanceFunction();
         }
 
         const physObj = particleData.typedData.physObj;
@@ -77,6 +83,7 @@ export class ParticlePool {
         particleData.typedData.rectDrawable.size = size;
         particleData.typedData.physObj.hitbox.width = size.x;
         particleData.typedData.physObj.hitbox.height = size.y;
+        particleData.typedData.updateHandler.airResistance = airResistance;
         
         this._activeParticles.push(particleData);
     }

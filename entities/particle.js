@@ -10,18 +10,18 @@ import { OpacityDrawableDecorator, RectDrawable } from "../services/customDrawab
 
 export function makeParticle(parent, relativePosition, collidableProvider, groundedProvider) {
     const hitbox = new RectHitbox(VectorZero, 1, 1);
-    
+
+    const updateHandler = new FallAirResistanceUpdateHandler(
+        new FallUpdateHandler(groundedProvider),
+        0.0001,
+        0.006
+    );
+
     const p = new PhysObj(
         parent,
         relativePosition,
         hitbox,
-        new Composite([
-            new FallAirResistanceUpdateHandler(
-                new FallUpdateHandler(groundedProvider),
-                0.0001,
-                0.006
-            )
-        ]),
+        updateHandler,
         new CollisionHandlers.Reactions(
             [
                 new GroundReaction(groundedProvider),
@@ -48,7 +48,8 @@ export function makeParticle(parent, relativePosition, collidableProvider, groun
             physObj: p,
             rectDrawable: rectDrawable,
             opacityDrawable: opacityDrawable,
-            disableTimer: disableTimer
+            disableTimer: disableTimer,
+            updateHandler: updateHandler
         },
         registrationData: ret
     };

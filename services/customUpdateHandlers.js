@@ -43,13 +43,13 @@ export class FallUpdateHandler {
 export class FallAirResistanceUpdateHandler {
 	constructor(fallUpdateHandler, gravity, airResistance) {
 		this._fallUpdateHandler = fallUpdateHandler;
-		this._gravity = gravity;
-		this._airResistance = airResistance;
+		this.gravity = gravity;
+		this.airResistance = airResistance;
 	}
 
 	update(physObj, timeDelta) {
-		this._fallUpdateHandler.update(physObj, timeDelta, this._gravity);
-		const airResistance = Math.max(1 - this._airResistance * timeDelta, 0);
+		this._fallUpdateHandler.update(physObj, timeDelta, this.gravity);
+		const airResistance = Math.max(1 - this.airResistance * timeDelta, 0);
 		physObj.velocity = physObj.velocity.scalar(airResistance);
 	}
 }

@@ -13,7 +13,7 @@ function getWidthOfText(txt, size) {
 	return Math.round(ret);
 }
 
-function writeText(camera, txt, size, pos, color, spacing) {
+function writeText(renderTarget, txt, size, pos, color, spacing) {
 	let needed = [];
 	txt = txt.toUpperCase(); // because I only did uppercase letters
 	for (let i = 0; i < txt.length; i++) {
@@ -32,7 +32,7 @@ function writeText(camera, txt, size, pos, color, spacing) {
 			let row = letter[y];
 			for (let x = 0; x < row.length; x++) {
 				if (row[x]) {
-					camera.fillRect(currX + x * size, currY, size, size, color);
+					renderTarget.drawRect(currX + x * size, currY, size, size, color);
 				}
 			}
 			addX = Math.max(addX, row.length * size);
