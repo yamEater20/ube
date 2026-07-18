@@ -1,6 +1,7 @@
-import { IScreenShakeOffsetProvider } from "../engine/camera.js";
+import { IPositionProvider } from "../engine/iPositionProvider.js";
 import { VectorZero, Vector, VectorLeft, VectorUp, VectorRight, VectorDown } from "../engine/math.js";
 import { Timer } from "../engine/time.js";
+import { POOL_TYPES } from "../entities/poolTypes.js";
 
 const SCREEN_SHAKES = [
 	Vector({x: 0, y: 0}),
@@ -14,53 +15,55 @@ const SCREEN_SHAKES = [
 	Vector({x: 0, y: 0}),
 ];
 
-export class DummyScreenShakeOffsetProvider extends IScreenShakeOffsetProvider {
-    getOffset() {
+export class DummyScreenShakeOffsetProvider extends IPositionProvider {
+    getPosition() {
         return VectorZero;
     }
+
+    update(timeDelta) {}
 }
 
-export class ScreenShakeOffsetProvider extends IScreenShakeOffsetProvider {
-    constructor() {
-        super();
-        this._strength = 0;
-        this._shakeTimer = new Timer();
-        this._screenShakePos = Vector({x: 0, y: 0});
-        this.shakeScreen = this.shakeScreen.bind(this);
-        this.isShaking = this.isShaking.bind(this);
-    }
+export class ScreenShakeOffsetProvider extends IPositionProvider {
+    // constructor() {
+    //     super();
+    //     this._strength = 0;
+    //     this._shakeTimer = new Timer();
+    //     this._screenShakePos = Vector({x: 0, y: 0});
+    //     this.shakeScreen = this.shakeScreen.bind(this);
+    //     this.isShaking = this.isShaking.bind(this);
+    // }
 
-    shakeScreen(strength = 1, duration = 250) {
-        if (this._shakeTimer.running())
-            this._strength = Math.max(this._strength, strength);
-        else
-            this._strength = strength;
-        this._shakeTimer.restart(duration);
-    }
+    // shakeScreen(strength = 1, duration = 250) {
+    //     if (this._shakeTimer.running())
+    //         this._strength = Math.max(this._strength, strength);
+    //     else
+    //         this._strength = strength;
+    //     this._shakeTimer.restart(duration);
+    // }
 
-    isShaking() {
-        return this._shakeTimer.running();
-    }
+    // isShaking() {
+    //     return this._shakeTimer.running();
+    // }
 
-    cancelScreenShake() {
-        this._shakeTimer.stop();
-        this._screenShakePos = VectorZero;
-    }
+    // cancelScreenShake() {
+    //     this._shakeTimer.stop();
+    //     this._screenShakePos = VectorZero;
+    // }
 
-    update(timeDelta) {
-        this._shakeTimer.update(timeDelta);
+    // update(timeDelta) {
+    //     this._shakeTimer.update(timeDelta);
 
-        if (this._shakeTimer.finished()) {
-            this._screenShakePos = VectorZero;
-        } else {
-            const index = this._shakeTimer.framesRemaining() % SCREEN_SHAKES.length;
-            this._screenShakePos = SCREEN_SHAKES[index].scalar(this._strength);
-        }
-    }
+    //     if (this._shakeTimer.finished()) {
+    //         this._screenShakePos = VectorZero;
+    //     } else {
+    //         const index = this._shakeTimer.framesRemaining() % SCREEN_SHAKES.length;
+    //         this._screenShakePos = SCREEN_SHAKES[index].scalar(this._strength);
+    //     }
+    // }
 
-    getOffset() {
-        return this._screenShakePos;
-    }
+    // getOffset() {
+    //     return this._screenShakePos;
+    // }
 }
 
 export class OnCameraMovePushPlayer {
@@ -99,4 +102,20 @@ export class OnCameraMovePushPlayer {
             playerPhysObj.setXVelocity(0);
         }
     }
+}
+
+export class SnapToRoomPositionProvider extends IPositionProvider {
+    constructor(registrarWithRooms) {
+        super();
+        this._registrarWithRooms = registrarWithRooms;
+    }
+
+    getPosition() {
+        return this._registrarWithRooms
+            .getPool(POOL_TYPES.CAMERA_FOLLOW)
+            .get()[0]
+            .globalPosition();
+    }
+
+    update(timeDelta) {}
 }

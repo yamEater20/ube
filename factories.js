@@ -14,29 +14,32 @@ import { RectDrawable } from './services/customDrawables.js';
 import { framesToMs, Vector } from './engine/math.js';
 import { DrawableEntity } from './engine/drawableEntity.js';
 import { CanvasRenderTarget } from './engine/renderTarget.js';
+import { CameraFollowingPositionProvider } from './engine/cameraFollowingPositionProvider.js';
 
-export function camerasFactory(startingPosition, getCameraFollow, depths, visibleCanvas, screenShakeOffsetProvider) {
+export function camerasFactory(visibleCanvas, screenShakeOffsetProvider) {
+	const positionProviders = positionProvidersFactory(initialPosition, followablePositionProvider, depths);
+	return {
+		positionProviders: positionProviders,
+		cameras: positionProviders.map(
+			provider => cameraFactory(provider, visibleCanvas)
+		)
+	};
+}
+
+function positionProvidersFactory(initialPosition, followablePositionProvider, depths) {
 	return depths.map(
-		parallaxScale => cameraFactory(
-			startingPosition,
-			getCameraFollow,
-			parallaxScale,
-			visibleCanvas,
-			screenShakeOffsetProvider
+		parallaxScale => new CameraFollowingPositionProvider(
+			initialPosition,
+			followablePositionProvider,
+			parallaxScale
 		)
 	);
 }
 
-function cameraFactory(startingPosition, getCameraFollow, depth, visibleCanvas, screenShakeOffsetProvider) {
+function cameraFactory(positionProvider, visibleCanvas) {
 	const canvasInfo = createCanvas(visibleCanvas, PIXEL_GAME_SIZE.add(1, 1));
 	const renderTarget = new CanvasRenderTarget(canvasInfo.canvas, canvasInfo.ctx);
-	return new Camera(
-		renderTarget,
-		startingPosition,
-		getCameraFollow,
-		screenShakeOffsetProvider,
-		depth
-	)
+	return new Camera(renderTarget, positionProvider);
 }
 
 export function timeFactory(buildMode) {

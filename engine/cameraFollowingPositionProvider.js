@@ -1,19 +1,28 @@
-import { IPositionProvider } from "./iPositionProvider";
+import { PIXEL_GAME_SIZE } from "./graphics.js";
+import { IPositionProvider } from "./iPositionProvider.js";
 
-class CameraFollowingPositionProvider extends IPositionProvider {
-    constructor(initialPosition, getFollowingFunc, depth) {
+export class CameraFollowingPositionProvider extends IPositionProvider {
+    constructor(initialPosition, followablePositionProvider, depth) {
+        super();
         this._position = initialPosition ?? Vector({x: 0, y: 0});
-        this._getFollowingFunc;
+        this._followablePositionProvider = followablePositionProvider;
+        this.depth = depth;
 
         this.isMoving = false;
+
+        this.extents = PIXEL_GAME_SIZE;
     }
 
     getPosition() {
-        return this._position;
+        return this._position.scalar(this.depth).trunc();
+        // return this._position.addPoint(this._getScreenShakeOffset()).scalar(this.depth).trunc();
     }
 
     update(timeDelta) {
-
+        const pos = this._followablePositionProvider
+            .getPosition()
+            .add(-PIXEL_GAME_SIZE.x/2, -PIXEL_GAME_SIZE.y/2);
+        this._moveToTarget(timeDelta, pos);
     }
 
     getSubPixels() {
@@ -24,9 +33,10 @@ class CameraFollowingPositionProvider extends IPositionProvider {
         return floatPosition.addPoint(truncPosition);
     }
 
-    // _getPositionUnTruncated() {
-    //     return this._position.addPoint(this._getScreenShakeOffset()).scalar(this.depth);
-    // }
+    _getPositionUnTruncated() {
+        return this._position.scalar(this.depth);
+        // return this._position.addPoint(this._getScreenShakeOffset()).scalar(this.depth);
+    }
 
     _moveToTarget(timeDelta, targetPosition) {
 		var v = targetPosition.addPoint(this._position.scalar(-1));

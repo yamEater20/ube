@@ -32,11 +32,13 @@ import { Root } from './entities/root.js';
 import { ParticlePool } from './services/particlePool.js';
 import { BUILD_MODES } from './engine/debug.js';
 import * as Factories from './factories.js';
-import { OnCameraMovePushPlayer, ScreenShakeOffsetProvider } from './services/cameraServices.js';
+import { DummyScreenShakeOffsetProvider, OnCameraMovePushPlayer, ScreenShakeOffsetProvider, SnapToRoomPositionProvider } from './services/cameraServices.js';
 import { createProgressBar } from './entities/progressBar.js';
 import { PlayerVFXManager } from './services/playerVFXManager.js';
 import { Camera } from './engine/camera.js';
 import { CanvasRenderTarget } from './engine/renderTarget.js';
+import { CameraFollowingPositionProvider } from './engine/cameraFollowingPositionProvider.js';
+import { StaticPositionProvider } from './engine/iPositionProvider.js';
 
 const LEVEL_PATH = "Levels.png";
 
@@ -50,6 +52,7 @@ const INITIAL_ROOM_INDEX = 12;
 
 let root;
 let worldCameras;
+let worldPositionProviders;
 let screenBufferCamera;
 let screenBufferCanvasInfo;
 
@@ -97,7 +100,8 @@ async function setup() {
 	poolDict[POOL_TYPES.CAMERA_FOLLOW] = new Pool();
 	const persistentRegistrar = new Registrar(poolDict);
 	
-	const screenShakeOffsetProvider = new ScreenShakeOffsetProvider();
+	//TODO
+	const screenShakeOffsetProvider = new DummyScreenShakeOffsetProvider();
 	const drawableRoomIndicesProvider = new RoomIndicesProvider(INITIAL_ROOM_INDEX);
 
 	const roomsPool = new RoomsPool(drawableRoomIndicesProvider, INITIAL_ROOM_INDEX);
@@ -113,18 +117,20 @@ async function setup() {
 	);
 	const groundedProvider = new UpdateHandlers.GroundedProvider(globalCollidableProvider);
 
-	drawableRoomIndicesProvider.isCameraShaking = screenShakeOffsetProvider.isShaking;
+	//TODO
+	drawableRoomIndicesProvider.isCameraShaking = () => false;
+	// drawableRoomIndicesProvider.isCameraShaking = screenShakeOffsetProvider.isShaking;
 	drawableRoomIndicesProvider.isCameraMoving = () => worldCameras[2].isMoving;
 	
 	const particlePool = new ParticlePool(globalCollidableProvider, groundedProvider, root);
 	persistentRegistrar.registerEntity(particlePool.getDataToRegister());
 	
-	const getCameraFollow = () => registrarWithRooms.getPool(POOL_TYPES.CAMERA_FOLLOW).get()[0];
+	const cameraFollowSnapToRoom = new SnapToRoomPositionProvider(registrarWithRooms);
 
 	const cameraInitialPosition = Vector({x: 128*2, y: 128*2});
 	worldCameras = Factories.camerasFactory(
 		cameraInitialPosition,
-		getCameraFollow,
+		cameraFollowSnapToRoom,
 		[0.05, 0.1, 1],
 		false,
 		screenShakeOffsetProvider
@@ -132,9 +138,7 @@ async function setup() {
 
 	screenBufferCamera = new Camera(
 		new CanvasRenderTarget(screenBufferCanvasInfo.canvas, screenBufferCanvasInfo.ctx),
-		cameraInitialPosition,
-		() => root,
-		screenShakeOffsetProvider
+		new StaticPositionProvider(cameraInitialPosition)
 	);
 
 	root = new Root(

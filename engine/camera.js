@@ -12,7 +12,7 @@ export class DummyCamera {
     update(timeDelta) {}
 }
 
-class Camera {
+export class Camera {
     constructor(renderTarget, positionProvider) {
         this._renderTarget = renderTarget;
         this.scale = 1;
@@ -28,16 +28,15 @@ class Camera {
         return this._screenShakeOffsetProvider.getOffset();
     }
 
-    getPosition() {
-        return this._getPositionUnTruncated().trunc().scalar(-1);
-    }
+    // getPosition() {
+    //     return this._getPositionUnTruncated().trunc().scalar(-1);
+    // }
 
     getRenderTarget() {return this._renderTarget;}
 
     update(timeDelta) {
         //TODO: change this pool to a queue for cinematics, remove hardcoded logic
-        this._moveToTarget(timeDelta, this._getFollowingFunc().globalPosition().add(-PIXEL_GAME_SIZE.x/2, -PIXEL_GAME_SIZE.y/2));
-
+        
         const myPosition = this.getPosition();
 
         //TODO: This is a code smell. Reset Transform doesn''t belong on a render target.
@@ -45,13 +44,4 @@ class Camera {
         //And have a bunch of pure functions that drawRect, drawImage, drawEllipse, etc.
         this._renderTarget.reset(myPosition, this.scale);
     }
-}
-
-// camera._position = Vector({x: 5, y: 20});
-const staticCamera = new Camera();
-
-export {
-    Camera,
-    IScreenShakeOffsetProvider,
-    staticCamera
 }
