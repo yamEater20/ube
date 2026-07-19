@@ -103,7 +103,6 @@ async function setup() {
 	poolDict[POOL_TYPES.CAMERA_FOLLOW] = new Pool();
 	const persistentRegistrar = new Registrar(poolDict);
 	
-	//TODO
 	const screenShakeOffsetProvider = new DummyScreenShakeOffsetProvider();
 	const drawableRoomIndicesProvider = new RoomIndicesProvider(INITIAL_ROOM_INDEX);
 
@@ -189,7 +188,7 @@ async function setup() {
 		new SpawnPositionProvider(roomsPool),
 		playerVFXManager,
 		roomCollider => {
-			worldCameras.forEach(camera => camera.isMoving = true);
+			worldCameraPositionProviders.forEach(positionProvider => positionProvider.isMoving = true);
 			// screenShakeOffsetProvider.cancelScreenShake();
 			const roomIndex = roomCollider.roomIndex;
 			drawableRoomIndicesProvider.newRoomIndex(roomIndex);
@@ -199,7 +198,11 @@ async function setup() {
 		() => root.queueReset()
 	);
 
-	root.onCameraMove = new OnCameraMovePushPlayer(player[POOL_TYPES.COLLIDABLE][0]);
+	root.onCameraMove = new OnCameraMovePushPlayer(
+		player[POOL_TYPES.COLLIDABLE][0],
+		worldCameras[2],
+		worldCameraPositionProviders[2]
+	);
 	
 	persistentRegistrar.registerEntity(player);
 	persistentRegistrar.registerItem(POOL_TYPES.UPDATEABLE, screenShakeOffsetProvider);

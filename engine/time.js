@@ -35,7 +35,7 @@ class FixedTimeDeltaTime {
 class Time {
     constructor() {
         this.start = window.performance.now();
-        this.scale = 1;
+        this.scale = 0.1;
         this.delta = 0;
         
         this._lastTime = 0;

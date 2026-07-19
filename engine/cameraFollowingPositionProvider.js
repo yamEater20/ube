@@ -29,15 +29,13 @@ export class CameraFollowingPositionProvider extends IPositionProvider {
 
     _getPositionUnTruncated() {
         return this._position.scalar(this.depth);
-        // return this._position.addPoint(this._getScreenShakeOffset()).scalar(this.depth);
     }
 
     _moveToTarget(timeDelta, targetPosition) {
 		var v = targetPosition.addPoint(this._position.scalar(-1));
 		const mag = v.magnitude();
         //TODO: try 0.5
-        if (mag < 1) {
-            console.log("!");
+        if (mag < 0.5) {
             this._position = targetPosition;
             this.isMoving = false;
 			return;

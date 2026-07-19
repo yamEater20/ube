@@ -67,8 +67,22 @@ export class ScreenShakeOffsetProvider extends IPositionProvider {
 }
 
 export class OnCameraMovePushPlayer {
-    constructor(playerPhysObj) {
+    constructor(playerPhysObj, mainCamera, mainCameraPositionProvider) {
         this._playerPhysObj = playerPhysObj;
+        this._mainCamera = mainCamera;
+        this._mainCameraPositionProvider = mainCameraPositionProvider;
+    }
+
+    //Technically antipattern - should have a mainCameraProvider.
+    isMoving() {
+        return this._mainCameraPositionProvider.isMoving;
+    }
+
+    update(timeDelta) {
+        const isMoving = this._mainCameraPositionProvider.isMoving;
+        if (isMoving) {
+            this.onCameraMove(this._mainCamera);
+        }
     }
     
     onCameraMove(camera) {

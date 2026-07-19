@@ -22,10 +22,10 @@ export class Camera {
         this.extents = PIXEL_GAME_SIZE;
     }
 
-    getPosition() {return this._positionProvider
-        .getPosition()
-        .add(-this.extents.x/2, -this.extents.y/2)
-        .scalar(-1);
+    getPosition() {
+        return this._positionProvider
+            .getPosition()
+            .add(-this.extents.x/2, -this.extents.y/2);
     }
 
     _getScreenShakeOffset() {
@@ -45,6 +45,6 @@ export class Camera {
         //TODO: This is a code smell. Reset Transform doesn''t belong on a render target.
         //I think the correct way to do this is to remove the renderTarget abstraction
         //And have a bunch of pure functions that drawRect, drawImage, drawEllipse, etc.
-        this._renderTarget.reset(myPosition, this.scale);
+        this._renderTarget.reset(myPosition.scalar(-1), this.scale);
     }
 }

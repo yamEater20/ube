@@ -62,7 +62,6 @@ export class Root extends Entity {
 		const input = this._inputProvider.getInput();
 
 		//Debug only
-		
 		if (input.debugPressed) toggleDebugAll();
 		if (input.noClipPressed) debugOptions.noClip = !debugOptions.noClip;
 		if (input.debugHitboxesPressed) debugOptions.showHitboxes = !debugOptions.showHitboxes;
@@ -71,19 +70,17 @@ export class Root extends Entity {
 
 		this._worldCameras.forEach(c => c.update(this._trueTime.delta));
 
-		const mainCamera = this._getMainLayerCamera();
+		const isMainCameraMoving = this.onCameraMove.isMoving();
+		this.onCameraMove.update();
 
-		if (mainCamera.isMoving) {
-			//Do not update world time on room Transition
-			this.onCameraMove.onCameraMove(mainCamera);
-		} else {
+		if (!isMainCameraMoving) {
 			if (input.pausePressed) this._worldPaused = !this._worldPaused;
 
 			if (!this._worldPaused)
 			{
 				if (input.resetPressed) this.queueReset();
 				this._registrar.getPool(POOL_TYPES.UPDATEABLE).foreach(item => item.update(this._worldTime.delta));
-			}
+			}	
 		}
 
 		if (this._shouldReset) {
