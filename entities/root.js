@@ -69,9 +69,9 @@ export class Root extends Entity {
 		if (input.showAllPressed) debugOptions.showAll = !debugOptions.showAll;
 
 		this._worldCameras.forEach(c => c.update(this._trueTime.delta));
-
-		const isMainCameraMoving = this.onCameraMove.isMoving();
+		
 		this.onCameraMove.update();
+		const isMainCameraMoving = this.onCameraMove.isMoving();
 
 		if (!isMainCameraMoving) {
 			if (input.pausePressed) this._worldPaused = !this._worldPaused;

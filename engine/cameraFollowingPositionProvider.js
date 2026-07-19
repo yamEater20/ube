@@ -13,7 +13,6 @@ export class CameraFollowingPositionProvider extends IPositionProvider {
 
     getPosition() {
         return this._position.scalar(this.depth).trunc();
-        // return this._position.addPoint(this._getScreenShakeOffset()).scalar(this.depth).trunc();
     }
 
     update(timeDelta) {
@@ -34,11 +33,10 @@ export class CameraFollowingPositionProvider extends IPositionProvider {
     _moveToTarget(timeDelta, targetPosition) {
 		var v = targetPosition.addPoint(this._position.scalar(-1));
 		const mag = v.magnitude();
-        //TODO: try 0.5
         if (mag < 0.5) {
             this._position = targetPosition;
-            this.isMoving = false;
-			return;
+			if (mag < 0.01) this.isMoving = false;
+            return;
 		}
 
         this.isMoving = true;
