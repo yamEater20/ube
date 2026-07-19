@@ -39,7 +39,6 @@ export class Camera {
     getRenderTarget() {return this._renderTarget;}
 
     update(timeDelta) {
-        this._positionProvider.update(timeDelta);
         const myPosition = this.getPosition();
 
         //TODO: This is a code smell. Reset Transform doesn''t belong on a render target.

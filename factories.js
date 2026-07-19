@@ -14,25 +14,24 @@ import { RectDrawable } from './services/customDrawables.js';
 import { framesToMs, Vector } from './engine/math.js';
 import { DrawableEntity } from './engine/drawableEntity.js';
 import { CanvasRenderTarget } from './engine/renderTarget.js';
-import { CameraFollowingPositionProvider } from './engine/cameraFollowingPositionProvider.js';
+import * as PositionProviders from './engine/positionProviders.js';
 
-export function camerasFactory(initialPosition, followablePositionProvider, depths, visibleCanvas, screenShakeOffsetProvider) {
-	const positionProviders = positionProvidersFactory(initialPosition, followablePositionProvider, depths);
-	return {
-		positionProviders: positionProviders,
-		cameras: positionProviders.map(
-			provider => cameraFactory(provider, visibleCanvas)
-		)
-	};
+export function camerasFactory(basePositionProvider, depths, visibleCanvas) {
+	const positionProviders = positionProvidersFactory(basePositionProvider, depths);
+	return positionProviders.map(
+		provider => cameraFactory(provider, visibleCanvas)
+	);
 }
 
-function positionProvidersFactory(initialPosition, followablePositionProvider, depths) {
+function positionProvidersFactory(basePositionProvider, depths) {
 	return depths.map(
-		parallaxScale => new CameraFollowingPositionProvider(
-			initialPosition,
-			followablePositionProvider,
-			parallaxScale
-		)
+		parallaxScale =>
+			new PositionProviders.Truncated(
+				new PositionProviders.WithDepth(
+					basePositionProvider,
+					parallaxScale
+				)
+			)
 	);
 }
 

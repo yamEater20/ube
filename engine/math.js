@@ -108,6 +108,10 @@ function lerp(a, b, t) {
 	return a * (1 - t) + b * t;
 }
 
+function lerpVector(a, b, t) {
+	return Vector({x: lerp(a.x, b.x, t), y: lerp(a.y, b.y, t)});
+}
+
 export {
 	Vector,
 	vectorToRadians,
@@ -123,5 +127,6 @@ export {
 	framesToMs,
 	shuffle,
 	getMethods,
-	lerp
+	lerp,
+	lerpVector
 };

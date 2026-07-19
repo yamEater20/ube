@@ -6,7 +6,7 @@ import { DrawableEntity } from "../engine/drawableEntity.js";
 import { Sprite, SPRITE_LK } from "../engine/sprites.js";
 
 export class Root extends Entity {
-	constructor(trueTime, worldTime, worldCameras, inputProvider, registrar) {
+	constructor(trueTime, worldTime, worldCameras, inputProvider, registrar, a, b) {
 		super();
         this._trueTime = trueTime;
 		this._worldTime = worldTime;
@@ -33,10 +33,12 @@ export class Root extends Entity {
 		this.staticCam = [];
 
 		this.onCameraMove;
+		this._a = a;
+		this._b = b;
 	}
 
 	_getMainLayerCamera() {
-		return this._worldCameras[2];
+		return this._worldCameras[0];
 	}
 
 	globalPosition() {
@@ -47,8 +49,8 @@ export class Root extends Entity {
 		const mainCamera = this._getMainLayerCamera();
 		this._registrar.getPool(POOL_TYPES.DRAWABLE).foreach(item => item.draw(mainCamera));
 
-		this._midgroundEntity.draw(this._worldCameras[0]);
-		this._midgroundEntity2.draw(this._worldCameras[1]);
+		// this._midgroundEntity.draw(this._worldCameras[0]);
+		// this._midgroundEntity2.draw(this._worldCameras[1]);
 
 		if (debugOptions.showHitboxes) this._registrar.getPool(POOL_TYPES.DRAWABLE_DEBUG).foreach(item => item.draw(mainCamera));
 	}
@@ -69,7 +71,11 @@ export class Root extends Entity {
 		if (input.showAllPressed) debugOptions.showAll = !debugOptions.showAll;
 
 		this._worldCameras.forEach(c => c.update(this._trueTime.delta));
-		
+
+		//TODO: fix
+		this._a.update(this._worldTime.delta);
+		this._b.update(this._worldTime.delta);
+
 		this.onCameraMove.update();
 		const isMainCameraMoving = this.onCameraMove.isMoving();
 

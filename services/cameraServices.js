@@ -1,6 +1,6 @@
 import { IPositionProvider } from "../engine/iPositionProvider.js";
-import { VectorZero, Vector, VectorLeft, VectorUp, VectorRight, VectorDown } from "../engine/math.js";
-import { Timer } from "../engine/time.js";
+import { VectorZero, Vector, VectorLeft, VectorUp, VectorRight, VectorDown, lerpVector, framesToMs } from "../engine/math.js";
+import { msToFrames, Timer } from "../engine/time.js";
 import { POOL_TYPES } from "../entities/poolTypes.js";
 
 const SCREEN_SHAKES = [
@@ -15,17 +15,10 @@ const SCREEN_SHAKES = [
 	Vector({x: 0, y: 0}),
 ];
 
-export class DummyScreenShakeOffsetProvider extends IPositionProvider {
-    getPosition() {
-        return VectorZero;
-    }
-
-    update(timeDelta) {}
-}
-
-export class ScreenShakeOffsetProvider extends IPositionProvider {
-    constructor() {
+export class ScreenShakePositionProvider extends IPositionProvider {
+    constructor(basePositionProvider) {
         super();
+        this._basePositionProvider = basePositionProvider;
         this._strength = 0;
         this._shakeTimer = new Timer();
         this._screenShakePos = Vector({x: 0, y: 0});
@@ -56,31 +49,37 @@ export class ScreenShakeOffsetProvider extends IPositionProvider {
         if (this._shakeTimer.finished()) {
             this._screenShakePos = VectorZero;
         } else {
-            //Lerp between
-            const index = this._shakeTimer.framesRemaining() % SCREEN_SHAKES.length;
-            this._screenShakePos = SCREEN_SHAKES[index].scalar(this._strength);
+            const currentFrame = this._shakeTimer.framesRemaining();
+            const index = currentFrame % SCREEN_SHAKES.length;
+            const nextIndex = (currentFrame + 1) % SCREEN_SHAKES.length;
+
+            const curScreenShakePos = SCREEN_SHAKES[index];
+            const nextScreenShakePos = SCREEN_SHAKES[nextIndex];
+
+            const lerpTime = (this._shakeTimer._durationMs - framesToMs(currentFrame)) / framesToMs(1);
+            this._screenShakePos = lerpVector(curScreenShakePos, nextScreenShakePos, lerpTime).scalar(this._strength);
         }
     }
 
     getPosition() {
-        return this._screenShakePos;
+        return this._basePositionProvider.getPosition().addPoint(this._screenShakePos);
     }
 }
 
 export class OnCameraMovePushPlayer {
-    constructor(playerPhysObj, mainCamera, mainCameraPositionProvider) {
+    constructor(playerPhysObj, mainCamera, movingPositionProvider) {
         this._playerPhysObj = playerPhysObj;
         this._mainCamera = mainCamera;
-        this._mainCameraPositionProvider = mainCameraPositionProvider;
+        this._movingPositionProvider = movingPositionProvider;
     }
 
     //Technically antipattern - should have a mainCameraProvider.
     isMoving() {
-        return this._mainCameraPositionProvider.isMoving;
+        return this._movingPositionProvider.isMoving;
     }
 
     update(timeDelta) {
-        const isMoving = this._mainCameraPositionProvider.isMoving;
+        const isMoving = this._movingPositionProvider.isMoving;
         if (isMoving) {
             this.onCameraMove(this._mainCamera);
         }
@@ -131,6 +130,4 @@ export class SnapToRoomPositionProvider extends IPositionProvider {
             .get()[0]
             .globalPosition();
     }
-
-    update(timeDelta) {}
 }

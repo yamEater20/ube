@@ -142,7 +142,7 @@ export class CanvasRenderTarget extends IRenderTarget {
     drawRenderTarget(renderTarget, scale, subpixels) {
         this._context.save();
         this._context.scale(scale, scale);
-        this._context.drawImage(renderTarget.getImage(), -subpixels.x, -subpixels.y);
+        this._context.drawImage(renderTarget.getImage(), subpixels.x, subpixels.y);
         this._context.restore();
     }
 
