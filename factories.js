@@ -16,7 +16,7 @@ import { DrawableEntity } from './engine/drawableEntity.js';
 import { CanvasRenderTarget } from './engine/renderTarget.js';
 import { CameraFollowingPositionProvider } from './engine/cameraFollowingPositionProvider.js';
 
-export function camerasFactory(visibleCanvas, screenShakeOffsetProvider) {
+export function camerasFactory(initialPosition, followablePositionProvider, depths, visibleCanvas, screenShakeOffsetProvider) {
 	const positionProviders = positionProvidersFactory(initialPosition, followablePositionProvider, depths);
 	return {
 		positionProviders: positionProviders,

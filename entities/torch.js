@@ -20,10 +20,10 @@ class Torch extends Entity {
     }
     
     update(timeDelta) {
-        this._time += timeDelta;
-        const x = this._originalRelativePosition.x;
-        const y = Math.sin(this.offset + this._time * FLOAT_SPEED) * FLOAT_AMPLITUDE + this._originalRelativePosition.y;
-        this.relativePosition = Vector({x: x, y: y});
+        // this._time += timeDelta;
+        // const x = this._originalRelativePosition.x;
+        // const y = Math.sin(this.offset + this._time * FLOAT_SPEED) * FLOAT_AMPLITUDE + this._originalRelativePosition.y;
+        // this.relativePosition = Vector({x: x, y: y});
     }
 
     getRadius() {

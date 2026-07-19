@@ -72,7 +72,7 @@ export class OnCameraMovePushPlayer {
     }
     
     onCameraMove(camera) {
-        const cameraPos = camera._position;
+        const cameraPos = camera.getPosition();
         
         const playerPhysObj = this._playerPhysObj;
         const playerPos = playerPhysObj.globalPosition();

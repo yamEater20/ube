@@ -9,8 +9,6 @@ export class CameraFollowingPositionProvider extends IPositionProvider {
         this.depth = depth;
 
         this.isMoving = false;
-
-        this.extents = PIXEL_GAME_SIZE;
     }
 
     getPosition() {
@@ -19,18 +17,14 @@ export class CameraFollowingPositionProvider extends IPositionProvider {
     }
 
     update(timeDelta) {
-        const pos = this._followablePositionProvider
-            .getPosition()
-            .add(-PIXEL_GAME_SIZE.x/2, -PIXEL_GAME_SIZE.y/2);
+        const pos = this._followablePositionProvider.getPosition();
         this._moveToTarget(timeDelta, pos);
     }
 
     getSubPixels() {
-        if (this.scale != 1) throw new Error("Not implemented");
-
         const truncPosition = this.getPosition();
         const floatPosition = this._getPositionUnTruncated();
-        return floatPosition.addPoint(truncPosition);
+        return floatPosition.subtract(truncPosition);
     }
 
     _getPositionUnTruncated() {
@@ -43,6 +37,7 @@ export class CameraFollowingPositionProvider extends IPositionProvider {
 		const mag = v.magnitude();
         //TODO: try 0.5
         if (mag < 1) {
+            console.log("!");
             this._position = targetPosition;
             this.isMoving = false;
 			return;

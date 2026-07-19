@@ -35,7 +35,7 @@ export class CanvasRenderTarget extends IRenderTarget {
 
     reset(position, scale) {
         this._context.reset();
-        this._context.setTransform(scale, 0, 0, scale, position.x * scale, position.y * scale);
+        this._context.setTransform(1, 0, 0, 1, position.x * scale, position.y * scale);
     }
 
     drawWithOpacity(func, opacity) {

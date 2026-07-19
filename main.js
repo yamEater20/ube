@@ -42,9 +42,9 @@ import { StaticPositionProvider } from './engine/iPositionProvider.js';
 
 const LEVEL_PATH = "Levels.png";
 
-// const CURRENT_BUILD_MODE = BUILD_MODES.LOCAL;
+const CURRENT_BUILD_MODE = BUILD_MODES.LOCAL;
 // const CURRENT_BUILD_MODE = BUILD_MODES.LOAD_TEST;
-const CURRENT_BUILD_MODE = BUILD_MODES.PRODUCTION;
+// const CURRENT_BUILD_MODE = BUILD_MODES.PRODUCTION;
 
 //TODO: somehow match different entities to different renderTargets
 
@@ -52,7 +52,7 @@ const INITIAL_ROOM_INDEX = 12;
 
 let root;
 let worldCameras;
-let worldPositionProviders;
+let worldCameraPositionProviders;
 let screenBufferCamera;
 let screenBufferCanvasInfo;
 
@@ -71,7 +71,7 @@ function updateAll() {
 }
 
 function drawBackBuffers() {
-	worldCameras.forEach(camera => camera.getRenderTarget().clear())
+	worldCameras.forEach(camera => camera.getRenderTarget().clear());
 	root.draw();
 }
 
@@ -84,9 +84,12 @@ function drawScreenBuffer() {
 
 	const scale = setMaxSize(canvas, context);
 	
-	worldCameras.forEach(camera => {
-		const subpixels = camera.getSubPixels();
-		screenBufferCamera.getRenderTarget().drawRenderTarget(camera.getRenderTarget(), scale, subpixels);
+	worldCameras.forEach((camera, i) => {
+		const positionProvider = worldCameraPositionProviders[i];
+		const subpixels = positionProvider.getSubPixels();
+		screenBufferCamera
+			.getRenderTarget()
+			.drawRenderTarget(camera.getRenderTarget(), scale, subpixels);
 	});
 }
 
@@ -117,25 +120,28 @@ async function setup() {
 	);
 	const groundedProvider = new UpdateHandlers.GroundedProvider(globalCollidableProvider);
 
-	//TODO
-	drawableRoomIndicesProvider.isCameraShaking = () => false;
-	// drawableRoomIndicesProvider.isCameraShaking = screenShakeOffsetProvider.isShaking;
-	drawableRoomIndicesProvider.isCameraMoving = () => worldCameras[2].isMoving;
-	
 	const particlePool = new ParticlePool(globalCollidableProvider, groundedProvider, root);
 	persistentRegistrar.registerEntity(particlePool.getDataToRegister());
 	
 	const cameraFollowSnapToRoom = new SnapToRoomPositionProvider(registrarWithRooms);
 
 	const cameraInitialPosition = Vector({x: 128*2, y: 128*2});
-	worldCameras = Factories.camerasFactory(
+	const camerasInfo = Factories.camerasFactory(
 		cameraInitialPosition,
 		cameraFollowSnapToRoom,
 		[0.05, 0.1, 1],
-		false,
+		true,
 		screenShakeOffsetProvider
 	);
 
+	worldCameras = camerasInfo.cameras;
+	worldCameraPositionProviders = camerasInfo.positionProviders;
+
+	//TODO
+	drawableRoomIndicesProvider.isCameraShaking = () => false;
+	// drawableRoomIndicesProvider.isCameraShaking = screenShakeOffsetProvider.isShaking;
+	drawableRoomIndicesProvider.isCameraMoving = () => worldCameraPositionProviders[2].isMoving;
+	
 	screenBufferCamera = new Camera(
 		new CanvasRenderTarget(screenBufferCanvasInfo.canvas, screenBufferCanvasInfo.ctx),
 		new StaticPositionProvider(cameraInitialPosition)

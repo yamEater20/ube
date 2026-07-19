@@ -31,7 +31,7 @@ class HitboxDrawableEntity extends Entity {
 	draw(camera) {
 		const relativePosition = this._hitbox.relativePosition;
 		const pos = this.globalPosition().addPoint(relativePosition).trunc();
-		camera.drawRect(
+		camera.getRenderTarget().drawRect(
 			pos.x,
 			pos.y,
 			this._hitbox.width,
@@ -39,7 +39,7 @@ class HitboxDrawableEntity extends Entity {
 			this._color
 		);
 
-		camera.drawRectOutline(
+		camera.getRenderTarget().drawRectOutline(
 			pos.x+0.5,
 			pos.y+0.5,
 			this._hitbox.width-1,

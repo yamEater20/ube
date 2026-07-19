@@ -22,7 +22,11 @@ export class Camera {
         this.extents = PIXEL_GAME_SIZE;
     }
 
-    getPosition() {return this._positionProvider.getPosition();}
+    getPosition() {return this._positionProvider
+        .getPosition()
+        .add(-this.extents.x/2, -this.extents.y/2)
+        .scalar(-1);
+    }
 
     _getScreenShakeOffset() {
         return this._screenShakeOffsetProvider.getOffset();
@@ -35,8 +39,7 @@ export class Camera {
     getRenderTarget() {return this._renderTarget;}
 
     update(timeDelta) {
-        //TODO: change this pool to a queue for cinematics, remove hardcoded logic
-        
+        this._positionProvider.update(timeDelta);
         const myPosition = this.getPosition();
 
         //TODO: This is a code smell. Reset Transform doesn''t belong on a render target.
