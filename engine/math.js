@@ -22,6 +22,9 @@ const Vector = ({ x, y }) => ({
 	trunc() {
 		return Vector({ x: Math.trunc(this.x), y: Math.trunc(this.y) });
 	},
+	round() {
+		return Vector({x: Math.round(this.x), y: Math.round(this.y)});
+	},
 	sign() {
 		return Vector({ x: Math.sign(this.x), y: Math.sign(this.y) });
 	},

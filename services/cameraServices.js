@@ -131,3 +131,25 @@ export class SnapToRoomPositionProvider extends IPositionProvider {
             .globalPosition();
     }
 }
+
+//For debug
+export class ScreenShakeAlwaysPositionProvider extends IPositionProvider {
+    constructor(basePositionProvider) {
+        super();
+        this._basePositionProvider = basePositionProvider;
+    }
+
+    shakeScreen(strength = 1, duration = 250) {}
+
+    isShaking() {
+        return true;
+    }
+
+    cancelScreenShake() {}
+
+    update(timeDelta) {}
+
+    getPosition() {
+        return this._basePositionProvider.getPosition().add(-2, -2);
+    }
+}

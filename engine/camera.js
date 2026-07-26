@@ -13,7 +13,7 @@ export class DummyCamera {
 }
 
 export class Camera {
-    constructor(renderTarget, positionProvider) {
+    constructor(renderTarget, positionProvider, extents) {
         this._renderTarget = renderTarget;
         this.scale = 1;
 
@@ -25,7 +25,7 @@ export class Camera {
     getPosition() {
         return this._positionProvider
             .getPosition()
-            .add(-this.extents.x/2, -this.extents.y/2);
+            ;
     }
 
     _getScreenShakeOffset() {

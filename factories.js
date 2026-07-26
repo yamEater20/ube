@@ -17,28 +17,33 @@ import { CanvasRenderTarget } from './engine/renderTarget.js';
 import * as PositionProviders from './engine/positionProviders.js';
 
 export function camerasFactory(basePositionProvider, depths, visibleCanvas) {
-	const positionProviders = positionProvidersFactory(basePositionProvider, depths);
+	const extents = PIXEL_GAME_SIZE;
+
+	const positionProviders = positionProvidersFactory(basePositionProvider, depths, extents);
 	return positionProviders.map(
-		provider => cameraFactory(provider, visibleCanvas)
+		provider => cameraFactory(provider, visibleCanvas, extents)
 	);
 }
 
-function positionProvidersFactory(basePositionProvider, depths) {
+function positionProvidersFactory(basePositionProvider, depths, extents) {
 	return depths.map(
 		parallaxScale =>
 			new PositionProviders.Truncated(
 				new PositionProviders.WithDepth(
-					basePositionProvider,
+					new PositionProviders.WithOffset(
+						basePositionProvider,
+						extents.scalar(-0.5).add(-1, -1)
+					),
 					parallaxScale
 				)
 			)
 	);
 }
 
-function cameraFactory(positionProvider, visibleCanvas) {
-	const canvasInfo = createCanvas(visibleCanvas, PIXEL_GAME_SIZE.add(1, 1));
+function cameraFactory(positionProvider, visibleCanvas, extents) {
+	const canvasInfo = createCanvas(visibleCanvas, extents.add(2, 2));
 	const renderTarget = new CanvasRenderTarget(canvasInfo.canvas, canvasInfo.ctx);
-	return new Camera(renderTarget, positionProvider);
+	return new Camera(renderTarget, positionProvider, extents);
 }
 
 export function timeFactory(buildMode) {

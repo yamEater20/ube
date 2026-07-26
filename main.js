@@ -33,7 +33,7 @@ import { ParticlePool } from './services/particlePool.js';
 import { BUILD_MODES } from './engine/debug.js';
 import * as Factories from './factories.js';
 import * as PositionProviders from './engine/positionProviders.js';
-import { OnCameraMovePushPlayer, ScreenShakePositionProvider, SnapToRoomPositionProvider as RoomPositionProvider } from './services/cameraServices.js';
+import { OnCameraMovePushPlayer, ScreenShakePositionProvider, SnapToRoomPositionProvider as RoomPositionProvider, ScreenShakeAlwaysPositionProvider } from './services/cameraServices.js';
 import { createProgressBar } from './entities/progressBar.js';
 import { PlayerVFXManager } from './services/playerVFXManager.js';
 import { Camera } from './engine/camera.js';
@@ -88,7 +88,7 @@ function drawScreenBuffer() {
 	worldCameras.forEach((camera, i) => {
 		//This is ergonomic but bad practice. Fix.
 		const positionProvider = camera._positionProvider;
-		const subpixels = positionProvider.getSubPixels();
+		const subpixels = positionProvider.getSubPixels().add(2, 2);
 		screenBufferCamera
 			.getRenderTarget()
 			.drawRenderTarget(camera.getRenderTarget(), scale, subpixels);
@@ -123,31 +123,13 @@ async function setup() {
 	const particlePool = new ParticlePool(globalCollidableProvider, groundedProvider, root);
 	persistentRegistrar.registerEntity(particlePool.getDataToRegister());
 	
-	const followablePositionProvider = new RoomPositionProvider(registrarWithRooms);
+	const cameraProviders = setupCameras(registrarWithRooms);
+	const cameraMovingProvider = cameraProviders.cameraMovingProvider;
+	const screenShakePositionProvider = cameraProviders.screenShakePositionProvider;
 
-	cameraMovingProvider = new PositionProviders.SmoothFollow(
-		CAMERA_INITIAL_POSITION,
-		followablePositionProvider
-	);
-	const screenShakePositionProvider = new ScreenShakePositionProvider(cameraMovingProvider);
-	// persistentRegistrar.registerItem(POOL_TYPES.UPDATEABLE, cameraMovingProvider);
-	// persistentRegistrar.registerItem(POOL_TYPES.UPDATEABLE, screenShakePositionProvider);
-
-	worldCameras = Factories.camerasFactory(
-		screenShakePositionProvider,
-		// [0.05, 0.1, 1],
-		[1],
-		true
-	);
-
-	//TODO
 	drawableRoomIndicesProvider.isCameraShaking = screenShakePositionProvider.isShaking;
 	drawableRoomIndicesProvider.isCameraMoving = () => cameraMovingProvider.isMoving;
 	
-	screenBufferCamera = new Camera(
-		new CanvasRenderTarget(screenBufferCanvasInfo.canvas, screenBufferCanvasInfo.ctx),
-		new StaticPositionProvider(CAMERA_INITIAL_POSITION)
-	);
 	root = new Root(
 		Factories.timeFactory(CURRENT_BUILD_MODE),
 		Factories.timeFactory(CURRENT_BUILD_MODE),
@@ -204,15 +186,15 @@ async function setup() {
 
 	root.onCameraMove = new OnCameraMovePushPlayer(
 		player[POOL_TYPES.COLLIDABLE][0],
-		// worldCameras[2],
-		worldCameras[0],
+		worldCameras[2],
+		// worldCameras[0],
 		cameraMovingProvider
 	);
 	
 	persistentRegistrar.registerEntity(player);
 
-	const a = Factories.drawEdgesAroundWorld(levelData, root, 12, "black");
-	a.forEach(item => persistentRegistrar.registerItem(POOL_TYPES.DRAWABLE, {item: item, layer: 0}));
+	const edges = Factories.drawEdgesAroundWorld(levelData, root, 12, "black");
+	edges.forEach(item => persistentRegistrar.registerItem(POOL_TYPES.DRAWABLE, {item: item, layer: 0}));
 
 	if (CURRENT_BUILD_MODE === BUILD_MODES.LOAD_TEST) {
 		persistentRegistrar.registerEntity(
@@ -228,6 +210,35 @@ async function setup() {
 	root.queueReset();
 
 	Setup.beginGameLoop(mainLoopDiagnostics.call);
+}
+
+function setupCameras(registrarWithRooms) {
+	const followablePositionProvider = new RoomPositionProvider(registrarWithRooms);
+
+	cameraMovingProvider = new PositionProviders.SmoothFollow(
+		CAMERA_INITIAL_POSITION,
+		followablePositionProvider
+	);
+
+	const screenShakePositionProvider = new ScreenShakePositionProvider(cameraMovingProvider);
+	// const screenShakePositionProvider = new ScreenShakeAlwaysPositionProvider(cameraMovingProvider);
+	
+	worldCameras = Factories.camerasFactory(
+		screenShakePositionProvider,
+		[0.05, 0.1, 1],
+		// [1],
+		true
+	);
+
+	screenBufferCamera = new Camera(
+		new CanvasRenderTarget(screenBufferCanvasInfo.canvas, screenBufferCanvasInfo.ctx),
+		new StaticPositionProvider(CAMERA_INITIAL_POSITION)
+	);
+
+	return {
+		cameraMovingProvider: cameraMovingProvider,
+		screenShakePositionProvider: screenShakePositionProvider
+	}
 }
 
 /*

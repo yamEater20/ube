@@ -1,4 +1,5 @@
 import { IPositionProvider } from "./iPositionProvider.js";
+import { VectorOne } from "./math.js";
 
 export class Truncated extends IPositionProvider {
     constructor(basePositionProvider) {
@@ -33,6 +34,18 @@ export class WithDepth extends IPositionProvider {
     }
 }
 
+export class WithOffset extends IPositionProvider {
+    constructor(basePositionProvider, offset) {
+        super();
+        this._basePositionProvider = basePositionProvider;
+        this.offset = offset;
+    }
+
+    getPosition() {
+        return this._basePositionProvider.getPosition().addPoint(this.offset);
+    }
+}
+
 export class SmoothFollow extends IPositionProvider {
     constructor(initialPosition, followablePositionProvider) {
         super();
@@ -47,7 +60,6 @@ export class SmoothFollow extends IPositionProvider {
     }
 
     update(timeDelta) {
-        
         const pos = this._followablePositionProvider.getPosition();
         this._moveToTarget(timeDelta, pos);
     }

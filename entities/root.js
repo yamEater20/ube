@@ -38,7 +38,7 @@ export class Root extends Entity {
 	}
 
 	_getMainLayerCamera() {
-		return this._worldCameras[0];
+		return this._worldCameras[2];
 	}
 
 	globalPosition() {
@@ -49,8 +49,8 @@ export class Root extends Entity {
 		const mainCamera = this._getMainLayerCamera();
 		this._registrar.getPool(POOL_TYPES.DRAWABLE).foreach(item => item.draw(mainCamera));
 
-		// this._midgroundEntity.draw(this._worldCameras[0]);
-		// this._midgroundEntity2.draw(this._worldCameras[1]);
+		this._midgroundEntity.draw(this._worldCameras[0]);
+		this._midgroundEntity2.draw(this._worldCameras[1]);
 
 		if (debugOptions.showHitboxes) this._registrar.getPool(POOL_TYPES.DRAWABLE_DEBUG).foreach(item => item.draw(mainCamera));
 	}
@@ -70,12 +70,12 @@ export class Root extends Entity {
 		// if (input.nextRoomPressed) this._registrar.getRoomsPool().nextRoom();
 		if (input.showAllPressed) debugOptions.showAll = !debugOptions.showAll;
 
+		this._a.update(this._worldTime.delta);
+		this._b.update(this._worldTime.delta);
 		this._worldCameras.forEach(c => c.update(this._trueTime.delta));
 
 		//TODO: fix
-		this._a.update(this._worldTime.delta);
-		this._b.update(this._worldTime.delta);
-
+		
 		this.onCameraMove.update();
 		const isMainCameraMoving = this.onCameraMove.isMoving();
 
